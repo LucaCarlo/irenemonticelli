@@ -105,6 +105,53 @@ async function runSeed() {
   } catch (e) {
     console.error('[seedContent]', e.message);
   }
+
+  try {
+    await seedProfessors();
+  } catch (e) {
+    console.error('[seedProfessors]', e.message);
+  }
+}
+
+// Importa i professori dalle foto in seed-assets/professors (idempotente).
+async function seedProfessors() {
+  const fsx = require('fs');
+  const pathx = require('path');
+  const { processUpload } = require('./lib/images');
+  const dir = pathx.join(__dirname, '..', 'seed-assets', 'professors');
+  if (!fsx.existsSync(dir)) return;
+  const DATA = [
+    { file: 'irene-monticelli.png', firstName: 'Irene', lastName: 'Monticelli', danceType: 'Contemporáneo · Modern', sort: 1,
+      descriptionHtml: '<p>Bailarina, coreógrafa y profesora. Directora artística de la <strong>Pro Dance Experience</strong>.</p>' },
+    { file: 'alicia-reig.png', firstName: 'Alicia', lastName: 'Reig', danceType: 'Danza', sort: 2,
+      descriptionHtml: '<p>Profesora invitada de la Pro Dance Experience.</p>' },
+    { file: 'cintia-solbes.png', firstName: 'Cintia', lastName: 'Solbes', danceType: 'Danza', sort: 3,
+      descriptionHtml: '<p>Profesora invitada de la Pro Dance Experience.</p>' },
+    { file: 'maria-palazon.png', firstName: 'María', lastName: 'Palazón', danceType: 'Danza', sort: 4,
+      descriptionHtml: '<p>Profesora invitada de la Pro Dance Experience.</p>' },
+  ];
+  for (const d of DATA) {
+    const exists = await prisma.professor.findFirst({ where: { firstName: d.firstName, lastName: d.lastName } });
+    if (exists) continue;
+    const fp = pathx.join(dir, d.file);
+    if (!fsx.existsSync(fp)) continue;
+    const buf = fsx.readFileSync(fp);
+    const info = await processUpload(buf, d.file, 'image/png');
+    const media = await prisma.media.create({
+      data: {
+        filename: info.filename, originalName: info.originalName, title: `${d.firstName} ${d.lastName}`,
+        alt: `${d.firstName} ${d.lastName}`, mime: info.mime, ext: info.ext,
+        width: info.width, height: info.height, sizeBytes: info.sizeBytes, smallBytes: info.smallBytes,
+        path: info.path, smallPath: info.smallPath, isImage: info.isImage,
+      },
+    });
+    await prisma.professor.create({
+      data: {
+        firstName: d.firstName, lastName: d.lastName, danceType: d.danceType,
+        descriptionHtml: d.descriptionHtml, photoMediaId: media.id, active: true, sort: d.sort,
+      },
+    });
+  }
 }
 
 // Dati base: l'evento Pro Dance e i 4 pacchetti collegati ad esso.
