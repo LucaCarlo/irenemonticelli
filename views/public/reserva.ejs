@@ -54,9 +54,11 @@
   .pk-form .pk-field input[type=date]{color:#2a2a2a}
   /* Niente messaggi d'errore inline (validazione lato server) */
   .pk-form .pk-error{display:none !important}
-  /* Allineamento colonne: sinistra/destra partono in alto */
+  /* Colonne sempre allineate in alto: il riepilogo NON e piu sticky
+     (non si disallinea piu scrollando su/giu) */
   .pk-checkout-grid{align-items:start}
-  .pk-summary-sticky{top:96px}
+  .pk-summary-sticky{position:static !important;top:auto !important}
+  .pk-summary-card{margin-top:0}
 </style>
 </head>
 <body class="on-pack" data-pack-color="<%= plan.slug.replace('pack-','') %>">
