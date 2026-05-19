@@ -5552,7 +5552,7 @@
         </div>
         <div class="pd-meta-item reveal">
           <span class="pd-meta-label">Nivel</span>
-          <span class="pd-meta-value">Medio — <em>Avanzado</em></span>
+          <span class="pd-meta-value">Medio avanzado <em>· +14 años</em></span>
         </div>
         <div class="pd-meta-item reveal">
           <span class="pd-meta-label">Info</span>
@@ -5713,22 +5713,7 @@
           <a href="/pack-red" class="pd-pack-cta" data-nav="pack-red">Reserva</a>
         </div>
       </article>
-
-      <article class="pd-pack pd-pack-green reveal">
-        <div class="pd-pack-head">
-          <span class="pd-pack-name">Pack <b>JUNIOR</b></span>
-          <span class="pd-pack-amount">150€</span>
-          <span class="pd-pack-tag">9 — 12 años · 3 días</span>
-        </div>
-        <div class="pd-pack-body">
-          <p class="pd-pack-desc">El pack dedicado a los <strong>jóvenes bailarines</strong> de entre 9 y 12 años. Un programa adaptado, con docentes formados para acompañar el cuerpo en crecimiento: técnica, juego, escucha y composición. Una primera experiencia de comunidad escénica.</p>
-          <ul class="pd-pack-list">
-            <li class="pd-discount"><span class="pd-pack-k">Reserva entro 15/06</span><span class="pd-pack-v"><b>120€</b></span></li>
-            <li class="pd-discount"><span class="pd-pack-k">Reserva entro 10/07</span><span class="pd-pack-v"><b>135€</b></span></li>
-          </ul>
-          <a href="/pack-junior" class="pd-pack-cta" data-nav="pack-junior">Reserva</a>
-        </div>
-      </article>
+        
 
     </div>
   </section>
@@ -6928,5 +6913,7 @@
 })();
 </script>
 
+
+<script id="rv-navfix">document.addEventListener("click",function(e){var t=e.target.closest(".nav-toggle");if(!t)return;var n=t.closest("nav")||t.parentNode;var l=n&&n.querySelector(".nav-links");if(!l)return;e.preventDefault();t.classList.toggle("open");l.classList.toggle("open");});document.addEventListener("click",function(e){if(e.target.closest(".nav-links a")){var o=document.querySelector(".nav-links.open");if(o){o.classList.remove("open");var b=document.querySelector(".nav-toggle.open");if(b)b.classList.remove("open");}}});</script>
 </body>
 </html>

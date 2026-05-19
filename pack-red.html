@@ -4941,5 +4941,7 @@
 })();
 </script>
 
+
+<script id="rv-navfix">document.addEventListener("click",function(e){var t=e.target.closest(".nav-toggle");if(!t)return;var n=t.closest("nav")||t.parentNode;var l=n&&n.querySelector(".nav-links");if(!l)return;e.preventDefault();t.classList.toggle("open");l.classList.toggle("open");});document.addEventListener("click",function(e){if(e.target.closest(".nav-links a")){var o=document.querySelector(".nav-links.open");if(o){o.classList.remove("open");var b=document.querySelector(".nav-toggle.open");if(b)b.classList.remove("open");}}});</script>
 </body>
 </html>

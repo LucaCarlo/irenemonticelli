@@ -23,10 +23,21 @@ router.get('/reserva/:slug', A(async (req, res) => {
   const plan = await loadPlan(req.params.slug);
   if (!plan) return res.status(404).render('public/notfound', { title: 'Pack no encontrado' });
   const event = plan.event;
+  const others = await prisma.plan.findMany({
+    where: { active: true, slug: { not: plan.slug } },
+    orderBy: { sort: 'asc' },
+    select: { slug: true, name: true, price: true, currency: true, pricingJson: true, bookingMode: true },
+  });
+  function dispPrice(p) {
+    const pr = B.pricing(p);
+    if (pr.type === 'lessons' && pr.options && pr.options[0]) return pr.options[0].price;
+    return B.tierPrice(pr);
+  }
   res.render('public/reserva', {
     title: plan.name,
     plan,
     event,
+    others: others.map((o) => ({ slug: o.slug, name: o.name, price: dispPrice(o), currency: o.currency || 'EUR' })),
     pricing: B.pricing(plan),
     currentPrice: B.tierPrice(B.pricing(plan)),
     days: B.eventDays(event),

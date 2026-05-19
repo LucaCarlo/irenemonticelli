@@ -20,9 +20,16 @@ function eventDays(event) {
   const start = new Date(event.startDate);
   const end = event.endDate ? new Date(event.endDate) : start;
   const months = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  const dows = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
   for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
     const dd = new Date(d);
-    out.push({ iso: dd.toISOString().slice(0, 10), label: `${dd.getDate()} ${months[dd.getMonth()]} ${dd.getFullYear()}` });
+    out.push({
+      iso: dd.toISOString().slice(0, 10),
+      label: `${dd.getDate()} ${months[dd.getMonth()]} ${dd.getFullYear()}`,
+      dow: dows[dd.getDay()],
+      num: dd.getDate(),
+      mon: months[dd.getMonth()],
+    });
   }
   return out;
 }

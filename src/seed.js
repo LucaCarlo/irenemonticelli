@@ -154,9 +154,6 @@ async function seedContent() {
     { slug: 'pack-red', name: 'Pack RED', bookingMode: 'red', badge: '', color: '#8a2a1c', sort: 3,
       price: 247, pricingJson: T(247, 198, 222),
       description: 'Una ruta concentrada de tres clases al día durante los tres días del curso. Equilibrio entre intensidad y respiración. Para cada día eliges mañana o tarde.' },
-    { slug: 'pack-junior', name: 'Pack JUNIOR', bookingMode: 'junior', badge: '', color: '#2f5f1a', sort: 4,
-      price: 150, pricingJson: T(150, 120, 135),
-      description: 'El pack dedicado a los jóvenes bailarines de entre 9 y 12 años. Todos los días por la mañana, de 9:30 a 12:30. Técnica, juego, escucha y composición.' },
   ];
   const OLD_MODES = ['date_time', 'none', 'three_days_ampm', 'alldays_time'];
   for (const p of plans) {
@@ -175,6 +172,12 @@ async function seedContent() {
       if (!exists.description || exists.description.startsWith('Todos los') || exists.description.startsWith('Una clase')) data.description = p.description;
       if (Object.keys(data).length) await prisma.plan.update({ where: { id: exists.id }, data });
     }
+  }
+
+  // Pack Junior (9-12) sospeso per quest'anno: disattivato (non eliminato)
+  const junior = await prisma.plan.findUnique({ where: { slug: 'pack-junior' } });
+  if (junior && junior.active) {
+    await prisma.plan.update({ where: { id: junior.id }, data: { active: false } });
   }
 }
 

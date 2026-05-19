@@ -3,162 +3,317 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title><%= title %> — Reserva — Irene Monticelli</title>
+<title><%= plan.name %> — Reserva — Irene Monticelli</title>
 <link rel="icon" href="/favicon.ico">
+<!-- Stile esatto del sito (_77) -->
+<link rel="stylesheet" href="/reserva77.css">
 <style>
-  :root{--ink:#1c1f26;--mut:#7a8190;--line:#e7e9ee;--accent:<%= plan.color || '#e0aa00' %>}
-  *{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;color:var(--ink);background:#f6f6f4;line-height:1.55}
-  .wrap{max-width:860px;margin:0 auto;padding:28px 18px 60px}
-  .top{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
-  .top a{color:var(--mut);text-decoration:none;font-size:14px}
-  .card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:26px;margin-bottom:18px}
-  .pack-head{border-left:5px solid var(--accent);padding-left:16px}
-  h1{font-size:26px;margin:.1em 0}
-  .price{font-size:30px;font-weight:800;color:var(--accent)}
-  .muted{color:var(--mut)}.sm{font-size:13px}
-  h2{font-size:16px;margin:22px 0 10px;text-transform:uppercase;letter-spacing:.06em}
-  label{display:block;font-weight:600;font-size:13px;margin:12px 0 5px}
-  input,select{width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:9px;font-size:15px;font-family:inherit}
-  input:focus,select:focus{outline:2px solid var(--accent)}
-  .row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-  .opt{display:flex;align-items:center;gap:10px;border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin:8px 0;cursor:pointer}
-  .opt input{width:auto}
-  .opt.sel{border-color:var(--accent);background:rgba(0,0,0,.02)}
-  .opt b{font-size:16px}.opt .p{margin-left:auto;font-weight:800;color:var(--accent)}
-  .lesson{border:1px dashed var(--line);border-radius:10px;padding:12px 14px;margin:10px 0}
-  .day-row{display:flex;align-items:center;gap:14px;border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin:8px 0;flex-wrap:wrap}
-  .day-row .n{font-weight:700;min-width:150px}
-  .seg{display:flex;gap:8px}
-  .seg label{display:flex;align-items:center;gap:6px;margin:0;font-weight:600;border:1px solid var(--line);border-radius:8px;padding:7px 12px;cursor:pointer}
-  .chk{display:flex;gap:10px;align-items:flex-start;margin:14px 0;font-weight:500}
-  .chk input{width:18px;height:18px;margin-top:2px}
-  .err{background:#fdecec;border:1px solid #f3c9c9;color:#b53636;padding:12px 16px;border-radius:10px;margin-bottom:16px;font-size:14px}
-  .pay{background:var(--accent);color:#fff;border:0;border-radius:10px;padding:15px 22px;font-size:16px;font-weight:800;cursor:pointer;width:100%}
-  .pay:hover{filter:brightness(.94)}
-  .tot{display:flex;justify-content:space-between;align-items:center;font-size:18px;font-weight:800;margin:18px 0}
-  .badge{display:inline-block;background:var(--accent);color:#fff;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;text-transform:uppercase;letter-spacing:.05em}
-  .hidden{display:none}
-  @media(max-width:640px){.row{grid-template-columns:1fr}.day-row .n{min-width:auto;width:100%}}
+  /* Adattamenti minimi (riusa le classi pk-* per lo stile del _77) */
+  body{margin:0;background:#f6f6f4}
+  .rv-head{display:flex;align-items:center;justify-content:space-between;padding:18px 6vw;border-bottom:1px solid rgba(0,0,0,.06);background:#fff}
+  .rv-head a{color:#1c1f26;text-decoration:none;font-weight:600;font-size:14px}
+  .rv-brand{font-weight:800;letter-spacing:.02em}
+  .pk-booking{padding:34px 0 70px}
+  .rv-formula{display:flex;gap:10px;flex-wrap:wrap}
+  .rv-lesson{border:1px solid rgba(0,0,0,.1);border-radius:14px;padding:14px 16px;margin:12px 0}
+  .rv-lesson > b{display:block;margin-bottom:8px}
+  .rv-consent{display:flex;gap:12px;align-items:flex-start;margin:14px 0;font-size:14px;line-height:1.5}
+  .rv-consent input{width:20px;height:20px;margin-top:1px;flex-shrink:0}
+  .rv-hide{display:none !important}
+  .rv-err{background:#fdecec;border:1px solid #f3c9c9;color:#b53636;padding:12px 16px;border-radius:12px;margin:0 6vw 18px;font-size:14px}
+  .pk-pay-row-panel p{margin:.4em 0}
 </style>
 </head>
-<body>
-<div class="wrap">
-  <div class="top">
-    <a href="/pro-dance">&larr; Volver a Pro Dance</a>
-    <a href="/">Irene Monticelli</a>
-  </div>
+<body class="on-pack" data-pack-color="<%= plan.slug.replace('pack-','') %>">
+<header class="rv-head">
+  <a href="/pro-dance">&larr; Pro Dance</a>
+  <a href="/" class="rv-brand">IRENE MONTICELLI</a>
+  <a href="/contatti">Contacto</a>
+</header>
 
-  <% if (error) { %><div class="err"><%= error %></div><% } %>
+<% if (error) { %><div class="rv-err"><%= error %></div><% } %>
 
-  <div class="card">
-    <div class="pack-head">
-      <% if (plan.badge) { %><span class="badge"><%= plan.badge %></span><% } %>
-      <h1><%= plan.name %></h1>
-      <div class="muted"><%= event ? event.title : '' %><% if (event && event.location) { %> · <%= event.location %><% } %></div>
-      <p class="muted sm"><%= plan.description %></p>
-    </div>
-  </div>
+<section class="pk-booking">
+  <div class="pk-booking-wrap" data-pack-key="<%= plan.slug %>" data-pack-price="<%= currentPrice %>">
+    <div class="pk-checkout-grid">
+      <!-- COLONNA SINISTRA -->
+      <div class="pk-checkout-main">
+        <form class="pk-form" id="rvForm" method="post" action="/reserva/<%= plan.slug %>" novalidate
+              data-mode="<%= plan.bookingMode %>"
+              data-pricing='<%- JSON.stringify(pricing) %>'
+              data-days='<%- JSON.stringify(days) %>'
+              data-slots='<%- JSON.stringify(slots) %>'
+              data-curprice="<%= currentPrice %>">
 
-  <form method="post" action="/reserva/<%= plan.slug %>" class="card" id="bk">
-    <% if (plan.bookingMode === 'single_lessons') { %>
-      <h2>Elige tu fórmula</h2>
-      <% (pricing.options||[]).forEach(function(o,i){ %>
-        <label class="opt">
-          <input type="radio" name="count" value="<%= o.count %>" data-price="<%= o.price %>" <%= i===0?'checked':'' %>>
-          <b><%= o.count %> clase<%= o.count>1?'s':'' %></b>
-          <span class="p"><%= o.price %> €</span>
-        </label>
-      <% }) %>
-      <h2>Día y horario de cada clase</h2>
-      <div id="lessons"></div>
-    <% } else if (plan.bookingMode === 'red') { %>
-      <h2>Para cada día: mañana o tarde</h2>
-      <% days.forEach(function(d){ %>
-        <div class="day-row">
-          <span class="n"><%= d.label %></span>
-          <div class="seg">
-            <label><input type="radio" name="day_<%= d.iso %>" value="AM" required> Mañana</label>
-            <label><input type="radio" name="day_<%= d.iso %>" value="PM"> Tarde</label>
+          <!-- 1. Pack -->
+          <section class="pk-block pk-block-pack">
+            <h1 class="pk-pack-title"><%= plan.name %></h1>
+            <p class="pk-pack-desc"><%= plan.description %></p>
+            <% if (others && others.length) { %>
+            <details class="pk-change-pack">
+              <summary>
+                <span>Cambiar de paquete</span>
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+              </summary>
+              <div class="pk-change-list">
+                <% others.forEach(function(o){ %>
+                  <a class="pk-change-option" href="/reserva/<%= o.slug %>">
+                    <span class="pk-change-name"><%= o.name %></span>
+                    <span class="pk-change-price"><%= o.price %>€</span>
+                  </a>
+                <% }) %>
+              </div>
+            </details>
+            <% } %>
+          </section>
+
+          <!-- 2. Selezione (dipende dalla modalità) -->
+          <% if (plan.bookingMode === 'single_lessons') { %>
+          <section class="pk-block">
+            <h2 class="pk-block-title">Fórmula</h2>
+            <div class="pk-sub-label">Elige cuántas clases</div>
+            <div class="rv-formula" id="rvFormula" role="radiogroup">
+              <% (pricing.options||[]).forEach(function(o,i){ %>
+                <button type="button" class="pk-slot rv-opt" data-count="<%= o.count %>" data-price="<%= o.price %>" aria-checked="<%= i===0?'true':'false' %>">
+                  <%= o.count %> clase<%= o.count>1?'s':'' %> · <%= o.price %>€
+                </button>
+              <% }) %>
+            </div>
+            <input type="hidden" name="count" id="rvCount" value="<%= (pricing.options&&pricing.options[0])?pricing.options[0].count:1 %>">
+          </section>
+          <section class="pk-block">
+            <h2 class="pk-block-title">Fecha y horario de cada clase</h2>
+            <div id="rvLessons"></div>
+          </section>
+          <% } else if (plan.bookingMode === 'red') { %>
+          <section class="pk-block">
+            <h2 class="pk-block-title">Para cada día: mañana o tarde</h2>
+            <% days.forEach(function(d){ %>
+              <div class="pk-block" style="border:0;padding:0;margin:14px 0">
+                <div class="pk-sub-label"><%= d.dow %> <%= d.num %> <%= d.mon %></div>
+                <div class="pk-slots-row rv-ampm" data-day="<%= d.iso %>" role="radiogroup">
+                  <button type="button" class="pk-slot" data-val="AM" aria-checked="false">Mañana</button>
+                  <button type="button" class="pk-slot" data-val="PM" aria-checked="false">Tarde</button>
+                </div>
+                <input type="hidden" name="day_<%= d.iso %>" value="">
+              </div>
+            <% }) %>
+          </section>
+          <% } else if (plan.bookingMode === 'junior') { %>
+          <section class="pk-block">
+            <h2 class="pk-block-title">Programa</h2>
+            <p class="pk-pack-desc">Todos los días por la mañana, de <strong>9:30 a 12:30</strong> (<%= days.length %> días). No hay que elegir horario.</p>
+          </section>
+          <% } else { %>
+          <section class="pk-block">
+            <h2 class="pk-block-title">Programa</h2>
+            <p class="pk-pack-desc">Acceso libre a todas las clases de los <%= days.length %> días. No hay que elegir nada.</p>
+          </section>
+          <% } %>
+
+          <!-- 3. Datos -->
+          <section class="pk-block">
+            <h2 class="pk-block-title">Tus datos</h2>
+            <div class="pk-row">
+              <div class="pk-field"><input type="text" name="firstName" required autocomplete="given-name" placeholder="Nombre"><span class="pk-error" data-error>Campo obligatorio</span></div>
+              <div class="pk-field"><input type="text" name="lastName" required autocomplete="family-name" placeholder="Apellidos"><span class="pk-error" data-error>Campo obligatorio</span></div>
+            </div>
+            <div class="pk-row">
+              <div class="pk-field"><input type="email" name="email" required autocomplete="email" placeholder="Email"><span class="pk-error" data-error>Email no válido</span></div>
+              <div class="pk-field"><input type="tel" name="phone" required autocomplete="tel" placeholder="Teléfono"><span class="pk-error" data-error>Teléfono obligatorio</span></div>
+            </div>
+            <div class="pk-row">
+              <div class="pk-field">
+                <label class="pk-sub-label" for="rvBd">Fecha de nacimiento</label>
+                <input type="date" id="rvBd" name="birthDate" required>
+                <span class="pk-error" data-error>Fecha obligatoria</span>
+              </div>
+              <div class="pk-field"></div>
+            </div>
+
+            <div class="rv-consent rv-hide" id="rvParentBox">
+              <input type="checkbox" name="parentalConsent" id="rvPc">
+              <label for="rvPc">Soy el padre/madre/tutor legal y <strong>autorizo la participación del menor</strong> (obligatorio para menores de 18 años).</label>
+            </div>
+            <div class="rv-consent">
+              <input type="checkbox" name="imageConsent" id="rvIc" required>
+              <label for="rvIc">Autorizo el uso de <strong>imágenes y vídeos</strong> de la actividad con fines de comunicación (obligatorio).</label>
+            </div>
+          </section>
+
+          <!-- 4. Método de pago (visivo come _77; il pago reale è seguro vía Stripe) -->
+          <section class="pk-block">
+            <h2 class="pk-block-title">Método de pago</h2>
+            <div class="pk-pay-stack" role="tablist">
+              <div class="pk-pay-row is-active" data-method-row="card">
+                <button type="button" class="pk-pay-row-head" data-method="card" role="tab" aria-selected="true">
+                  <span class="pk-pay-radio"><span class="pk-pay-radio-dot"></span></span>
+                  <span class="pk-pay-row-label">Tarjeta</span>
+                  <span class="pk-pay-row-badges">
+                    <span class="pk-pay-badge pk-badge-visa">VISA</span>
+                    <span class="pk-pay-badge pk-badge-mc">MC</span>
+                    <span class="pk-pay-badge pk-badge-amex">AMEX</span>
+                    <span class="pk-pay-badge pk-badge-more">+5</span>
+                  </span>
+                </button>
+                <div class="pk-pay-row-panel"><p class="pk-pay-info">Pago seguro con tarjeta. Serás redirigido a la pasarela cifrada de Stripe para completar el pago.</p></div>
+              </div>
+              <div class="pk-pay-row" data-method-row="other">
+                <button type="button" class="pk-pay-row-head" data-method="other" role="tab" aria-selected="false">
+                  <span class="pk-pay-radio"><span class="pk-pay-radio-dot"></span></span>
+                  <span class="pk-pay-row-label">Otros métodos</span>
+                </button>
+                <div class="pk-pay-row-panel"><p class="pk-pay-info">En la pasarela de pago podrás elegir otros métodos disponibles.</p></div>
+              </div>
+            </div>
+          </section>
+
+          <div class="pk-confirm-left">
+            <button type="submit" class="pk-confirm-final is-disabled" id="rvSubmitL">Confirmar y pagar</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- COLONNA DESTRA: summary sticky -->
+      <aside class="pk-summary-sticky">
+        <div class="pk-summary-card">
+          <h3 class="pk-summary-title">Resumen de tu reserva</h3>
+          <div class="pk-summary-rows">
+            <div class="pk-summary-row"><span class="pk-summary-label">Paquete</span><span class="pk-summary-value"><%= plan.name %></span></div>
+            <div class="pk-summary-row"><span class="pk-summary-label">Evento</span><span class="pk-summary-value"><%= event ? event.title : '' %></span></div>
+            <div class="pk-summary-row"><span class="pk-summary-label">Detalle</span><span class="pk-summary-value pk-summary-empty" id="rvSumDetail">—</span></div>
+          </div>
+          <div class="pk-summary-total">
+            <span class="pk-summary-total-label">Total</span>
+            <span class="pk-summary-total-amount" id="rvTotal"><%= currentPrice %>€</span>
+          </div>
+          <button type="submit" form="rvForm" class="pk-confirm-final is-disabled" id="rvSubmitR">Confirmar y pagar</button>
+          <div class="pk-secure-note">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 1l9 4v6c0 5.5-4 10.7-9 12-5-1.3-9-6.5-9-12V5l9-4z"/></svg>
+            Pago seguro · cifrado SSL · Stripe
           </div>
         </div>
-      <% }) %>
-      <p class="muted sm">3 clases al día durante los <%= days.length %> días.</p>
-    <% } else if (plan.bookingMode === 'junior') { %>
-      <h2>Programa</h2>
-      <p>Todos los días por la mañana, de <strong>9:30 a 12:30</strong> (<%= days.length %> días). No hay que elegir horario.</p>
-    <% } else { %>
-      <h2>Programa</h2>
-      <p>Acceso libre a todas las clases de los <%= days.length %> días. No hay que elegir nada.</p>
-    <% } %>
-
-    <h2>Tus datos</h2>
-    <div class="row">
-      <div><label>Nombre</label><input type="text" name="firstName" required></div>
-      <div><label>Apellidos</label><input type="text" name="lastName" required></div>
+      </aside>
     </div>
-    <div class="row">
-      <div><label>Email</label><input type="email" name="email" required></div>
-      <div><label>Teléfono</label><input type="tel" name="phone" required></div>
-    </div>
-    <label>Fecha de nacimiento</label>
-    <input type="date" name="birthDate" id="bd" required>
-
-    <div class="chk hidden" id="parentBox">
-      <input type="checkbox" name="parentalConsent" id="pc">
-      <label for="pc" style="margin:0;font-weight:600">Soy el padre/madre/tutor y autorizo la participación del menor (obligatorio para menores de 18 años).</label>
-    </div>
-    <div class="chk">
-      <input type="checkbox" name="imageConsent" id="ic" required>
-      <label for="ic" style="margin:0;font-weight:600">Autorizo el uso de imágenes/vídeos de la actividad (obligatorio).</label>
-    </div>
-
-    <div class="tot"><span>Total</span><span id="tot"><%= (plan.bookingMode==='single_lessons' ? (pricing.options&&pricing.options[0]?pricing.options[0].price:0) : currentPrice) %> €</span></div>
-    <button class="pay" type="submit">Pagar y reservar</button>
-    <p class="muted sm" style="text-align:center;margin-top:10px">Pago seguro con Stripe (tarjeta y otros métodos).</p>
-  </form>
-</div>
+  </div>
+</section>
 
 <script>
 (function(){
-  var mode = <%- JSON.stringify(plan.bookingMode) %>;
-  var DAYS = <%- JSON.stringify(days) %>;
-  var SLOTS = <%- JSON.stringify(slots) %>;
-  var tot = document.getElementById('tot');
+  var form=document.getElementById('rvForm');
+  var mode=form.dataset.mode;
+  var pricing=JSON.parse(form.dataset.pricing||'{}');
+  var DAYS=JSON.parse(form.dataset.days||'[]');
+  var SLOTS=JSON.parse(form.dataset.slots||'[]');
+  var curPrice=parseFloat(form.dataset.curprice)||0;
+  var totalEl=document.getElementById('rvTotal');
+  var detEl=document.getElementById('rvSumDetail');
+  var subs=[document.getElementById('rvSubmitL'),document.getElementById('rvSubmitR')];
+  var total=curPrice;
 
-  if (mode === 'single_lessons') {
-    var box = document.getElementById('lessons');
-    function dayOpts(){ return DAYS.map(function(d){return '<option value="'+d.iso+'">'+d.label+'</option>';}).join(''); }
-    function slotOpts(){ return SLOTS.map(function(s){return '<option value="'+s+'">'+s+'</option>';}).join(''); }
-    function render(n, price){
+  function datePills(){return DAYS.map(function(d){return '<button type="button" class="pk-date" data-date="'+d.iso+'" role="radio" aria-checked="false"><span class="pk-date-day">'+d.dow+'</span><span class="pk-date-num">'+d.num+'</span></button>';}).join('');}
+  function slotPills(){return SLOTS.map(function(s){return '<button type="button" class="pk-slot" data-slot="'+s+'" role="radio" aria-checked="false">'+s+'</button>';}).join('');}
+
+  // Single: fórmula + N lezioni
+  if(mode==='single_lessons'){
+    var opts=document.querySelectorAll('.rv-opt');
+    var countInp=document.getElementById('rvCount');
+    var box=document.getElementById('rvLessons');
+    function renderLessons(n){
       var h='';
       for(var i=0;i<n;i++){
-        h+='<div class="lesson"><strong>Clase '+(i+1)+'</strong><div class="row">'+
-           '<div><label>Día</label><select name="lesson_day_'+i+'" required>'+dayOpts()+'</select></div>'+
-           '<div><label>Horario</label><select name="lesson_slot_'+i+'" required>'+slotOpts()+'</select></div></div></div>';
+        h+='<div class="rv-lesson"><b>Clase '+(i+1)+'</b>'+
+           '<div class="pk-sub-label">Fecha</div><div class="pk-dates rv-d" data-i="'+i+'">'+datePills()+'</div>'+
+           '<div class="pk-sub-label pk-sub-label-spaced">Horario</div><div class="pk-slots-row rv-s" data-i="'+i+'">'+slotPills()+'</div>'+
+           '<input type="hidden" name="lesson_day_'+i+'" value=""><input type="hidden" name="lesson_slot_'+i+'" value=""></div>';
       }
       box.innerHTML=h;
-      tot.textContent = price + ' €';
     }
-    document.querySelectorAll('input[name=count]').forEach(function(r){
-      r.addEventListener('change',function(){ render(parseInt(r.value,10), r.getAttribute('data-price')); });
+    function selOpt(btn){
+      opts.forEach(function(o){o.classList.remove('is-selected');o.setAttribute('aria-checked','false');});
+      btn.classList.add('is-selected');btn.setAttribute('aria-checked','true');
+      countInp.value=btn.dataset.count;
+      total=parseFloat(btn.dataset.price)||0;
+      renderLessons(parseInt(btn.dataset.count,10));
+      sync();
+    }
+    opts.forEach(function(o){o.addEventListener('click',function(){selOpt(o);});});
+    if(opts[0]) selOpt(opts[0]);
+    box.addEventListener('click',function(e){
+      var dt=e.target.closest('.pk-date'), sl=e.target.closest('.pk-slot');
+      if(dt){var c=dt.closest('.rv-d');c.querySelectorAll('.pk-date').forEach(function(x){x.classList.remove('is-selected');x.setAttribute('aria-checked','false');});dt.classList.add('is-selected');dt.setAttribute('aria-checked','true');c.parentNode.querySelector('input[name="lesson_day_'+c.dataset.i+'"]').value=dt.dataset.date;sync();}
+      if(sl){var c2=sl.closest('.rv-s');c2.querySelectorAll('.pk-slot').forEach(function(x){x.classList.remove('is-selected');x.setAttribute('aria-checked','false');});sl.classList.add('is-selected');sl.setAttribute('aria-checked','true');c2.parentNode.querySelector('input[name="lesson_slot_'+c2.dataset.i+'"]').value=sl.dataset.slot;sync();}
     });
-    var c=document.querySelector('input[name=count]:checked'); render(parseInt(c.value,10), c.getAttribute('data-price'));
-    document.querySelectorAll('.opt input').forEach(function(r){r.addEventListener('change',function(){
-      document.querySelectorAll('.opt').forEach(function(o){o.classList.remove('sel');});
-      if(r.checked) r.closest('.opt').classList.add('sel');
-    });});
-    var cc=document.querySelector('.opt input:checked'); if(cc) cc.closest('.opt').classList.add('sel');
   }
 
-  // Consenso genitori se minorenne
-  var bd=document.getElementById('bd'), pbox=document.getElementById('parentBox'), pc=document.getElementById('pc');
-  function checkAge(){
-    if(!bd.value){pbox.classList.add('hidden');pc.required=false;return;}
-    var b=new Date(bd.value), n=new Date(), a=n.getFullYear()-b.getFullYear(), m=n.getMonth()-b.getMonth();
-    if(m<0||(m===0&&n.getDate()<b.getDate()))a--;
-    if(a<18){pbox.classList.remove('hidden');pc.required=true;} else {pbox.classList.add('hidden');pc.required=false;pc.checked=false;}
+  // Red: AM/PM per giorno
+  if(mode==='red'){
+    document.querySelectorAll('.rv-ampm').forEach(function(row){
+      row.addEventListener('click',function(e){
+        var b=e.target.closest('.pk-slot'); if(!b)return;
+        row.querySelectorAll('.pk-slot').forEach(function(x){x.classList.remove('is-selected');x.setAttribute('aria-checked','false');});
+        b.classList.add('is-selected');b.setAttribute('aria-checked','true');
+        row.parentNode.querySelector('input[name="day_'+row.dataset.day+'"]').value=b.dataset.val;
+        sync();
+      });
+    });
   }
-  bd.addEventListener('change',checkAge); checkAge();
+
+  // Metodo pagamento (solo visivo)
+  document.querySelectorAll('.pk-pay-row-head').forEach(function(h){
+    h.addEventListener('click',function(){
+      document.querySelectorAll('.pk-pay-row').forEach(function(r){r.classList.remove('is-active');});
+      document.querySelectorAll('.pk-pay-row-head').forEach(function(x){x.setAttribute('aria-selected','false');});
+      h.closest('.pk-pay-row').classList.add('is-active');h.setAttribute('aria-selected','true');
+    });
+  });
+
+  // Età -> consenso genitori
+  var bd=document.getElementById('rvBd'),pbox=document.getElementById('rvParentBox'),pc=document.getElementById('rvPc');
+  function checkAge(){
+    if(!bd.value){pbox.classList.add('rv-hide');pc.required=false;pc.checked=false;sync();return;}
+    var b=new Date(bd.value),n=new Date(),a=n.getFullYear()-b.getFullYear(),m=n.getMonth()-b.getMonth();
+    if(m<0||(m===0&&n.getDate()<b.getDate()))a--;
+    if(a<18){pbox.classList.remove('rv-hide');pc.required=true;}else{pbox.classList.add('rv-hide');pc.required=false;pc.checked=false;}
+    sync();
+  }
+  bd.addEventListener('change',checkAge);
+
+  function selectionOk(){
+    if(mode==='single_lessons'){
+      var n=parseInt(document.getElementById('rvCount').value,10);
+      for(var i=0;i<n;i++){var d=form.querySelector('input[name="lesson_day_'+i+'"]'),s=form.querySelector('input[name="lesson_slot_'+i+'"]');if(!d||!s||!d.value||!s.value)return false;}
+      return true;
+    }
+    if(mode==='red'){var rows=document.querySelectorAll('.rv-ampm');for(var k=0;k<rows.length;k++){var inp=rows[k].parentNode.querySelector('input');if(!inp.value)return false;}return true;}
+    return true;
+  }
+  function fieldsOk(){
+    var fn=form.firstName.value.trim(),ln=form.lastName.value.trim(),em=form.email.value.trim(),ph=form.phone.value.trim();
+    if(fn.length<2||ln.length<2||!ph||!bd.value)return false;
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em))return false;
+    if(!document.getElementById('rvIc').checked)return false;
+    if(pc.required&&!pc.checked)return false;
+    return true;
+  }
+  function sync(){
+    // dettaglio + totale
+    var det='—';
+    if(mode==='single_lessons'){var n=parseInt(document.getElementById('rvCount').value,10);det=n+' clase'+(n>1?'s':'');}
+    else if(mode==='red'){det='3 clases/día · '+DAYS.length+' días';}
+    else if(mode==='junior'){det='Mañanas 9:30–12:30 · '+DAYS.length+' días';}
+    else{det='Open class · '+DAYS.length+' días';}
+    detEl.textContent=det; detEl.classList.remove('pk-summary-empty');
+    totalEl.textContent=(total||curPrice)+'€';
+    var ready=selectionOk()&&fieldsOk();
+    subs.forEach(function(b){ if(ready){b.classList.remove('is-disabled');}else{b.classList.add('is-disabled');} });
+  }
+  form.addEventListener('input',sync);
+  form.addEventListener('change',sync);
+  form.addEventListener('submit',function(e){
+    if(!(selectionOk()&&fieldsOk())){e.preventDefault();sync();window.scrollTo({top:0,behavior:'smooth'});}
+  });
+  checkAge(); sync();
 })();
 </script>
 </body>
