@@ -33,6 +33,13 @@ let prefix = pd.slice(0, hdrE);
 const suffix = pd.slice(ftS);
 // titolo pagina
 prefix = prefix.replace(/<title>[\s\S]*?<\/title>/, '<title>Quién soy — Irene Monticelli</title>');
+// Rinomina lo wrapper: NON deve essere "pro-dance" (altrimenti il menu evidenzia
+// Pro Dance e si applicano stili pd-*). Pagina propria "quien-soy".
+prefix = prefix.split('id="page-prodance"').join('id="page-quiensoy"');
+prefix = prefix.split('data-page="pro-dance"').join('data-page="quien-soy"');
+prefix = prefix.split('id="header-prodance"').join('id="header-quiensoy"');
+prefix = prefix.split('id="navToggle-prodance"').join('id="navToggle-quiensoy"');
+prefix = prefix.split('id="navLinks-prodance"').join('id="navLinks-quiensoy"');
 
 // --- testo curriculum ---
 const CV = [
@@ -75,7 +82,8 @@ const CONTENT = `
   .qs-intro{display:grid;grid-template-columns:1.05fr 1fr;gap:0;align-items:stretch}
   .qs-intro-img{position:relative;min-height:70vh;overflow:hidden}
   .qs-intro-img img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
-  .qs-intro-txt{display:flex;flex-direction:column;justify-content:center;padding:9vh 7vw}
+  .qs-intro-txt{display:flex;flex-direction:column;justify-content:center;padding:8vh 7vw 8vh 7vw}
+  .qs-intro-txt .h-section,.qs-intro-txt .body-lg{max-width:none;padding-right:0}
   .qs-intro-txt .body-lg{margin:14px 0 0}
   .qs-split{display:grid;grid-template-columns:1.15fr .85fr;gap:56px;align-items:start}
   .qs-cv{text-align:left}
@@ -86,24 +94,25 @@ const CONTENT = `
   .qs-side-fig:hover img{transform:scale(1.05)}
   .qs-side-fig figcaption{position:absolute;left:12px;bottom:10px;color:#fff;font-size:12px;letter-spacing:.04em;text-shadow:0 1px 6px rgba(0,0,0,.5)}
   /* Timeline: linea centrale, riquadri alternati sopra/sotto, frecce, auto-scroll, NO scrollbar */
-  .qs-tl2{position:relative;margin-top:54px;padding:0 56px}
-  .qs-tl2-viewport{overflow:hidden;position:relative}
-  .qs-tl2-viewport::before{content:"";position:absolute;left:0;right:0;top:50%;height:2px;transform:translateY(-50%);background:linear-gradient(90deg,rgba(0,0,0,.06),var(--yellow,#e0aa00) 20%,var(--yellow,#e0aa00) 80%,rgba(0,0,0,.06))}
-  .qs-tl2-track{display:flex;transition:transform .75s cubic-bezier(.7,0,.2,1);will-change:transform}
-  .qs-tl2-item{flex:0 0 340px;width:340px;height:380px;position:relative}
-  .qs-tl2-card{position:absolute;left:24px;right:24px;background:#fff;border:1px solid rgba(0,0,0,.07);border-radius:14px;padding:18px 20px;box-shadow:0 20px 44px -26px rgba(0,0,0,.3)}
-  .qs-up .qs-tl2-card{bottom:calc(50% + 46px)}
-  .qs-down .qs-tl2-card{top:calc(50% + 46px)}
+  /* Timeline a tutta larghezza pagina; il CURSORE diventa freccia ←/→ */
+  .qs-tl2{position:relative;margin:56px 0 0;left:50%;width:100vw;transform:translateX(-50%)}
+  .qs-tl2-viewport{overflow:hidden;position:relative;cursor:none}
+  .qs-tl2-viewport::before{content:"";position:absolute;left:0;right:0;top:50%;height:2px;transform:translateY(-50%);background:linear-gradient(90deg,rgba(0,0,0,.05),var(--yellow,#e0aa00) 14%,var(--yellow,#e0aa00) 86%,rgba(0,0,0,.05))}
+  .qs-tl2-track{display:flex;padding:0 4vw;transition:transform .8s cubic-bezier(.7,0,.2,1);will-change:transform}
+  .qs-tl2-item{flex:0 0 460px;width:460px;height:440px;position:relative}
+  .qs-tl2-card{position:absolute;left:34px;right:34px;background:#fff;border:1px solid rgba(0,0,0,.06);border-radius:18px;padding:28px 32px;box-shadow:0 26px 56px -28px rgba(0,0,0,.32)}
+  .qs-up .qs-tl2-card{bottom:calc(50% + 54px)}
+  .qs-down .qs-tl2-card{top:calc(50% + 54px)}
+  .qs-cursor{position:fixed;left:0;top:0;width:64px;height:64px;border-radius:50%;background:var(--yellow,#e0aa00);color:#fff;display:flex;align-items:center;justify-content:center;font-size:28px;pointer-events:none;z-index:90;transform:translate(-50%,-50%) scale(0);transition:transform .18s cubic-bezier(.7,0,.2,1),background .2s;box-shadow:0 10px 28px -10px rgba(224,170,0,.6)}
+  .qs-cursor.on{transform:translate(-50%,-50%) scale(1)}
   .qs-tl2-stem{position:absolute;left:50%;width:2px;background:rgba(224,170,0,.55);transform:translateX(-50%)}
   .qs-up .qs-tl2-stem{bottom:50%;height:46px}
   .qs-down .qs-tl2-stem{top:50%;height:46px}
   .qs-tl2-dot{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:18px;height:18px;border-radius:50%;background:var(--yellow,#e0aa00);box-shadow:0 0 0 6px rgba(224,170,0,.16);z-index:2}
-  .qs-tl2-year{font-family:Fraunces,Georgia,serif;font-size:30px;font-weight:600;color:var(--yellow,#c8970a);margin-bottom:6px}
-  .qs-tl2-text{font-size:14.5px;line-height:1.62;color:#3a3d44;margin:0}
-  .qs-tl2-nav{position:absolute;top:50%;transform:translateY(-50%);z-index:6;width:46px;height:46px;border-radius:50%;border:1px solid rgba(0,0,0,.14);background:#fff;color:#1c1f26;font-size:22px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 20px -10px rgba(0,0,0,.25);transition:transform .2s,background .2s}
-  .qs-tl2-nav:hover{background:var(--yellow,#e0aa00);color:#fff;transform:translateY(-50%) scale(1.06)}
-  .qs-prev{left:4px}.qs-next{right:4px}
-  @media(max-width:760px){.qs-tl2{padding:0 44px}.qs-tl2-item{flex-basis:280px;width:280px;height:360px}.qs-tl2-card{left:14px;right:14px;padding:15px 16px}}
+  .qs-tl2-year{font-family:Fraunces,Georgia,serif;font-size:40px;font-weight:600;color:var(--yellow,#c8970a);margin-bottom:10px}
+  .qs-tl2-text{font-size:16.5px;line-height:1.7;color:#3a3d44;margin:0}
+  .qs-tl2-hint{text-align:center;font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:#9a8f7a;margin:18px 0 0}
+  @media(max-width:760px){.qs-tl2-track{padding:0 16px}.qs-tl2-item{flex-basis:84vw;width:84vw;height:400px}.qs-tl2-card{left:10px;right:10px;padding:22px 22px}.qs-tl2-year{font-size:32px}.qs-cursor{display:none}.qs-tl2-viewport{cursor:default}}
   @media(max-width:920px){.qs-split{grid-template-columns:1fr;gap:30px}.qs-side{position:static;flex-direction:row;overflow-x:auto}.qs-side-fig{flex:0 0 70%}}
   @media(max-width:860px){.qs-intro{grid-template-columns:1fr}.qs-intro-img{min-height:54vh;order:-1}}
 </style>
@@ -140,31 +149,38 @@ ${sideImgs}
     <div class="sec-num reveal"><span class="sec-dash" aria-hidden="true"></span>La experiencia</div>
     <h2 class="h-section reveal">Como <i class="it yel">bailarina</i>.</h2>
     <div class="qs-tl2">
-      <button type="button" class="qs-tl2-nav qs-prev" aria-label="Anterior">&#8249;</button>
-      <button type="button" class="qs-tl2-nav qs-next" aria-label="Siguiente">&#8250;</button>
-      <div class="qs-tl2-viewport">
+      <div class="qs-cursor" id="qsCursor" aria-hidden="true">&#8250;</div>
+      <div class="qs-tl2-viewport" id="qsVp">
         <div class="qs-tl2-track" id="qsTrack">${htlCards}
         </div>
       </div>
     </div>
+    <p class="qs-tl2-hint">Mueve el cursor a izquierda o derecha y haz clic para recorrer</p>
   </div>
 </section>
 <script>
 (function(){
-  var track=document.getElementById('qsTrack'); if(!track) return;
-  var items=track.children, n=items.length, idx=0, timer=null;
-  function iw(){ return items.length ? items[0].getBoundingClientRect().width : 340; }
-  function vis(){ var vp=track.parentElement.getBoundingClientRect().width; return Math.max(1, Math.floor(vp/iw())); }
+  var track=document.getElementById('qsTrack'),vp=document.getElementById('qsVp'),cur=document.getElementById('qsCursor');
+  if(!track||!vp) return;
+  var items=track.children, n=items.length, idx=0, timer=null, dir=1;
+  function iw(){ return items.length ? items[0].getBoundingClientRect().width : 460; }
+  function vis(){ return Math.max(1, Math.floor(vp.getBoundingClientRect().width/iw())); }
   function maxI(){ return Math.max(0, n - vis()); }
   function go(i){ var m=maxI(); idx = i>m ? 0 : (i<0 ? m : i); track.style.transform='translateX('+(-idx*iw())+'px)'; }
   function next(){ go(idx+1); }
-  function start(){ stop(); timer=setInterval(next, 4500); }
+  function start(){ stop(); timer=setInterval(next, 5000); }
   function stop(){ if(timer){ clearInterval(timer); timer=null; } }
-  var wrap=track.closest('.qs-tl2');
-  wrap.querySelector('.qs-next').addEventListener('click', function(){ next(); start(); });
-  wrap.querySelector('.qs-prev').addEventListener('click', function(){ go(idx-1); start(); });
-  wrap.addEventListener('mouseenter', stop);
-  wrap.addEventListener('mouseleave', start);
+  // Il cursore diventa freccia ← / → secondo la posizione del mouse
+  vp.addEventListener('mousemove', function(e){
+    if(!cur) return;
+    cur.style.left=e.clientX+'px'; cur.style.top=e.clientY+'px';
+    var mid=vp.getBoundingClientRect().left+vp.getBoundingClientRect().width/2;
+    dir = e.clientX < mid ? -1 : 1;
+    cur.innerHTML = dir<0 ? '&#8249;' : '&#8250;';
+  });
+  vp.addEventListener('mouseenter', function(){ if(cur) cur.classList.add('on'); stop(); });
+  vp.addEventListener('mouseleave', function(){ if(cur) cur.classList.remove('on'); start(); });
+  vp.addEventListener('click', function(){ go(idx + dir); });
   window.addEventListener('resize', function(){ go(Math.min(idx, maxI())); });
   go(0); start();
 })();

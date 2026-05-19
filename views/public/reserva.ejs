@@ -42,6 +42,21 @@
   .pk-form .pk-row.pk-row-1{grid-template-columns:1fr}
   .pk-form .pk-field{min-width:0}
   @media(max-width:680px){.pk-form .pk-row{grid-template-columns:1fr;gap:0}}
+  /* Campi = stile elegante del sito: underline, focus dorato e fino */
+  .pk-form .pk-field input,.pk-form .pk-field select{
+    font-family:inherit;font-weight:300;font-size:17px;color:#2a2a2a;background:transparent;
+    border:0;border-bottom:1px solid rgba(42,42,42,.22);border-radius:0;
+    padding:14px 0 16px;outline:none;width:100%;box-shadow:none;
+    transition:border-bottom-color .35s cubic-bezier(.7,0,.2,1),border-bottom-width .35s cubic-bezier(.7,0,.2,1)}
+  .pk-form .pk-field input::placeholder{color:rgba(42,42,42,.32)}
+  .pk-form .pk-field input:focus,.pk-form .pk-field select:focus{
+    border-bottom-color:#e0aa00;border-bottom-width:1.5px;padding-bottom:15.5px}
+  .pk-form .pk-field input[type=date]{color:#2a2a2a}
+  /* Niente messaggi d'errore inline (validazione lato server) */
+  .pk-form .pk-error{display:none !important}
+  /* Allineamento colonne: sinistra/destra partono in alto */
+  .pk-checkout-grid{align-items:start}
+  .pk-summary-sticky{top:96px}
 </style>
 </head>
 <body class="on-pack" data-pack-color="<%= plan.slug.replace('pack-','') %>">
