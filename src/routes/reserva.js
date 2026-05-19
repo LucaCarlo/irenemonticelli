@@ -5,8 +5,19 @@ const settings = require('../lib/settings');
 const { getStripe } = require('../lib/stripe');
 const B = require('../lib/booking');
 
+const fs = require('fs');
+const path = require('path');
 const router = express.Router();
 const A = (fn) => (req, res, next) => Promise.resolve(fn(req, res, next)).catch(next);
+
+// Logo SVG (symbol #logo-paths) estratto una volta dal sito, per l'header reale
+let LOGO_DEFS = '';
+try {
+  const src = fs.readFileSync(path.join(__dirname, '..', '..', 'pro-dance.html'), 'utf8');
+  const ds = src.indexOf('<svg width="0" height="0"');
+  const de = src.indexOf('</svg>', src.indexOf('</symbol>')) + 6;
+  if (ds >= 0 && de > ds) LOGO_DEFS = src.slice(ds, de);
+} catch (e) { /* fallback: nessun logo inline */ }
 
 async function loadPlan(slug) {
   const plan = await prisma.plan.findUnique({ where: { slug }, include: { event: true } });
@@ -35,6 +46,7 @@ router.get('/reserva/:slug', A(async (req, res) => {
   }
   res.render('public/reserva', {
     title: plan.name,
+    logoDefs: LOGO_DEFS,
     plan,
     event,
     others: others.map((o) => ({ slug: o.slug, name: o.name, price: dispPrice(o), currency: o.currency || 'EUR' })),

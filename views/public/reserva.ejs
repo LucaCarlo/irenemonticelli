@@ -8,11 +8,25 @@
 <!-- Stile esatto del sito (_77) -->
 <link rel="stylesheet" href="/reserva77.css">
 <style>
-  /* Adattamenti minimi (riusa le classi pk-* per lo stile del _77) */
-  body{margin:0;background:#f6f6f4}
-  .rv-head{display:flex;align-items:center;justify-content:space-between;padding:18px 6vw;border-bottom:1px solid rgba(0,0,0,.06);background:#fff}
-  .rv-head a{color:#1c1f26;text-decoration:none;font-weight:600;font-size:14px}
-  .rv-brand{font-weight:800;letter-spacing:.02em}
+  body{margin:0;background:#f6f6f4;padding-top:72px}
+  /* Header del sito: FISSO in alto (non scorre) — logo a sinistra, voci a destra */
+  .rv-site-head{position:fixed;top:0;left:0;right:0;z-index:50;background:#fff;border-bottom:1px solid rgba(0,0,0,.07)}
+  .rv-site-head .nav{display:flex;align-items:center;justify-content:space-between;max-width:1280px;margin:0 auto;padding:16px 5vw}
+  .rv-site-head .logo{display:block;width:170px;max-width:42vw;color:#1c1f26}
+  .rv-site-head .logo svg{display:block;width:100%;height:auto}
+  .rv-site-head .logo .cls-1{fill:#e0aa00}
+  .rv-site-head .nav-links{display:flex;gap:30px;align-items:center}
+  .rv-site-head .nav-links a{color:#1c1f26;text-decoration:none;font-size:14px;font-weight:600;letter-spacing:.01em}
+  .rv-site-head .nav-links a:hover{color:#c8970a}
+  .rv-burger{display:none;background:none;border:0;cursor:pointer;flex-direction:column;gap:5px;padding:8px}
+  .rv-burger span{display:block;width:24px;height:2px;background:#1c1f26}
+  @media(max-width:780px){
+    .rv-burger{display:flex}
+    .rv-site-head .nav-links{position:absolute;top:100%;left:0;right:0;background:#fff;flex-direction:column;gap:0;padding:8px 0;
+      border-bottom:1px solid rgba(0,0,0,.08);box-shadow:0 16px 30px -16px rgba(0,0,0,.25);display:none}
+    .rv-site-head .nav-links.open{display:flex}
+    .rv-site-head .nav-links a{padding:14px 6vw;width:100%}
+  }
   .pk-booking{padding:34px 0 70px}
   .rv-formula{display:flex;gap:10px;flex-wrap:wrap}
   .rv-lesson{border:1px solid rgba(0,0,0,.1);border-radius:14px;padding:14px 16px;margin:12px 0}
@@ -22,13 +36,28 @@
   .rv-hide{display:none !important}
   .rv-err{background:#fdecec;border:1px solid #f3c9c9;color:#b53636;padding:12px 16px;border-radius:12px;margin:0 6vw 18px;font-size:14px}
   .pk-pay-row-panel p{margin:.4em 0}
+  /* Layout campi uniforme su tutti i pacchetti — stile input NATIVO del sito
+     (bordo dorato e fino al focus): non sovrascrivo aspetto/bordo degli input */
+  .pk-form .pk-row{display:grid;grid-template-columns:1fr 1fr;gap:22px;align-items:start}
+  .pk-form .pk-row.pk-row-1{grid-template-columns:1fr}
+  .pk-form .pk-field{min-width:0}
+  @media(max-width:680px){.pk-form .pk-row{grid-template-columns:1fr;gap:0}}
 </style>
 </head>
 <body class="on-pack" data-pack-color="<%= plan.slug.replace('pack-','') %>">
-<header class="rv-head">
-  <a href="/pro-dance">&larr; Pro Dance</a>
-  <a href="/" class="rv-brand">IRENE MONTICELLI</a>
-  <a href="/contatti">Contacto</a>
+<% if (typeof logoDefs !== 'undefined' && logoDefs) { %><%- logoDefs %><% } %>
+<header class="rv-site-head">
+  <nav class="nav">
+    <a href="/" class="logo" aria-label="Irene Monticelli — Home">
+      <svg viewBox="0 0 1000 140" preserveAspectRatio="xMinYMid meet" aria-hidden="true"><use href="#logo-paths"/></svg>
+    </a>
+    <button class="rv-burger" id="rvBurger" aria-label="Menú"><span></span><span></span><span></span></button>
+    <div class="nav-links" id="rvNav">
+      <a href="/quien-soy">Quién soy</a>
+      <a href="/pro-dance">Pro Dance</a>
+      <a href="/contatti">Contacto</a>
+    </div>
+  </nav>
 </header>
 
 <% if (error) { %><div class="rv-err"><%= error %></div><% } %>
@@ -122,13 +151,12 @@
               <div class="pk-field"><input type="email" name="email" required autocomplete="email" placeholder="Email"><span class="pk-error" data-error>Email no válido</span></div>
               <div class="pk-field"><input type="tel" name="phone" required autocomplete="tel" placeholder="Teléfono"><span class="pk-error" data-error>Teléfono obligatorio</span></div>
             </div>
-            <div class="pk-row">
+            <div class="pk-row pk-row-1">
               <div class="pk-field">
                 <label class="pk-sub-label" for="rvBd">Fecha de nacimiento</label>
                 <input type="date" id="rvBd" name="birthDate" required>
                 <span class="pk-error" data-error>Fecha obligatoria</span>
               </div>
-              <div class="pk-field"></div>
             </div>
 
             <div class="rv-consent rv-hide" id="rvParentBox">
@@ -199,6 +227,11 @@
 </section>
 
 <script>
+(function(){
+  var bg=document.getElementById('rvBurger'),nv=document.getElementById('rvNav');
+  if(bg&&nv){bg.addEventListener('click',function(){nv.classList.toggle('open');});
+    nv.addEventListener('click',function(e){if(e.target.tagName==='A')nv.classList.remove('open');});}
+})();
 (function(){
   var form=document.getElementById('rvForm');
   var mode=form.dataset.mode;
