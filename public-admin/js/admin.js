@@ -4,13 +4,22 @@
   var $$ = function (s, c) { return Array.prototype.slice.call((c || document).querySelectorAll(s)); };
 
   // Sidebar mobile
-  var burger = $('#sbBurger'), sidebar = $('#sidebar');
+  var burger = $('#sbBurger'), sidebar = $('#sidebar'), backdrop = $('#sbBackdrop');
+  function setSidebar(open) {
+    if (!sidebar) return;
+    sidebar.classList.toggle('open', open);
+    if (backdrop) backdrop.classList.toggle('show', open);
+  }
   if (burger && sidebar) {
-    burger.addEventListener('click', function () { sidebar.classList.toggle('open'); });
-    document.addEventListener('click', function (e) {
-      if (window.innerWidth <= 880 && sidebar.classList.contains('open') &&
-          !sidebar.contains(e.target) && e.target !== burger) sidebar.classList.remove('open');
+    burger.addEventListener('click', function (e) {
+      e.stopPropagation();
+      setSidebar(!sidebar.classList.contains('open'));
     });
+    if (backdrop) backdrop.addEventListener('click', function () { setSidebar(false); });
+    sidebar.addEventListener('click', function (e) {
+      if (e.target.closest('a.sb-link')) setSidebar(false);
+    });
+    window.addEventListener('keydown', function (e) { if (e.key === 'Escape') setSidebar(false); });
   }
 
   // Flash auto-dismiss

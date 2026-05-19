@@ -4,6 +4,7 @@
     <h2>Ruoli</h2>
     <% if (can('roles.create')) { %><a class="btn btn-primary" href="/admin/roles/new">+ Nuovo ruolo</a><% } %>
   </div>
+  <div class="table-wrap">
   <table class="table">
     <thead><tr><th>Nome</th><th>Descrizione</th><th>Permessi</th><th>Utenti</th><th></th></tr></thead>
     <tbody>
@@ -27,5 +28,6 @@
     <% }) %>
     </tbody>
   </table>
+  </div>
 </div>
 <%- include('../partials/footer') %>
