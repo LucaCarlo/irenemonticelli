@@ -3,6 +3,7 @@
 const express = require('express');
 const prisma = require('../lib/db');
 const { getStripe, webhookSecret } = require('../lib/stripe');
+const { sendBookingConfirmation } = require('../lib/bookingmail');
 
 const router = express.Router();
 
@@ -37,6 +38,12 @@ router.post('/stripe/webhook', express.raw({ type: '*/*' }), async (req, res) =>
             stripePaymentIntent: s.payment_intent || '',
           },
         });
+        // Email di conferma con riepilogo (non bloccare il webhook se SMTP off)
+        try {
+          await sendBookingConfirmation(bookingId);
+        } catch (e) {
+          console.error('[booking-mail] invio fallito:', e.message);
+        }
       }
     } else if (event.type === 'checkout.session.expired') {
       const s = event.data.object;

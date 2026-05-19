@@ -54,11 +54,19 @@
   .pk-form .pk-field input[type=date]{color:#2a2a2a}
   /* Niente messaggi d'errore inline (validazione lato server) */
   .pk-form .pk-error{display:none !important}
-  /* Colonne sempre allineate in alto: il riepilogo NON e piu sticky
-     (non si disallinea piu scrollando su/giu) */
-  .pk-checkout-grid{align-items:start}
-  .pk-summary-sticky{position:static !important;top:auto !important}
-  .pk-summary-card{margin-top:0}
+  /* Layout checkout esplicito e deterministico: form a sinistra (fluido),
+     riepilogo a destra (largh. fissa), allineati in alto. Il riepilogo
+     resta visibile mentre scorri (sticky col giusto offset header fisso). */
+  .pk-checkout-grid{display:grid !important;grid-template-columns:minmax(0,1fr) 360px;
+    gap:46px;align-items:start;max-width:1180px;margin:0 auto}
+  .pk-checkout-main{min-width:0}
+  .pk-checkout-main .pk-form{max-width:none;margin:0}
+  .pk-summary-sticky{position:sticky !important;top:92px !important;align-self:start}
+  .pk-summary-card{margin:0;max-width:none}
+  @media(max-width:900px){
+    .pk-checkout-grid{grid-template-columns:1fr;gap:26px;max-width:620px}
+    .pk-summary-sticky{position:static !important;top:auto !important}
+  }
 </style>
 </head>
 <body class="on-pack" data-pack-color="<%= plan.slug.replace('pack-','') %>">
