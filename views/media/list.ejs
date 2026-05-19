@@ -1,0 +1,68 @@
+<%- include('../partials/header') %>
+
+<div class="card">
+  <div class="card-head">
+    <h2>Libreria media</h2>
+    <div class="head-tools">
+      <form method="get" action="/admin/media" class="search">
+        <input type="text" name="q" value="<%= q %>" placeholder="Cerca per nome / titolo / alt">
+        <button class="btn btn-ghost btn-sm">Cerca</button>
+      </form>
+      <% if (can('media.upload')) { %>
+        <label class="btn btn-primary" for="fileInput">+ Carica media</label>
+      <% } %>
+    </div>
+  </div>
+
+  <% if (can('media.upload')) { %>
+  <form id="uploadForm" method="post" action="/admin/media/upload" enctype="multipart/form-data" class="dropzone" id="dropzone">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <input type="file" id="fileInput" name="files" multiple accept="image/*" hidden>
+    <div class="dz-msg">Trascina qui le immagini o <span class="link">scegli i file</span>. Diventano automaticamente WebP (variante small + normal), ridimensionate e compresse.</div>
+    <div class="dz-progress" id="dzProgress" hidden><div class="dz-bar" id="dzBar"></div></div>
+  </form>
+  <% } %>
+
+  <div class="bulkbar" id="bulkbar" hidden>
+    <span><strong id="selCount">0</strong> selezionati</span>
+    <% if (can('media.delete')) { %>
+    <form method="post" action="/admin/media/bulk/delete" id="bulkDeleteForm" onsubmit="return confirm('Eliminare i media selezionati? Operazione irreversibile.')">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <span id="bulkIds"></span>
+      <button class="btn btn-danger btn-sm">Elimina selezionati</button>
+    </form>
+    <% } %>
+    <button class="btn btn-ghost btn-sm" id="selClear" type="button">Deseleziona</button>
+  </div>
+
+  <% if (!media.length) { %>
+    <p class="muted">Nessun media. Carica la prima immagine.</p>
+  <% } else { %>
+  <div class="media-grid" id="mediaGrid">
+    <% media.forEach(function(m){ %>
+      <div class="media-tile" data-id="<%= m.id %>">
+        <input type="checkbox" class="media-check" value="<%= m.id %>">
+        <div class="media-thumb" data-detail="<%= m.id %>">
+          <% if (m.isImage) { %><img src="<%= m.smallPath %>" alt="<%= m.alt %>" loading="lazy"><% } else { %><span class="file-ico"><%= m.ext %></span><% } %>
+        </div>
+        <div class="media-name" title="<%= m.originalName %>"><%= m.originalName %></div>
+        <div class="media-sub muted"><%= m.width %>×<%= m.height %> · <%= fmtBytes(m.sizeBytes) %></div>
+      </div>
+    <% }) %>
+  </div>
+  <% } %>
+</div>
+
+<!-- Detail drawer -->
+<div class="drawer" id="detailDrawer" hidden>
+  <div class="drawer-box">
+    <div class="drawer-head">
+      <h3>Dettaglio media</h3>
+      <button class="modal-x" id="detailClose">&times;</button>
+    </div>
+    <div class="drawer-body" id="detailBody"><p class="muted">Caricamento...</p></div>
+  </div>
+</div>
+
+<script>window.MEDIA_CSRF = "<%= csrfToken %>";</script>
+<%- include('../partials/footer') %>

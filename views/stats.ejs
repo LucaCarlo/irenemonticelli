@@ -1,0 +1,16 @@
+<%- include('partials/header') %>
+<div class="cards">
+  <div class="card stat"><div class="stat-num"><%= data.users %></div><div class="stat-lbl">Utenti totali</div></div>
+  <div class="card stat"><div class="stat-num"><%= data.activeUsers %></div><div class="stat-lbl">Utenti attivi</div></div>
+  <div class="card stat"><div class="stat-num"><%= data.roles %></div><div class="stat-lbl">Ruoli</div></div>
+  <div class="card stat"><div class="stat-num"><%= data.media %></div><div class="stat-lbl">Media</div></div>
+  <div class="card stat"><div class="stat-num"><%= data.images %></div><div class="stat-lbl">Immagini</div></div>
+  <div class="card stat"><div class="stat-num"><%= fmtBytes(data.storageBytes) %></div><div class="stat-lbl">Spazio occupato</div></div>
+</div>
+<div class="card">
+  <h2>Riepilogo</h2>
+  <p class="muted">Statistiche di base del sito. Le metriche di traffico (Analytics) si collegano dalle
+  <a href="/admin/settings?tab=analytics">Impostazioni &rsaquo; Analytics</a>.
+  Metriche avanzate (eventi, prenotazioni, conversioni) arriveranno con i rispettivi moduli.</p>
+</div>
+<%- include('partials/footer') %>

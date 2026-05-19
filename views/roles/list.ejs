@@ -1,0 +1,31 @@
+<%- include('../partials/header') %>
+<div class="card">
+  <div class="card-head">
+    <h2>Ruoli</h2>
+    <% if (can('roles.create')) { %><a class="btn btn-primary" href="/admin/roles/new">+ Nuovo ruolo</a><% } %>
+  </div>
+  <table class="table">
+    <thead><tr><th>Nome</th><th>Descrizione</th><th>Permessi</th><th>Utenti</th><th></th></tr></thead>
+    <tbody>
+    <% roles.forEach(function(r){ var perms; try { perms = JSON.parse(r.permissions||'[]'); } catch(e){ perms=[]; } %>
+      <tr>
+        <td><%= r.name %> <% if (r.isSystem) { %><span class="badge badge-warn">sistema</span><% } %></td>
+        <td class="muted"><%= r.description %></td>
+        <td><%= perms.includes('*') ? 'Tutti i permessi' : perms.length + ' permessi' %></td>
+        <td><%= r._count.users %></td>
+        <td class="row-actions">
+          <% if (can('roles.edit') && !r.isSystem) { %>
+            <a class="btn btn-ghost btn-sm" href="/admin/roles/<%= r.id %>/edit">Modifica</a>
+          <% } %>
+          <% if (can('roles.delete') && !r.isSystem) { %>
+            <form method="post" action="/admin/roles/<%= r.id %>/delete" onsubmit="return confirm('Eliminare questo ruolo?')">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="btn btn-danger btn-sm">Elimina</button>
+            </form>
+          <% } %>
+        </td>
+      </tr>
+    <% }) %>
+    </tbody>
+  </table>
+</div>
+<%- include('../partials/footer') %>

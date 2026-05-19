@@ -1,0 +1,70 @@
+// Schema Prisma — SQLite. Backup = copia del file data/app.db.
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                 Int       @id @default(autoincrement())
+  email              String    @unique
+  name               String
+  passwordHash       String
+  isActive           Boolean   @default(true)
+  mustChangePassword Boolean   @default(false)
+  lastLoginAt        DateTime?
+  roleId             Int
+  role               Role      @relation(fields: [roleId], references: [id])
+  mediaUploaded      Media[]   @relation("MediaUploader")
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+}
+
+model Role {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique
+  description String   @default("")
+  // Array di chiavi permesso serializzato in JSON. "*" = tutti i permessi.
+  permissions String   @default("[]")
+  isSystem    Boolean  @default(false)
+  users       User[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Setting {
+  key       String   @id
+  value     String   @default("")
+  group     String   @default("general")
+  updatedAt DateTime @updatedAt
+}
+
+model Media {
+  id            Int      @id @default(autoincrement())
+  filename      String   @unique // base senza estensione, es. 1715000000-foto
+  originalName  String
+  title         String   @default("")
+  alt           String   @default("")
+  mime          String   @default("image/webp")
+  ext           String   @default("webp")
+  width         Int      @default(0)
+  height        Int      @default(0)
+  sizeBytes     Int      @default(0) // variante "normal"
+  smallBytes    Int      @default(0) // variante "small"
+  path          String   // url pubblico variante normal, es. /uploads/xxx.webp
+  smallPath     String   // url pubblico variante small
+  isImage       Boolean  @default(true)
+  uploadedById  Int?
+  uploadedBy    User?    @relation("MediaUploader", fields: [uploadedById], references: [id])
+  createdAt     DateTime @default(now())
+}
+
+model Session {
+  id        String   @id
+  sid       String   @unique
+  data      String
+  expiresAt DateTime
+}

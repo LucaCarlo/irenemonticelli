@@ -1,0 +1,96 @@
+<%
+  function isActive(prefix){ return (path === prefix || (prefix !== '/admin' && path.indexOf(prefix) === 0)); }
+  var cu = currentUser || {};
+  var roleName = cu.role ? cu.role.name : '';
+%>
+<aside class="sidebar" id="sidebar">
+  <div class="sb-brand">
+    <% if (logoUrl) { %>
+      <img src="<%= logoUrl %>" alt="<%= appName %>" class="sb-logo-img">
+    <% } else { %>
+      <div class="sb-logo-txt"><%= appName %></div>
+    <% } %>
+    <div class="sb-brand-sub">Pannello di amministrazione</div>
+  </div>
+
+  <nav class="sb-nav">
+    <div class="sb-group">
+      <div class="sb-group-title">Panoramica</div>
+      <a class="sb-link <%= path === '/admin' ? 'active' : '' %>" href="/admin">
+        <span class="sb-ico">&#9632;</span> Dashboard
+      </a>
+    </div>
+
+    <div class="sb-group">
+      <div class="sb-group-title">Contenuti</div>
+      <span class="sb-link disabled">&#9633; Eventi <em class="soon">presto</em></span>
+      <span class="sb-link disabled">&#9633; Pagine <em class="soon">presto</em></span>
+      <% if (can('media.view')) { %>
+        <a class="sb-link <%= isActive('/admin/media') ? 'active' : '' %>" href="/admin/media">
+          <span class="sb-ico">&#9636;</span> Media
+        </a>
+      <% } %>
+    </div>
+
+    <div class="sb-group">
+      <div class="sb-group-title">Prenotazioni</div>
+      <span class="sb-link disabled">&#9633; Piani / Pacchetti <em class="soon">presto</em></span>
+      <span class="sb-link disabled">&#9633; Prenotazioni <em class="soon">presto</em></span>
+      <span class="sb-link disabled">&#9633; Calendario <em class="soon">presto</em></span>
+    </div>
+
+    <div class="sb-group">
+      <div class="sb-group-title">Comunicazione</div>
+      <span class="sb-link disabled">&#9633; Newsletter <em class="soon">presto</em></span>
+      <span class="sb-link disabled">&#9633; Messaggi contatto <em class="soon">presto</em></span>
+    </div>
+
+    <div class="sb-group">
+      <div class="sb-group-title">Amministrazione</div>
+      <% if (can('users.view')) { %>
+        <a class="sb-link <%= isActive('/admin/users') ? 'active' : '' %>" href="/admin/users">
+          <span class="sb-ico">&#9787;</span> Utenti admin
+        </a>
+      <% } %>
+      <% if (can('roles.view')) { %>
+        <a class="sb-link <%= isActive('/admin/roles') ? 'active' : '' %>" href="/admin/roles">
+          <span class="sb-ico">&#9881;</span> Ruoli
+        </a>
+      <% } %>
+      <% if (can('settings.view')) { %>
+        <a class="sb-link <%= path === '/admin/settings' || path.indexOf('/admin/settings?') === 0 ? 'active' : '' %>" href="/admin/settings">
+          <span class="sb-ico">&#9874;</span> Impostazioni
+        </a>
+      <% } %>
+    </div>
+
+    <div class="sb-group">
+      <div class="sb-group-title">Sistema</div>
+      <% if (can('stats.view')) { %>
+        <a class="sb-link <%= isActive('/admin/settings/stats') ? 'active' : '' %>" href="/admin/settings/stats">
+          <span class="sb-ico">&#9650;</span> Statistiche
+        </a>
+      <% } %>
+      <% if (can('backup.manage')) { %>
+        <a class="sb-link <%= isActive('/admin/settings/backup') ? 'active' : '' %>" href="/admin/settings/backup">
+          <span class="sb-ico">&#9635;</span> Backup
+        </a>
+      <% } %>
+      <span class="sb-link disabled">&#9633; Log attivita <em class="soon">presto</em></span>
+    </div>
+  </nav>
+
+  <div class="sb-user">
+    <div class="sb-user-info">
+      <div class="sb-avatar"><%= (cu.name || '?').trim().charAt(0).toUpperCase() %></div>
+      <div class="sb-user-meta">
+        <div class="sb-user-name"><%= cu.name || '' %></div>
+        <div class="sb-user-role"><%= roleName %></div>
+      </div>
+    </div>
+    <form method="post" action="/admin/logout" class="sb-logout-form">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <button type="submit" class="sb-logout">Esci</button>
+    </form>
+  </div>
+</aside>

@@ -1,0 +1,79 @@
+<%- include('partials/header') %>
+
+<div class="tabs" id="settingsTabs">
+  <% Object.keys(SCHEMA).forEach(function(g){ %>
+    <a class="tab <%= active === g ? 'active' : '' %>" href="/admin/settings?tab=<%= g %>"><%= SCHEMA[g].label %></a>
+  <% }) %>
+</div>
+
+<% Object.keys(SCHEMA).forEach(function(g){ var grp = SCHEMA[g]; %>
+<div class="tab-panel <%= active === g ? '' : 'hidden' %>" data-tab="<%= g %>">
+  <form method="post" action="/admin/settings/<%= g %>" class="card form">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <h2><%= grp.label %></h2>
+    <% grp.fields.forEach(function(f){ var val = values[f.key] || ''; %>
+      <div class="field">
+        <label class="field-lbl"><%= f.label %></label>
+        <% if (f.type === 'bool') { %>
+          <label class="switch">
+            <input type="checkbox" name="<%= f.key %>" value="1" <%= (val==='1'||val==='true') ? 'checked' : '' %>>
+            <span>Attivo</span>
+          </label>
+        <% } else if (f.type === 'select') { %>
+          <select name="<%= f.key %>">
+            <% f.options.forEach(function(o){ %><option value="<%= o %>" <%= val===o?'selected':'' %>><%= o %></option><% }) %>
+          </select>
+        <% } else if (f.type === 'media') { %>
+          <% var picked = pickedMedia[parseInt(val,10)]; %>
+          <div class="media-picker" data-target="<%= f.key %>">
+            <input type="hidden" name="<%= f.key %>" value="<%= val %>">
+            <div class="media-picker-preview">
+              <% if (picked) { %><img src="<%= picked.smallPath %>" alt=""><% } else { %><span class="muted">Nessuna immagine</span><% } %>
+            </div>
+            <div class="media-picker-actions">
+              <button type="button" class="btn btn-ghost btn-pick">Scegli dalla libreria</button>
+              <button type="button" class="btn btn-ghost btn-clear">Rimuovi</button>
+            </div>
+          </div>
+        <% } else if (f.type === 'password') { %>
+          <input type="password" name="<%= f.key %>" value="<%= val %>" placeholder="<%= f.placeholder||'' %>" autocomplete="new-password">
+        <% } else { %>
+          <input type="<%= f.type==='number'?'number':'text' %>" name="<%= f.key %>" value="<%= val %>" placeholder="<%= f.placeholder||'' %>">
+        <% } %>
+        <% if (f.help) { %><div class="field-help"><%= f.help %></div><% } %>
+      </div>
+    <% }) %>
+    <div class="form-actions">
+      <button type="submit" class="btn btn-primary">Salva <%= grp.label %></button>
+    </div>
+  </form>
+
+  <% if (g === 'smtp') { %>
+  <form method="post" action="/admin/settings/test-email" class="card form">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <h2>Test invio email</h2>
+    <div class="field">
+      <label class="field-lbl">Invia una email di prova a</label>
+      <input type="email" name="to" placeholder="<%= currentUser.email %>">
+      <div class="field-help">Usa le impostazioni SMTP salvate qui sopra.</div>
+    </div>
+    <div class="form-actions"><button class="btn btn-ghost">Invia test</button></div>
+  </form>
+  <% } %>
+</div>
+<% }) %>
+
+<!-- Media picker modal -->
+<div class="modal" id="pickerModal" hidden>
+  <div class="modal-box">
+    <div class="modal-head">
+      <h3>Scegli immagine</h3>
+      <button class="modal-x" id="pickerClose">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="media-grid" id="pickerGrid"><p class="muted">Caricamento...</p></div>
+    </div>
+  </div>
+</div>
+
+<%- include('partials/footer') %>

@@ -1,0 +1,12 @@
+node_modules/
+.env
+data/
+*.log
+.DS_Store
+serve.js
+
+# Cartelle runtime: tieni la cartella, ignora il contenuto
+uploads/*
+!uploads/.gitkeep
+backups/*
+!backups/.gitkeep

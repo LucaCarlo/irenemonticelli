@@ -1,0 +1,35 @@
+<%- include('partials/header') %>
+<div class="card">
+  <div class="card-head">
+    <h2>Backup</h2>
+    <form method="post" action="/admin/settings/backup/create">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <button class="btn btn-primary">Crea backup ora</button>
+    </form>
+  </div>
+  <p class="muted">Ogni backup contiene il database (<code>data/app.db</code>) e tutti i media caricati (<code>uploads/</code>).</p>
+  <% if (!backups.length) { %>
+    <p class="muted">Nessun backup presente.</p>
+  <% } else { %>
+  <table class="table">
+    <thead><tr><th>Nome</th><th>Dimensione</th><th>Data</th><th></th></tr></thead>
+    <tbody>
+    <% backups.forEach(function(b){ %>
+      <tr>
+        <td><%= b.name %></td>
+        <td><%= fmtBytes(b.sizeBytes) %></td>
+        <td><%= new Date(b.createdAt).toLocaleString('it-IT') %></td>
+        <td class="row-actions">
+          <a class="btn btn-ghost btn-sm" href="/admin/settings/backup/download/<%= encodeURIComponent(b.name) %>">Scarica</a>
+          <form method="post" action="/admin/settings/backup/delete/<%= encodeURIComponent(b.name) %>" onsubmit="return confirm('Eliminare questo backup?')">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <button class="btn btn-danger btn-sm">Elimina</button>
+          </form>
+        </td>
+      </tr>
+    <% }) %>
+    </tbody>
+  </table>
+  <% } %>
+</div>
+<%- include('partials/footer') %>

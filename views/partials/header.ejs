@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title><%= typeof title !== 'undefined' ? title + ' — ' : '' %><%= (settings && settings.admin_title) || 'Irene Monticelli — Admin' %></title>
+<link rel="icon" href="/favicon.ico">
+<link rel="stylesheet" href="/public-admin/css/admin.css">
+</head>
+<body>
+<button class="sb-burger" id="sbBurger" aria-label="Menu">&#9776;</button>
+<div class="layout">
+  <%- include('sidebar') %>
+  <main class="content">
+    <header class="topbar">
+      <h1 class="page-title"><%= typeof title !== 'undefined' ? title : '' %></h1>
+      <div class="topbar-right">
+        <a class="btn btn-ghost" href="/" target="_blank" rel="noopener">Vedi sito &#8599;</a>
+      </div>
+    </header>
+    <div class="container">
+      <%- include('flash') %>

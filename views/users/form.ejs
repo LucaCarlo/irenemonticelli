@@ -1,0 +1,41 @@
+<%- include('../partials/header') %>
+<div class="card form-card">
+  <h2><%= user ? 'Modifica utente' : 'Nuovo utente' %></h2>
+  <form method="post" action="<%= user ? '/admin/users/'+user.id : '/admin/users' %>" class="form">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <div class="field">
+      <label class="field-lbl">Nome</label>
+      <input type="text" name="name" required value="<%= user ? user.name : '' %>">
+    </div>
+    <div class="field">
+      <label class="field-lbl">Email</label>
+      <input type="email" name="email" required value="<%= user ? user.email : '' %>">
+    </div>
+    <div class="field">
+      <label class="field-lbl">Ruolo</label>
+      <select name="roleId" required>
+        <% roles.forEach(function(r){ %>
+          <option value="<%= r.id %>" <%= user && user.roleId === r.id ? 'selected' : '' %>><%= r.name %></option>
+        <% }) %>
+      </select>
+    </div>
+    <% if (!user) { %>
+    <div class="field">
+      <label class="field-lbl">Password (opzionale)</label>
+      <input type="text" name="password" placeholder="Lascia vuoto per generarla automaticamente">
+      <div class="field-help">L'utente dovra cambiarla al primo accesso.</div>
+    </div>
+    <% } %>
+    <div class="field">
+      <label class="switch">
+        <input type="checkbox" name="isActive" value="1" <%= !user || user.isActive ? 'checked' : '' %>>
+        <span>Utente attivo</span>
+      </label>
+    </div>
+    <div class="form-actions">
+      <button type="submit" class="btn btn-primary"><%= user ? 'Salva modifiche' : 'Crea utente' %></button>
+      <a class="btn btn-ghost" href="/admin/users">Annulla</a>
+    </div>
+  </form>
+</div>
+<%- include('../partials/footer') %>

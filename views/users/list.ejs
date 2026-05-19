@@ -1,0 +1,42 @@
+<%- include('../partials/header') %>
+<div class="card">
+  <div class="card-head">
+    <h2>Utenti admin</h2>
+    <% if (can('users.create')) { %><a class="btn btn-primary" href="/admin/users/new">+ Nuovo utente</a><% } %>
+  </div>
+  <table class="table">
+    <thead><tr><th>Nome</th><th>Email</th><th>Ruolo</th><th>Stato</th><th>Ultimo accesso</th><th></th></tr></thead>
+    <tbody>
+    <% users.forEach(function(u){ %>
+      <tr>
+        <td><%= u.name %><% if (u.id === currentUser.id) { %> <span class="badge">tu</span><% } %></td>
+        <td><%= u.email %></td>
+        <td><span class="badge badge-role"><%= u.role ? u.role.name : '—' %></span></td>
+        <td><% if (u.isActive) { %><span class="badge badge-ok">attivo</span><% } else { %><span class="badge badge-off">disattivo</span><% } %>
+          <% if (u.mustChangePassword) { %><span class="badge badge-warn">cambio pw</span><% } %>
+        </td>
+        <td class="muted"><%= u.lastLoginAt ? new Date(u.lastLoginAt).toLocaleString('it-IT') : 'mai' %></td>
+        <td class="row-actions">
+          <% if (can('users.edit')) { %>
+            <a class="btn btn-ghost btn-sm" href="/admin/users/<%= u.id %>/edit">Modifica</a>
+            <form method="post" action="/admin/users/<%= u.id %>/reset-password" onsubmit="return confirm('Generare una nuova password temporanea?')">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="btn btn-ghost btn-sm">Reset pw</button>
+            </form>
+            <% if (u.id !== currentUser.id) { %>
+            <form method="post" action="/admin/users/<%= u.id %>/toggle">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="btn btn-ghost btn-sm"><%= u.isActive ? 'Disattiva' : 'Attiva' %></button>
+            </form>
+            <% } %>
+          <% } %>
+          <% if (can('users.delete') && u.id !== currentUser.id) { %>
+            <form method="post" action="/admin/users/<%= u.id %>/delete" onsubmit="return confirm('Eliminare definitivamente questo utente?')">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="btn btn-danger btn-sm">Elimina</button>
+            </form>
+          <% } %>
+        </td>
+      </tr>
+    <% }) %>
+    </tbody>
+  </table>
+</div>
+<%- include('../partials/footer') %>

@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Accedi — <%= (settings && settings.admin_title) || 'Irene Monticelli Admin' %></title>
+<link rel="icon" href="/favicon.ico">
+<link rel="stylesheet" href="/public-admin/css/admin.css">
+</head>
+<body class="auth-body">
+  <div class="auth-card">
+    <div class="auth-brand"><%= (settings && settings.site_name) || 'Irene Monticelli' %></div>
+    <div class="auth-sub">Accesso area riservata</div>
+    <% if (error) { %><div class="flash flash-error"><%= error %></div><% } %>
+    <form method="post" action="/admin/login" class="auth-form">
+      <label>Email
+        <input type="email" name="email" required autofocus autocomplete="username">
+      </label>
+      <label>Password
+        <input type="password" name="password" required autocomplete="current-password">
+      </label>
+      <button type="submit" class="btn btn-primary btn-block">Accedi</button>
+    </form>
+  </div>
+</body>
+</html>

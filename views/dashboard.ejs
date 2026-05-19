@@ -1,0 +1,52 @@
+<%- include('partials/header') %>
+
+<div class="cards">
+  <div class="card stat">
+    <div class="stat-num"><%= stats.users %></div>
+    <div class="stat-lbl">Utenti admin</div>
+  </div>
+  <div class="card stat">
+    <div class="stat-num"><%= stats.roles %></div>
+    <div class="stat-lbl">Ruoli</div>
+  </div>
+  <div class="card stat">
+    <div class="stat-num"><%= stats.media %></div>
+    <div class="stat-lbl">Media caricati</div>
+  </div>
+  <div class="card stat">
+    <div class="stat-num"><%= fmtBytes(stats.storageBytes) %></div>
+    <div class="stat-lbl">Spazio media</div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-head">
+    <h2>Media recenti</h2>
+    <% if (can('media.view')) { %><a class="btn btn-ghost" href="/admin/media">Apri libreria</a><% } %>
+  </div>
+  <% if (recentMedia.length === 0) { %>
+    <p class="muted">Nessun media caricato. Vai in <a href="/admin/media">Media</a> per caricare immagini.</p>
+  <% } else { %>
+    <div class="media-grid sm">
+      <% recentMedia.forEach(function(m){ %>
+        <div class="media-tile">
+          <div class="media-thumb">
+            <% if (m.isImage) { %><img src="<%= m.smallPath %>" alt=""><% } else { %><span class="file-ico"><%= m.ext %></span><% } %>
+          </div>
+          <div class="media-name" title="<%= m.originalName %>"><%= m.originalName %></div>
+        </div>
+      <% }) %>
+    </div>
+  <% } %>
+</div>
+
+<div class="card welcome">
+  <h2>Benvenuto, <%= currentUser.name %></h2>
+  <p class="muted">
+    Da qui gestisci il sito di Irene Monticelli. Le sezioni <strong>Eventi</strong>,
+    <strong>Piani/Prenotazioni</strong>, <strong>Newsletter</strong> e <strong>Log attivita</strong>
+    sono gia previste nel menu e verranno implementate nelle prossime fasi.
+  </p>
+</div>
+
+<%- include('partials/footer') %>

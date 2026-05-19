@@ -1,0 +1,43 @@
+<%- include('../partials/header') %>
+<div class="card form-card">
+  <h2><%= role ? 'Modifica ruolo' : 'Nuovo ruolo' %></h2>
+  <form method="post" action="<%= role ? '/admin/roles/'+role.id : '/admin/roles' %>" class="form">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <div class="field">
+      <label class="field-lbl">Nome ruolo</label>
+      <input type="text" name="name" required value="<%= role ? role.name : '' %>">
+    </div>
+    <div class="field">
+      <label class="field-lbl">Descrizione</label>
+      <input type="text" name="description" value="<%= role ? role.description : '' %>">
+    </div>
+
+    <h3 class="sub">Permessi</h3>
+    <p class="muted">Seleziona in dettaglio cosa puo fare questo ruolo. Le aree marcate "in arrivo" sono gia predisposte.</p>
+
+    <% CATALOG.forEach(function(grp){ %>
+      <fieldset class="perm-group">
+        <legend>
+          <label class="perm-all">
+            <input type="checkbox" class="perm-group-toggle"> <%= grp.group %>
+          </label>
+        </legend>
+        <div class="perm-grid">
+        <% grp.items.forEach(function(it){ %>
+          <label class="perm-item">
+            <input type="checkbox" name="permissions" value="<%= it.key %>" <%= selected.indexOf(it.key) > -1 ? 'checked' : '' %>>
+            <span><%= it.label %></span>
+            <code><%= it.key %></code>
+          </label>
+        <% }) %>
+        </div>
+      </fieldset>
+    <% }) %>
+
+    <div class="form-actions">
+      <button type="submit" class="btn btn-primary"><%= role ? 'Salva modifiche' : 'Crea ruolo' %></button>
+      <a class="btn btn-ghost" href="/admin/roles">Annulla</a>
+    </div>
+  </form>
+</div>
+<%- include('../partials/footer') %>

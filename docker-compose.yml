@@ -1,0 +1,27 @@
+# Avvio dell'app completa (sito + admin) in un solo container.
+# I volumi persistono DB, media e backup tra i riavvii.
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.node
+    ports:
+      - "3017:3017"
+    environment:
+      NODE_ENV: production
+      PORT: "3017"
+      SESSION_SECRET: "${SESSION_SECRET:-cambia-questo-segreto}"
+      SEED_ADMIN_EMAIL: "${SEED_ADMIN_EMAIL:-luca@mywebagency.com}"
+      SEED_ADMIN_NAME: "${SEED_ADMIN_NAME:-Super Admin}"
+      SEED_ADMIN_PASSWORD: "${SEED_ADMIN_PASSWORD:-}"
+      DATABASE_URL: "file:../data/app.db"
+    volumes:
+      - im_data:/app/data
+      - im_uploads:/app/uploads
+      - im_backups:/app/backups
+    restart: unless-stopped
+
+volumes:
+  im_data:
+  im_uploads:
+  im_backups:

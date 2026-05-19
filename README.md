@@ -25,3 +25,16 @@ aprire `index.html` o pubblicare la cartella su un host statico.
 - `Foto sito Irene Monticelli/` — immagini originali.
 
 Per rigenerare le pagine: `node build_pages.js`
+
+## Dashboard Admin
+
+È presente un'area di amministrazione (`/admin`) basata su Node + Express +
+Prisma (SQLite). L'app Node serve sia il sito pubblico sia l'admin.
+
+```bash
+npm install
+npm run setup   # crea DB + super-admin (password stampata in console)
+npm start       # http://localhost:3017  ·  admin: /admin
+```
+
+Documentazione completa: **[ADMIN.md](ADMIN.md)**.
