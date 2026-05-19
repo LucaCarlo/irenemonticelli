@@ -3650,32 +3650,16 @@
     opacity:1 !important;transform:none !important;transition:none !important;animation:none !important}
   /* Voce di menu attiva su questa pagina = gialla */
   header.site .nav-links a[href="/quien-soy"]{color:var(--yellow,#e0aa00) !important;font-weight:600}
-  /* Timeline ALTERNATA sopra/sotto, riquadri spaziosi, niente clipping */
-  .qs-tl2{position:relative;margin:56px 0 0;left:50%;width:100vw;transform:translateX(-50%)}
-  .qs-tl2-viewport{overflow-x:auto;overflow-y:hidden;position:relative;cursor:none;
-    scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;scroll-behavior:smooth;
-    scrollbar-width:none;-ms-overflow-style:none}
-  .qs-tl2-viewport::-webkit-scrollbar{display:none;height:0}
-  .qs-tl2-viewport.drag{scroll-behavior:auto;cursor:grabbing}
-  .qs-tl2-viewport::before{content:"";position:absolute;left:0;right:0;top:50%;height:2px;transform:translateY(-50%);background:linear-gradient(90deg,rgba(0,0,0,.05),var(--yellow,#e0aa00) 12%,var(--yellow,#e0aa00) 88%,rgba(0,0,0,.05));z-index:0}
-  .qs-tl2-track{display:flex;padding:0 5vw}
-  .qs-tl2-item{flex:0 0 460px;width:460px;height:560px;position:relative;scroll-snap-align:center}
-  .qs-tl2-card{position:absolute;left:32px;right:32px;height:210px;display:flex;flex-direction:column;overflow:hidden;background:#fff;border:1px solid rgba(0,0,0,.06);border-radius:18px;padding:26px 30px;box-shadow:0 26px 56px -30px rgba(0,0,0,.3);opacity:0;transform:translateY(18px) scale(.97);transition:opacity .7s cubic-bezier(.7,0,.2,1),transform .7s cubic-bezier(.7,0,.2,1)}
-  .qs-tl2-item.in .qs-tl2-card{opacity:1;transform:none}
-  .qs-tl2-item.in .qs-tl2-dot{animation:qsDotPulse 1.6s ease-out}
-  @keyframes qsDotPulse{0%{box-shadow:0 0 0 0 rgba(224,170,0,.45)}100%{box-shadow:0 0 0 14px rgba(224,170,0,0)}}
-  .qs-up .qs-tl2-card{bottom:calc(50% + 50px)}
-  .qs-down .qs-tl2-card{top:calc(50% + 50px)}
-  .qs-tl2-conn{position:absolute;left:50%;width:2px;background:rgba(224,170,0,.5);transform:translateX(-50%);z-index:1}
-  .qs-up .qs-tl2-conn{bottom:50%;height:50px}
-  .qs-down .qs-tl2-conn{top:50%;height:50px}
-  .qs-tl2-dot{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:18px;height:18px;border-radius:50%;background:var(--yellow,#e0aa00);box-shadow:0 0 0 6px rgba(224,170,0,.16);z-index:2}
-  .qs-tl2-year{font-family:Fraunces,Georgia,serif;font-size:40px;font-weight:600;color:var(--yellow,#c8970a);margin-bottom:10px;line-height:1}
-  .qs-tl2-text{font-size:15.5px;line-height:1.62;color:#3a3d44;margin:0;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:5;overflow:hidden}
-  .qs-cursor{position:fixed;left:0;top:0;width:62px;height:62px;border-radius:50%;background:var(--yellow,#e0aa00);color:#fff;display:flex;align-items:center;justify-content:center;font-size:26px;pointer-events:none;z-index:99999;opacity:0;transform:translate(-50%,-50%) scale(.4);transition:opacity .15s,transform .15s;box-shadow:0 10px 28px -10px rgba(224,170,0,.6)}
-  .qs-cursor.on{opacity:1;transform:translate(-50%,-50%) scale(1)}
-  .qs-tl2-hint{text-align:center;font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:#9a8f7a;margin:24px 0 0}
-  @media(max-width:760px){.qs-tl2-track{padding:0 14px}.qs-tl2-item{flex-basis:86vw;width:86vw;height:520px}.qs-tl2-card{left:14px;right:14px;padding:22px 22px}.qs-tl2-year{font-size:32px}.qs-cursor{display:none}.qs-tl2-viewport{cursor:default}}
+  /* Esperienza: griglia di card cicciotte (3 sopra, 2 sotto) */
+  .qs-exp-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;margin-top:44px}
+  .qs-exp-card{background:#fff;border:1px solid rgba(0,0,0,.06);border-radius:20px;padding:34px 34px;
+    box-shadow:0 26px 56px -34px rgba(0,0,0,.28);border-top:4px solid var(--yellow,#e0aa00);
+    transition:transform .5s cubic-bezier(.7,0,.2,1),box-shadow .5s}
+  .qs-exp-card:hover{transform:translateY(-6px);box-shadow:0 34px 66px -34px rgba(0,0,0,.34)}
+  .qs-exp-year{font-family:Fraunces,Georgia,serif;font-size:46px;font-weight:600;color:var(--yellow,#c8970a);line-height:1;margin-bottom:14px}
+  .qs-exp-text{font-size:16px;line-height:1.72;color:#3a3d44;margin:0}
+  @media(max-width:920px){.qs-exp-grid{grid-template-columns:repeat(2,1fr);gap:18px}}
+  @media(max-width:600px){.qs-exp-grid{grid-template-columns:1fr}.qs-exp-card{padding:26px 24px}.qs-exp-year{font-size:38px}}
   @media(max-width:920px){.qs-split{grid-template-columns:1fr;gap:30px}.qs-side{position:static;flex-direction:row;overflow-x:auto}.qs-side-fig{flex:0 0 70%}}
   @media(max-width:860px){.qs-intro{grid-template-columns:1fr}.qs-intro-img{min-height:54vh;order:-1}}
 </style>
@@ -3717,104 +3701,30 @@
   <div class="container">
     <div class="sec-num reveal"><span class="sec-dash" aria-hidden="true"></span>La experiencia</div>
     <h2 class="h-section reveal">Como <i class="it yel">bailarina</i>.</h2>
-    <div class="qs-tl2">
-      <div class="qs-tl2-viewport" id="qsVp">
-        <div class="qs-tl2-track" id="qsTrack">
-        <article class="qs-tl2-item qs-up">
-          <div class="qs-tl2-card">
-            <div class="qs-tl2-year">2003</div>
-            <p class="qs-tl2-text">Solista en la compañía dirigida por R. Sabbatini "Zeropositivo" para diversas producciones (hasta 2005).</p>
-          </div>
-          <span class="qs-tl2-conn" aria-hidden="true"></span>
-          <span class="qs-tl2-dot" aria-hidden="true"></span>
+    <div class="qs-exp-grid">
+        <article class="qs-exp-card reveal">
+          <div class="qs-exp-year">2003</div>
+          <p class="qs-exp-text">Solista en la compañía dirigida por R. Sabbatini "Zeropositivo" para diversas producciones (hasta 2005).</p>
         </article>
-        <article class="qs-tl2-item qs-down">
-          <div class="qs-tl2-card">
-            <div class="qs-tl2-year">2004</div>
-            <p class="qs-tl2-text">Coreografía de D. Ziglioli "Due uomini per un paio di tacchi" en el Hangart Dance Festival de Pesaro; pieza de improvisación con la compañía Lische.</p>
-          </div>
-          <span class="qs-tl2-conn" aria-hidden="true"></span>
-          <span class="qs-tl2-dot" aria-hidden="true"></span>
+        <article class="qs-exp-card reveal">
+          <div class="qs-exp-year">2004</div>
+          <p class="qs-exp-text">Coreografía de D. Ziglioli "Due uomini per un paio di tacchi" en el Hangart Dance Festival de Pesaro; pieza de improvisación con la compañía Lische.</p>
         </article>
-        <article class="qs-tl2-item qs-up">
-          <div class="qs-tl2-card">
-            <div class="qs-tl2-year">2006</div>
-            <p class="qs-tl2-text">Contrato de temporada con la compañía "Ortomagico" para el musical "Jesus Christ Superstar".</p>
-          </div>
-          <span class="qs-tl2-conn" aria-hidden="true"></span>
-          <span class="qs-tl2-dot" aria-hidden="true"></span>
+        <article class="qs-exp-card reveal">
+          <div class="qs-exp-year">2006</div>
+          <p class="qs-exp-text">Contrato de temporada con la compañía "Ortomagico" para el musical "Jesus Christ Superstar".</p>
         </article>
-        <article class="qs-tl2-item qs-down">
-          <div class="qs-tl2-card">
-            <div class="qs-tl2-year">2010</div>
-            <p class="qs-tl2-text">Solista en "El Cascanueces" con música en vivo en el Teatro dell’Aquila de Fermo.</p>
-          </div>
-          <span class="qs-tl2-conn" aria-hidden="true"></span>
-          <span class="qs-tl2-dot" aria-hidden="true"></span>
+        <article class="qs-exp-card reveal">
+          <div class="qs-exp-year">2010</div>
+          <p class="qs-exp-text">Solista en "El Cascanueces" con música en vivo en el Teatro dell’Aquila de Fermo.</p>
         </article>
-        <article class="qs-tl2-item qs-up">
-          <div class="qs-tl2-card">
-            <div class="qs-tl2-year">2012</div>
-            <p class="qs-tl2-text">Primer premio en "Riccione Summer Dance" con la coreografía "Come sorelle", de M. Cursi.</p>
-          </div>
-          <span class="qs-tl2-conn" aria-hidden="true"></span>
-          <span class="qs-tl2-dot" aria-hidden="true"></span>
+        <article class="qs-exp-card reveal">
+          <div class="qs-exp-year">2012</div>
+          <p class="qs-exp-text">Primer premio en "Riccione Summer Dance" con la coreografía "Come sorelle", de M. Cursi.</p>
         </article>
-        </div>
-      </div>
     </div>
-    <p class="qs-tl2-hint">Mueve el cursor a la izquierda o derecha y haz clic para recorrer</p>
   </div>
 </section>
-<script>
-(function(){
-  var vp=document.getElementById('qsVp'),track=document.getElementById('qsTrack');
-  if(!vp||!track) return;
-  var items=track.children, dir=0, timer=null;
-  function iw(){ return items.length ? items[0].getBoundingClientRect().width : 460; }
-  function atEnd(){ return vp.scrollLeft + vp.clientWidth >= vp.scrollWidth - 4; }
-  function scrollBy(d){ vp.scrollBy({left:d*iw(),behavior:'smooth'}); }
-  function auto(){ stop(); timer=setInterval(function(){
-    if(atEnd()) vp.scrollTo({left:0,behavior:'smooth'}); else vp.scrollBy({left:iw(),behavior:'smooth'});
-  }, 4500); }
-  function stop(){ if(timer){clearInterval(timer);timer=null;} }
-
-  // Reveal fluido delle card all'ingresso
-  if('IntersectionObserver' in window){
-    var io=new IntersectionObserver(function(es){
-      es.forEach(function(e){ if(e.isIntersecting) e.target.classList.add('in'); });
-    },{root:vp,threshold:.35});
-    Array.prototype.forEach.call(items,function(it){ io.observe(it); });
-  } else { Array.prototype.forEach.call(items,function(it){ it.classList.add('in'); }); }
-
-  // Cursore-freccia: creato nel BODY (fixed esatto sul mouse); solo zone sx/dx
-  var cur=document.createElement('div'); cur.className='qs-cursor'; cur.setAttribute('aria-hidden','true');
-  document.body.appendChild(cur);
-  var noTouch = window.matchMedia('(hover:hover)').matches;
-  vp.addEventListener('mousemove', function(e){
-    if(!noTouch) return;
-    cur.style.left=e.clientX+'px'; cur.style.top=e.clientY+'px';
-    var r=vp.getBoundingClientRect(), p=(e.clientX-r.left)/r.width;
-    if(p<0.30){ dir=-1; cur.innerHTML='&#8249;'; cur.classList.add('on'); vp.style.cursor='none'; }
-    else if(p>0.70){ dir=1; cur.innerHTML='&#8250;'; cur.classList.add('on'); vp.style.cursor='none'; }
-    else { dir=0; cur.classList.remove('on'); vp.style.cursor='grab'; }
-  });
-  vp.addEventListener('mouseenter', stop);
-  vp.addEventListener('mouseleave', function(){ cur.classList.remove('on'); auto(); });
-  vp.addEventListener('click', function(){ if(dir!==0) scrollBy(dir); });
-
-  // Drag-to-scroll fluido (desktop)
-  var down=false, sx=0, sl=0, moved=false;
-  vp.addEventListener('pointerdown', function(e){ if(e.pointerType==='mouse'){ down=true; moved=false; sx=e.clientX; sl=vp.scrollLeft; vp.classList.add('drag'); } });
-  vp.addEventListener('pointermove', function(e){ if(!down) return; var dx=e.clientX-sx; if(Math.abs(dx)>4) moved=true; vp.scrollLeft=sl-dx; });
-  function up(){ if(down){ down=false; vp.classList.remove('drag'); } }
-  vp.addEventListener('pointerup', up); vp.addEventListener('pointerleave', up);
-  vp.addEventListener('click', function(e){ if(moved){ e.stopImmediatePropagation(); moved=false; } }, true);
-
-  ['wheel','touchstart'].forEach(function(ev){ vp.addEventListener(ev, stop, {passive:true}); });
-  auto();
-})();
-</script>
 
 <section class="quote">
   <span class="quote-deco-l" aria-hidden="true"></span>
@@ -3841,12 +3751,12 @@
         <li><a href="/pro-dance" data-nav="pro-dance">Pro Dance</a></li>
         <li><a href="index.html#galleria" data-nav="home" data-target="galleria">Galería</a></li>
         <li><a href="/profesores">Profesores</a></li>
-        <li><a href="/contatti" data-nav="contatti">Escríbenos</a></li>
       </ul>
     </div>
     <div class="foot-col">
       <h4>Contacto</h4>
       <ul>
+        <li><a href="/contatti" data-nav="contatti">Escríbenos</a></li>
         <li><a href="/contatti" data-nav="contatti">Reservar clase</a></li>
         <li><a href="tel:+34672047938">+34 672047938</a></li>
       </ul>
