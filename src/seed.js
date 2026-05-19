@@ -119,36 +119,54 @@ async function seedProfessors() {
   const pathx = require('path');
   const { processUpload } = require('./lib/images');
   const dir = pathx.join(__dirname, '..', 'seed-assets', 'professors');
-  if (!fsx.existsSync(dir)) return;
+  const dirOk = fsx.existsSync(dir);
   const DATA = [
     { file: 'irene-monticelli.png', firstName: 'Irene', lastName: 'Monticelli', danceType: 'Contemporáneo · Modern', sort: 1,
       descriptionHtml: '<p>Bailarina, coreógrafa y profesora. Directora artística de la <strong>Pro Dance Experience</strong>.</p>' },
-    { file: 'alicia-reig.png', firstName: 'Alicia', lastName: 'Reig', danceType: 'Danza', sort: 2,
+    { firstName: 'Carmela', lastName: 'García', danceType: 'Contemporáneo', sort: 2,
+      descriptionHtml:
+        '<p>Doctora en Danza y Licenciada en Coreografía e Interpretación. Su trayectoria se desarrolla entre la creación, la escena y la docencia, combinando una sólida carrera como bailarina e intérprete con la labor pedagógica y de investigación. Ha formado parte de producciones reconocidas como <i>La mort i la Donzella</i>, producida por el IVC y con coreografía de Asun Noales. Ha sido distinguida en diversas ocasiones como Mejor Bailarina, además de recibir premios internacionales. Su experiencia abarca compañías como OtraDanza y proyectos de ámbito internacional, así como la dirección artística junto a A. Espinoza en Cave Canem. Forma parte también de la dirección artística y de procesos de creación en la Jove Companyia de Dansa Gerard Collins, dirigida por Mamen García. Actualmente compagina su actividad escénica en Wako Danza, bajo la dirección de Eduardo Zúñiga, y en Titoyaya Dansa, dirigida por Gustavo Ramírez, con la docencia en conservatorios y universidad.</p>' +
+        '<p>Su trabajo entiende la danza como un lenguaje que transforma, conecta y potencia el bienestar. Su enfoque parte de dotar de sentido al movimiento desde la interpretación, explorando la relación entre lo técnico y lo expresivo para generar un espacio de libertad, comodidad y organicidad en el cuerpo.</p>' +
+        '<p><i>Estará presente todos los tres días del intensivo con su clase de contemporáneo donde la convergencia de técnica, intención y presencia harán que sus clases sean únicas.</i></p>' },
+    { firstName: 'Giosy', lastName: 'Sampaolo', danceType: 'Contemporáneo', sort: 3,
+      descriptionHtml:
+        '<p>Licenciada en Letras Modernas con especialización en Estética del Espectáculo, cuenta con un Máster en Dirección Teatral, además tiene una formación en Light Designer. Bailarina de sólida formación clásica y contemporánea, se ha perfeccionado en importantes centros europeos junto a reconocidos maestros internacionales como Loris Petrillo y Tero Saarinen, Guy Nader, Carolyn Carsol, Anton Lucty y Sharon Fridman.</p>' +
+        '<p>Es directora artística de Hunt Compañía de Danza Contemporánea, activa en el panorama nacional italiano, y destaca también como formadora de numerosos bailarines que hoy forman parte de prestigiosas compañías y teatros internacionales. Imparte clases de técnica contemporánea, floor work, contact improvisation y creación coreográfica, combinando experiencia artística, técnica y pedagógica.</p>' +
+        '<p><i>En nuestro intensivo impartirá técnica de contact improvisation.</i></p>' },
+    { firstName: 'Federica', lastName: 'Fasano', danceType: 'Contemporáneo', sort: 4,
+      descriptionHtml:
+        '<p>Desarrolla su trayectoria como intérprete en Rusia, Holanda, Malta y España (Tatiana Petrova Youth Ballet Theatre, The Saint-Petersburg Classical Ballet Theatre of Marina Medvetskaya, DDG, La Fura dels Baus, MOPA).</p>' +
+        '<p>Es Licenciada cum laude en Lengua y Literatura Rusa, Inglesa y Portuguesa (UNIBA, Italia) y Graduada en Pedagogía de la Danza, especialidad danza contemporánea, con Matrícula de Honor por el Conservatorio Superior de Danza de Alicante.</p>' +
+        '<p>Es Miembro Jurado en certámenes internacionales de danza como Young Russia Grand Prix e International Ballet Competition Anna Pavlova. Ganadora del Premio RusPrix Award 2019 del Consulado Ruso en La Haya, y del Accèsit del VI Premio Nacional de Investigación en Artes Escénicas José Monleón 2020 (AAEE, España). Premio Alacant a Escena 2019 con la obra <i>Cuando los pájaros vuelan</i> (Compañía Over&amp;Out). Cuenta con un Máster en Estudios Avanzados de Teatro (UNIR) y un Máster en Investigación Educativa (UA). Su último proyecto performativo, FUGANT, ha sido seleccionado para la residencia de creación artística en l’Assut del Art (Tales), un proyecto de Pepa Cases producido por el Institut Valencià de Cultura.</p>' +
+        '<p><i>Estará presente todos los tres días del intensivo dedicándose a desarrollar el taller coreográfico.</i></p>' },
+    { file: 'alicia-reig.png', firstName: 'Alicia', lastName: 'Reig', danceType: 'Danza', sort: 5,
       descriptionHtml: '<p>Profesora invitada de la Pro Dance Experience.</p>' },
-    { file: 'cintia-solbes.png', firstName: 'Cintia', lastName: 'Solbes', danceType: 'Danza', sort: 3,
+    { file: 'cintia-solbes.png', firstName: 'Cintia', lastName: 'Solbes', danceType: 'Danza', sort: 6,
       descriptionHtml: '<p>Profesora invitada de la Pro Dance Experience.</p>' },
-    { file: 'maria-palazon.png', firstName: 'María', lastName: 'Palazón', danceType: 'Danza', sort: 4,
+    { file: 'maria-palazon.png', firstName: 'María', lastName: 'Palazón', danceType: 'Danza', sort: 7,
       descriptionHtml: '<p>Profesora invitada de la Pro Dance Experience.</p>' },
   ];
   for (const d of DATA) {
     const exists = await prisma.professor.findFirst({ where: { firstName: d.firstName, lastName: d.lastName } });
     if (exists) continue;
-    const fp = pathx.join(dir, d.file);
-    if (!fsx.existsSync(fp)) continue;
-    const buf = fsx.readFileSync(fp);
-    const info = await processUpload(buf, d.file, 'image/png');
-    const media = await prisma.media.create({
-      data: {
-        filename: info.filename, originalName: info.originalName, title: `${d.firstName} ${d.lastName}`,
-        alt: `${d.firstName} ${d.lastName}`, mime: info.mime, ext: info.ext,
-        width: info.width, height: info.height, sizeBytes: info.sizeBytes, smallBytes: info.smallBytes,
-        path: info.path, smallPath: info.smallPath, isImage: info.isImage,
-      },
-    });
+    let photoMediaId = null;
+    const fp = d.file && dirOk ? pathx.join(dir, d.file) : null;
+    if (fp && fsx.existsSync(fp)) {
+      const info = await processUpload(fsx.readFileSync(fp), d.file, 'image/png');
+      const media = await prisma.media.create({
+        data: {
+          filename: info.filename, originalName: info.originalName, title: `${d.firstName} ${d.lastName}`,
+          alt: `${d.firstName} ${d.lastName}`, mime: info.mime, ext: info.ext,
+          width: info.width, height: info.height, sizeBytes: info.sizeBytes, smallBytes: info.smallBytes,
+          path: info.path, smallPath: info.smallPath, isImage: info.isImage,
+        },
+      });
+      photoMediaId = media.id;
+    }
     await prisma.professor.create({
       data: {
         firstName: d.firstName, lastName: d.lastName, danceType: d.danceType,
-        descriptionHtml: d.descriptionHtml, photoMediaId: media.id, active: true, sort: d.sort,
+        descriptionHtml: d.descriptionHtml, photoMediaId, active: true, sort: d.sort,
       },
     });
   }
