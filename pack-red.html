@@ -3542,6 +3542,30 @@
     .quote-right{gap:32px}
   }
 </style>
+<style id="site-fix-mobile-nav">
+/* Mobile drawer must stay off-canvas until .open */
+@media (max-width:880px){
+  header.site .nav-links,
+  header.site.entered .nav-links,
+  #page-prodance header.site .nav-links,
+  body.on-prodance header.site .nav-links,
+  #page-prodance header.site:not(.entered) .nav-links,
+  body.on-prodance header.site:not(.entered) .nav-links,
+  #page-contatti header.site .nav-links,
+  body.on-contatti header.site .nav-links{
+    transform:translateX(100%) !important;
+    opacity:1 !important;
+  }
+  header.site .nav-links.open,
+  header.site.entered .nav-links.open,
+  #page-prodance header.site .nav-links.open,
+  body.on-prodance header.site .nav-links.open,
+  #page-contatti header.site .nav-links.open,
+  body.on-contatti header.site .nav-links.open{
+    transform:translateX(0) !important;
+  }
+}
+</style>
 </head>
 <body>
 
@@ -3562,7 +3586,7 @@
 <div id="page-pack-red" class="page-view page-pack" data-pack-color="red" data-page="pack-red">
   <header class="site" id="header-pack-red">
   <nav class="nav">
-    <a href="index.html" class="logo" data-nav="home" aria-label="Irene Monticelli — Home">
+    <a href="/" class="logo" data-nav="home" aria-label="Irene Monticelli — Home">
       <svg viewBox="0 0 1000 140" preserveAspectRatio="xMinYMid meet" aria-hidden="true">
         <use href="#logo-paths"/>
       </svg>
@@ -3573,8 +3597,8 @@
     </button>
     <div class="nav-links" id="navLinks-pack-red">
       <a href="index.html#about" data-h data-nav="home" data-target="about">Sobre mí</a>
-      <a href="pro-dance.html" data-h data-nav="pro-dance">Pro Dance</a>
-      <a href="contatti.html" data-h data-nav="contatti">Contacto</a>
+      <a href="/pro-dance" data-h data-nav="pro-dance">Pro Dance</a>
+      <a href="/contatti" data-h data-nav="contatti">Contacto</a>
     </div>
   </nav>
 </header>
@@ -3771,7 +3795,7 @@
             <div class="pk-sum-row"><span>Total</span><strong>247€</strong></div>
           </div>
           <p class="pk-success-note">Recibirás un email de confirmación en <strong data-success-email>—</strong> en las próximas 24 horas.</p>
-          <a href="pro-dance.html" data-nav="pro-dance" class="pk-success-back">← Volver a Pro Dance</a>
+          <a href="/pro-dance" data-nav="pro-dance" class="pk-success-back">← Volver a Pro Dance</a>
         </div>
 
       </form>

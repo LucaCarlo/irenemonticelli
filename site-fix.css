@@ -1,0 +1,27 @@
+/* ============================================================
+   FIX MOBILE MENU: il menu drawer mobile deve stare fuori schermo
+   (translateX(100%)) di default e dentro solo con .open.
+   Le regole generiche del sito sovrascrivono il transform con
+   translateY(0), facendo apparire la fascia bianca a destra.
+   ============================================================ */
+@media (max-width:880px){
+  header.site .nav-links,
+  header.site.entered .nav-links,
+  #page-prodance header.site .nav-links,
+  body.on-prodance header.site .nav-links,
+  #page-prodance header.site:not(.entered) .nav-links,
+  body.on-prodance header.site:not(.entered) .nav-links,
+  #page-contatti header.site .nav-links,
+  body.on-contatti header.site .nav-links{
+    transform:translateX(100%) !important;
+    opacity:1 !important;
+  }
+  header.site .nav-links.open,
+  header.site.entered .nav-links.open,
+  #page-prodance header.site .nav-links.open,
+  body.on-prodance header.site .nav-links.open,
+  #page-contatti header.site .nav-links.open,
+  body.on-contatti header.site .nav-links.open{
+    transform:translateX(0) !important;
+  }
+}

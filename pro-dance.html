@@ -3542,6 +3542,30 @@
     .quote-right{gap:32px}
   }
 </style>
+<style id="site-fix-mobile-nav">
+/* Mobile drawer must stay off-canvas until .open */
+@media (max-width:880px){
+  header.site .nav-links,
+  header.site.entered .nav-links,
+  #page-prodance header.site .nav-links,
+  body.on-prodance header.site .nav-links,
+  #page-prodance header.site:not(.entered) .nav-links,
+  body.on-prodance header.site:not(.entered) .nav-links,
+  #page-contatti header.site .nav-links,
+  body.on-contatti header.site .nav-links{
+    transform:translateX(100%) !important;
+    opacity:1 !important;
+  }
+  header.site .nav-links.open,
+  header.site.entered .nav-links.open,
+  #page-prodance header.site .nav-links.open,
+  body.on-prodance header.site .nav-links.open,
+  #page-contatti header.site .nav-links.open,
+  body.on-contatti header.site .nav-links.open{
+    transform:translateX(0) !important;
+  }
+}
+</style>
 </head>
 <body>
 
@@ -3562,7 +3586,7 @@
 <div id="page-prodance" class="page-view" data-page="pro-dance">
 <header class="site" id="header-prodance">
   <nav class="nav">
-    <a href="index.html" class="logo" data-nav="home" aria-label="Irene Monticelli — Home">
+    <a href="/" class="logo" data-nav="home" aria-label="Irene Monticelli — Home">
       <svg viewBox="0 0 1000 140" preserveAspectRatio="xMinYMid meet" aria-hidden="true">
         <use href="#logo-paths"/>
       </svg>
@@ -3573,8 +3597,8 @@
     </button>
     <div class="nav-links" id="navLinks-prodance">
       <a href="index.html#about" data-h data-nav="home" data-target="about">Sobre mí</a>
-      <a href="pro-dance.html" data-h data-nav="pro-dance">Pro Dance</a>
-      <a href="contatti.html" data-h data-nav="contatti">Contacto</a>
+      <a href="/pro-dance" data-h data-nav="pro-dance">Pro Dance</a>
+      <a href="/contatti" data-h data-nav="contatti">Contacto</a>
     </div>
   </nav>
 </header>
@@ -5627,7 +5651,7 @@
             <li class="pd-discount"><span class="pd-pack-k">3 class / day</span><span class="pd-pack-v"><b>82,50€</b></span></li>
             <li class="pd-discount"><span class="pd-pack-k">6 class / day</span><span class="pd-pack-v"><b>120€</b></span></li>
           </ul>
-          <a href="pack-single.html" class="pd-pack-cta" data-nav="pack-single">Prenota</a>
+          <a href="/pack-single" class="pd-pack-cta" data-nav="pack-single">Prenota</a>
         </div>
       </article>
 
@@ -5645,7 +5669,7 @@
             <li class="pd-discount"><span class="pd-pack-k">Reserva entro 10/07</span><span class="pd-pack-v"><b>324€</b></span></li>
           </ul>
           <p class="pd-pack-note">Reserva conjunta de 10 open class: <b>−25%</b></p>
-          <a href="pack-gold.html" class="pd-pack-cta" data-nav="pack-gold">Prenota</a>
+          <a href="/pack-gold" class="pd-pack-cta" data-nav="pack-gold">Prenota</a>
         </div>
       </article>
 
@@ -5661,7 +5685,7 @@
             <li class="pd-discount"><span class="pd-pack-k">Reserva entro 15/06</span><span class="pd-pack-v"><b>198€</b></span></li>
             <li class="pd-discount"><span class="pd-pack-k">Reserva entro 10/07</span><span class="pd-pack-v"><b>222€</b></span></li>
           </ul>
-          <a href="pack-red.html" class="pd-pack-cta" data-nav="pack-red">Prenota</a>
+          <a href="/pack-red" class="pd-pack-cta" data-nav="pack-red">Prenota</a>
         </div>
       </article>
 
@@ -5677,7 +5701,7 @@
             <li class="pd-discount"><span class="pd-pack-k">Reserva entro 15/06</span><span class="pd-pack-v"><b>120€</b></span></li>
             <li class="pd-discount"><span class="pd-pack-k">Reserva entro 10/07</span><span class="pd-pack-v"><b>135€</b></span></li>
           </ul>
-          <a href="pack-junior.html" class="pd-pack-cta" data-nav="pack-junior">Prenota</a>
+          <a href="/pack-junior" class="pd-pack-cta" data-nav="pack-junior">Prenota</a>
         </div>
       </article>
 
@@ -5697,29 +5721,29 @@
     <div class="quote-body reveal">
       <blockquote>¿Te apetece <i class="it">conocernos</i>? Reserva una clase, hazme una pregunta, o simplemente <i class="it">ven a bailar</i>.</blockquote>
       </div>
-    <a href="contatti.html" data-nav="contatti" class="quote-cta reveal">Contáctame</a>
+    <a href="/contatti" data-nav="contatti" class="quote-cta reveal">Contáctame</a>
   </div>
 </section>
 
 <footer>
   <div class="foot-grid">
     <div>
-      <a href="index.html" class="foot-logo" data-nav="home" aria-label="Volver al inicio"><svg viewBox="0 0 1000 140" preserveAspectRatio="xMinYMid meet" aria-hidden="true"><use href="#logo-paths"/></svg></a>
+      <a href="/" class="foot-logo" data-nav="home" aria-label="Volver al inicio"><svg viewBox="0 0 1000 140" preserveAspectRatio="xMinYMid meet" aria-hidden="true"><use href="#logo-paths"/></svg></a>
       <p>Bailarina, coreógrafa y profesora de danza contemporánea y moderna en la Associazione Arte e Passione. Italia <span style="color:var(--yellow)">*</span> España.</p>
     </div>
     <div class="foot-col">
       <h4>Explora</h4>
       <ul>
         <li><a href="index.html#about" data-nav="home" data-target="about">Sobre mí</a></li>
-        <li><a href="pro-dance.html" data-nav="pro-dance">Pro Dance Experience</a></li>
+        <li><a href="/pro-dance" data-nav="pro-dance">Pro Dance Experience</a></li>
         <li><a href="index.html#galleria" data-nav="home" data-target="galleria">Galería</a></li>
-        <li><a href="contatti.html" data-nav="contatti">Contacto</a></li>
+        <li><a href="/contatti" data-nav="contatti">Contacto</a></li>
       </ul>
     </div>
     <div class="foot-col">
       <h4>Contacto</h4>
       <ul>
-        <li><a href="contatti.html" data-nav="contatti">Reservar clase</a></li>
+        <li><a href="/contatti" data-nav="contatti">Reservar clase</a></li>
         <li><a href="tel:+34600000000">+34 600 000 000</a></li>
       </ul>
     </div>
