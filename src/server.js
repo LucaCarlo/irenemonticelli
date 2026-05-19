@@ -175,6 +175,7 @@ app.use('/admin/roles', requireAuth, enforcePasswordChange, csrfProtect, require
 app.use('/admin/media', requireAuth, enforcePasswordChange, csrfProtect, require('./routes/media'));
 app.use('/admin/plans', requireAuth, enforcePasswordChange, csrfProtect, require('./routes/plans'));
 app.use('/admin/events', requireAuth, enforcePasswordChange, csrfProtect, require('./routes/events'));
+app.use('/admin/professors', requireAuth, enforcePasswordChange, csrfProtect, require('./routes/professors'));
 app.use('/admin/bookings', requireAuth, enforcePasswordChange, csrfProtect, require('./routes/bookings'));
 
 // ---- Prenotazione pubblica dinamica (DB + Stripe) ----

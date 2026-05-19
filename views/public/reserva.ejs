@@ -54,12 +54,16 @@
   .pk-form .pk-field input[type=date]{color:#2a2a2a}
   /* Niente messaggi d'errore inline (validazione lato server) */
   .pk-form .pk-error{display:none !important}
-  /* Layout colonne: stile nativo del sito (_77), 2 colonne, riepilogo a destra.
-     Unico ritocco: il titolo sinistro deve allinearsi a quello del riepilogo
-     (la card destra ha 22px di padding sopra il titolo). */
-  .pk-checkout-main .pk-form>.pk-block:first-child{padding-top:22px !important;margin-top:0 !important}
-  .pk-checkout-main .pk-pack-title{margin-top:0 !important;padding-top:0 !important}
-  .pk-summary-card .pk-summary-title{margin-top:0 !important;padding-top:0 !important}
+  /* Allineamento DETERMINISTICO dei due titoli (sinistra vs riepilogo):
+     entrambe le colonne partono in alto e i titoli a 30px dal top colonna. */
+  .pk-checkout-grid{align-items:start !important}
+  .pk-checkout-main,.pk-checkout-main .pk-form{padding-top:0 !important;margin-top:0 !important}
+  .pk-checkout-main .pk-form>.pk-block:first-child{padding-top:30px !important;margin-top:0 !important}
+  .pk-checkout-main .pk-block-pack{padding-top:30px !important}
+  .pk-checkout-main .pk-pack-title{margin:0 !important;padding:0 !important;line-height:1.05}
+  .pk-summary-sticky{padding-top:0 !important;margin-top:0 !important}
+  .pk-summary-card{margin-top:0 !important;padding-top:30px !important}
+  .pk-summary-card .pk-summary-title{margin:0 !important;padding:0 !important;line-height:1.05}
 </style>
 </head>
 <body class="on-pack" data-pack-color="<%= plan.slug.replace('pack-','') %>">

@@ -1,0 +1,84 @@
+<%- include('../partials/header') %>
+<div class="card form-card wide">
+  <h2><%= prof ? 'Modifica professore' : 'Nuovo professore' %></h2>
+  <form method="post" action="<%= prof ? '/admin/professors/'+prof.id : '/admin/professors' %>" class="form" id="profForm">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <div class="form-grid">
+      <div class="field"><label class="field-lbl">Nome</label><input type="text" name="firstName" required value="<%= prof ? prof.firstName : '' %>"></div>
+      <div class="field"><label class="field-lbl">Cognome</label><input type="text" name="lastName" required value="<%= prof ? prof.lastName : '' %>"></div>
+      <div class="field"><label class="field-lbl">Tipo di danza</label><input type="text" name="danceType" value="<%= prof ? prof.danceType : '' %>" placeholder="es. Contemporáneo, Ballet, Modern"></div>
+      <div class="field"><label class="field-lbl">Ordine</label><input type="number" name="sort" value="<%= prof ? prof.sort : 0 %>"></div>
+      <div class="field">
+        <label class="field-lbl">Foto</label>
+        <div class="media-picker" data-target="photoMediaId">
+          <input type="hidden" name="photoMediaId" value="<%= prof && prof.photoMediaId ? prof.photoMediaId : '' %>">
+          <div class="media-picker-preview">
+            <% if (photo) { %><img src="<%= photo.smallPath || photo.path %>" alt=""><% } else { %><span class="muted">Nessuna immagine</span><% } %>
+          </div>
+          <div class="media-picker-actions">
+            <button type="button" class="btn btn-ghost btn-pick">Scegli dalla libreria</button>
+            <button type="button" class="btn btn-ghost btn-clear">Rimuovi</button>
+          </div>
+        </div>
+      </div>
+      <div class="field"><label class="switch"><input type="checkbox" name="active" value="1" <%= !prof || prof.active ? 'checked':'' %>><span>Attivo (visibile sul sito)</span></label></div>
+      <div class="field field-full">
+        <label class="field-lbl">Descrizione</label>
+        <div class="rte">
+          <div class="rte-bar">
+            <button type="button" data-cmd="bold" title="Grassetto"><b>B</b></button>
+            <button type="button" data-cmd="italic" title="Corsivo"><i>I</i></button>
+            <button type="button" data-cmd="underline" title="Sottolineato"><u>U</u></button>
+            <span class="rte-sep"></span>
+            <button type="button" data-cmd="insertUnorderedList" title="Elenco puntato">&#8226; List</button>
+            <button type="button" data-cmd="insertOrderedList" title="Elenco numerato">1. List</button>
+            <span class="rte-sep"></span>
+            <button type="button" data-cmd="createLink" title="Link">&#128279;</button>
+            <button type="button" data-cmd="removeFormat" title="Rimuovi formattazione">T&#10005;</button>
+          </div>
+          <div class="rte-area" id="rteArea" contenteditable="true"><%- prof ? prof.descriptionHtml : '' %></div>
+        </div>
+        <textarea name="descriptionHtml" id="rteHidden" hidden></textarea>
+        <div class="field-help">Puoi usare grassetto, corsivo, sottolineato, elenchi e link.</div>
+      </div>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-primary"><%= prof ? 'Salva' : 'Crea' %></button>
+      <a class="btn btn-ghost" href="/admin/professors">Annulla</a>
+    </div>
+  </form>
+</div>
+
+<!-- Media picker modal (gestito da admin.js) -->
+<div class="modal" id="pickerModal" hidden>
+  <div class="modal-box">
+    <div class="modal-head"><h3>Scegli immagine</h3><button class="modal-x" id="pickerClose">&times;</button></div>
+    <div class="modal-body"><div class="media-grid" id="pickerGrid"><p class="muted">Caricamento...</p></div></div>
+  </div>
+</div>
+
+<style>
+  .rte{border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  .rte-bar{display:flex;flex-wrap:wrap;gap:4px;padding:8px;background:#f7f8fa;border-bottom:1px solid var(--line)}
+  .rte-bar button{background:#fff;border:1px solid var(--line);border-radius:7px;min-width:34px;height:32px;padding:0 9px;cursor:pointer;font-size:13px}
+  .rte-bar button:hover{background:var(--brand);color:#1c1408;border-color:var(--brand)}
+  .rte-sep{width:1px;background:var(--line);margin:2px 4px}
+  .rte-area{min-height:200px;padding:14px 16px;font-size:15px;line-height:1.7;outline:none}
+  .rte-area:focus{box-shadow:inset 0 0 0 2px rgba(224,170,0,.25)}
+  .rte-area p{margin:0 0 .7em}
+</style>
+<script>
+(function(){
+  var area=document.getElementById('rteArea'),hidden=document.getElementById('rteHidden'),form=document.getElementById('profForm');
+  document.querySelectorAll('.rte-bar button').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      var c=btn.getAttribute('data-cmd');
+      area.focus();
+      if(c==='createLink'){ var u=prompt('URL del link:','https://'); if(u) document.execCommand(c,false,u); }
+      else document.execCommand(c,false,null);
+    });
+  });
+  form.addEventListener('submit',function(){ hidden.value=area.innerHTML; });
+})();
+</script>
+<%- include('../partials/footer') %>

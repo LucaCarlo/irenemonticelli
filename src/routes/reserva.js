@@ -135,6 +135,19 @@ router.post('/reserva/:slug', A(async (req, res) => {
   res.redirect(303, session.url);
 }));
 
+// Pagina pubblica Profesores (dinamica dal DB)
+router.get('/profesores', A(async (req, res) => {
+  let profs = await prisma.professor.findMany({
+    where: { active: true },
+    orderBy: [{ sort: 'asc' }, { id: 'asc' }],
+  });
+  const ids = profs.map((p) => p.photoMediaId).filter(Boolean);
+  const media = ids.length ? await prisma.media.findMany({ where: { id: { in: ids } } }) : [];
+  const byId = Object.fromEntries(media.map((m) => [m.id, m]));
+  profs = profs.map((p) => ({ ...p, photo: p.photoMediaId ? byId[p.photoMediaId] || null : null }));
+  res.render('public/profesores', { title: 'Profesores', logoDefs: LOGO_DEFS, profs });
+}));
+
 router.get('/reserva/success', A(async (req, res) => {
   const booking = await prisma.booking.findUnique({
     where: { id: parseInt(req.query.b, 10) || 0 }, include: { plan: true, event: true },

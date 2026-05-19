@@ -39,6 +39,7 @@ const CATALOG = [
     group: 'Contenuti (in arrivo)',
     items: [
       { key: 'events.manage', label: 'Gestire eventi' },
+      { key: 'professors.manage', label: 'Gestire professori' },
       { key: 'pages.manage', label: 'Gestire pagine' },
     ],
   },

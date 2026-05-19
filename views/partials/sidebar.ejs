@@ -24,6 +24,9 @@
       <% if (can('events.manage')) { %>
         <a class="sb-link <%= isActive('/admin/events') ? 'active' : '' %>" href="/admin/events"><%- include('icon',{name:'events'}) %><span>Eventi</span></a>
       <% } %>
+      <% if (can('professors.manage')) { %>
+        <a class="sb-link <%= isActive('/admin/professors') ? 'active' : '' %>" href="/admin/professors"><%- include('icon',{name:'users'}) %><span>Professori</span></a>
+      <% } %>
       <span class="sb-link disabled"><%- include('icon',{name:'pages'}) %><span>Pagine</span><em class="soon">presto</em></span>
       <% if (can('media.view')) { %>
         <a class="sb-link <%= isActive('/admin/media') ? 'active' : '' %>" href="/admin/media"><%- include('icon',{name:'media'}) %><span>Media</span></a>
