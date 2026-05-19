@@ -70,11 +70,14 @@ model Plan {
   currency    String    @default("EUR")
   badge       String    @default("")
   description String    @default("")
-  // none = niente scelta | time = scelta orario | three_days_ampm = 3 giorni, mattina/pomeriggio | date_time = data + orario
+  // none = niente scelta (tutti i giorni) | three_days_ampm = tutti i giorni, mattina/pomeriggio
+  // | alldays_time = tutti i giorni, scelta orario | date_time = scelta giorno + orario
   bookingMode String    @default("date_time")
   ctaLabel    String    @default("Reserva")
   active      Boolean   @default(true)
   sort        Int       @default(0)
+  eventId     Int?
+  event       Event?    @relation(fields: [eventId], references: [id])
   bookings    Booking[]
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
@@ -90,6 +93,7 @@ model Event {
   description String    @default("")
   active      Boolean   @default(true)
   sort        Int       @default(0)
+  plans       Plan[]
   bookings    Booking[]
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt

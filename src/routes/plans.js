@@ -5,11 +5,12 @@ const { requirePermission } = require('../middleware/rbac');
 const router = express.Router();
 const A = (fn) => (req, res, next) => Promise.resolve(fn(req, res, next)).catch(next);
 
+// I 4 comportamenti reali dei pacchetti dell'evento:
 const MODES = [
-  { v: 'none', l: 'Nessuna scelta (pacchetto intero)' },
-  { v: 'time', l: 'Scelta orario' },
-  { v: 'three_days_ampm', l: '3 giorni — mattina o pomeriggio' },
-  { v: 'date_time', l: 'Data + orario' },
+  { v: 'none', l: 'Nessuna scelta — tutti i giorni (Gold)' },
+  { v: 'three_days_ampm', l: 'Tutti i giorni — mattina o pomeriggio (Red)' },
+  { v: 'alldays_time', l: 'Tutti i giorni — scelta orario (Junior)' },
+  { v: 'date_time', l: 'Scelta giorno e orario (Single/classico)' },
 ];
 
 router.use(requirePermission('plans.manage'));

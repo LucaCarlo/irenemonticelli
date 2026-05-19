@@ -107,41 +107,54 @@ async function runSeed() {
   }
 }
 
-// Dati base di Piani ed Eventi (creati solo se mancanti).
+// Dati base: l'evento Pro Dance e i 4 pacchetti collegati ad esso.
 async function seedContent() {
-  const plans = [
-    { slug: 'pack-single', name: 'Single Class', bookingMode: 'date_time', badge: '', sort: 1,
-      description: 'Una clase a elegir: dia y horario.' },
-    { slug: 'pack-gold', name: 'Pack Gold', bookingMode: 'none', badge: 'Completo', sort: 2,
-      description: 'Pack entero: no hace falta elegir dia ni horario.' },
-    { slug: 'pack-red', name: 'Pack Red', bookingMode: 'three_days_ampm', badge: '', sort: 3,
-      description: 'Los 3 dias, eligiendo horario de manana o de tarde.' },
-    { slug: 'pack-junior', name: 'Pack Junior', bookingMode: 'date_time', badge: '', sort: 4,
-      description: 'Pack junior.' },
-  ];
-  for (const p of plans) {
-    const exists = await prisma.plan.findUnique({ where: { slug: p.slug } });
-    if (!exists) {
-      await prisma.plan.create({
-        data: { ...p, price: 0, currency: 'EUR', ctaLabel: 'Reserva', active: true },
-      });
-    }
+  // 1) Evento (creato se manca)
+  let event = await prisma.event.findFirst({ where: { title: 'Pro Dance Experience' } });
+  if (event && (!event.location || event.location === 'Santa Pola - Alicante')) {
+    // aggiorna solo il valore di default iniziale (rispetta modifiche manuali)
+    event = await prisma.event.update({
+      where: { id: event.id },
+      data: { location: 'Pabellon Municipal Lara Gonzalez, Santa Pola - Alicante' },
+    });
   }
-
-  const evCount = await prisma.event.count();
-  if (evCount === 0) {
-    await prisma.event.create({
+  if (!event) {
+    event = await prisma.event.create({
       data: {
         title: 'Pro Dance Experience',
         subtitle: 'Tres dias de danza',
         startDate: new Date('2026-07-29'),
         endDate: new Date('2026-07-31'),
-        location: 'Santa Pola - Alicante',
+        location: 'Pabellon Municipal Lara Gonzalez, Santa Pola - Alicante',
         description: 'Tres dias de danza frente al Mediterraneo.',
         active: true,
         sort: 1,
       },
     });
+  }
+
+  // 2) Pacchetti collegati all'evento. bookingMode di default secondo le regole:
+  //    Gold = none | Red = mattina/pomeriggio | Junior = tutti i gg + orario | Single = giorno+orario
+  const plans = [
+    { slug: 'pack-single', name: 'Single Class', bookingMode: 'date_time', badge: '', sort: 1,
+      description: 'Una clase: se elige dia y horario.' },
+    { slug: 'pack-gold', name: 'Pack Gold', bookingMode: 'none', badge: 'Completo', sort: 2,
+      description: 'Todos los dias del evento, sin elegir dia ni horario.' },
+    { slug: 'pack-red', name: 'Pack Red', bookingMode: 'three_days_ampm', badge: '', sort: 3,
+      description: 'Todos los dias, eligiendo siempre manana o siempre tarde.' },
+    { slug: 'pack-junior', name: 'Pack Junior', bookingMode: 'alldays_time', badge: '', sort: 4,
+      description: 'Todos los dias, eligiendo el horario.' },
+  ];
+  for (const p of plans) {
+    const exists = await prisma.plan.findUnique({ where: { slug: p.slug } });
+    if (!exists) {
+      await prisma.plan.create({
+        data: { ...p, price: 0, currency: 'EUR', ctaLabel: 'Reserva', active: true, eventId: event.id },
+      });
+    } else if (!exists.eventId) {
+      // collega all'evento i pacchetti gia esistenti (senza toccare prezzi/personalizzazioni)
+      await prisma.plan.update({ where: { id: exists.id }, data: { eventId: event.id } });
+    }
   }
 }
 
