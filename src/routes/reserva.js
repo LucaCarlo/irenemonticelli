@@ -10,14 +10,30 @@ const path = require('path');
 const router = express.Router();
 const A = (fn) => (req, res, next) => Promise.resolve(fn(req, res, next)).catch(next);
 
-// Logo SVG (symbol #logo-paths) estratto una volta dal sito, per l'header reale
+// Logo + SHELL del sito (head+header / footer+scripts) presi UNA volta da
+// pro-dance.html, per pagine pubbliche dinamiche con header/footer identici.
 let LOGO_DEFS = '';
+let SHELL_PREFIX = '';
+let SHELL_SUFFIX = '';
 try {
   const src = fs.readFileSync(path.join(__dirname, '..', '..', 'pro-dance.html'), 'utf8');
   const ds = src.indexOf('<svg width="0" height="0"');
   const de = src.indexOf('</svg>', src.indexOf('</symbol>')) + 6;
   if (ds >= 0 && de > ds) LOGO_DEFS = src.slice(ds, de);
-} catch (e) { /* fallback: nessun logo inline */ }
+  const hdrE = src.indexOf('</header>', src.indexOf('<header class="site"')) + '</header>'.length;
+  const ftS = src.indexOf('<footer');
+  if (hdrE > 10 && ftS > 0) {
+    let pre = src.slice(0, hdrE);
+    pre = pre.replace(/<title>[\s\S]*?<\/title>/, '<title>Profesores — Irene Monticelli</title>');
+    pre = pre.split('id="page-prodance"').join('id="page-profesores"');
+    pre = pre.split('data-page="pro-dance"').join('data-page="profesores"');
+    pre = pre.split('id="header-prodance"').join('id="header-profesores"');
+    pre = pre.split('id="navToggle-prodance"').join('id="navToggle-profesores"');
+    pre = pre.split('id="navLinks-prodance"').join('id="navLinks-profesores"');
+    SHELL_PREFIX = pre;
+    SHELL_SUFFIX = src.slice(ftS);
+  }
+} catch (e) { /* fallback */ }
 
 async function loadPlan(slug) {
   const plan = await prisma.plan.findUnique({ where: { slug }, include: { event: true } });
@@ -145,7 +161,10 @@ router.get('/profesores', A(async (req, res) => {
   const media = ids.length ? await prisma.media.findMany({ where: { id: { in: ids } } }) : [];
   const byId = Object.fromEntries(media.map((m) => [m.id, m]));
   profs = profs.map((p) => ({ ...p, photo: p.photoMediaId ? byId[p.photoMediaId] || null : null }));
-  res.render('public/profesores', { title: 'Profesores', logoDefs: LOGO_DEFS, profs });
+  res.render('public/profesores', {
+    title: 'Profesores', profs,
+    shellPrefix: SHELL_PREFIX, shellSuffix: SHELL_SUFFIX,
+  });
 }));
 
 router.get('/reserva/success', A(async (req, res) => {
