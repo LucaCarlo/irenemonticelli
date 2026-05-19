@@ -27,6 +27,9 @@ app.use(
   })
 );
 
+// Webhook Stripe PRIMA dei body-parser (serve il body grezzo per la firma)
+app.use(require('./routes/stripe-webhook'));
+
 app.use(express.urlencoded({ extended: true, limit: '2mb' }));
 app.use(express.json({ limit: '2mb' }));
 app.use(methodOverride('_method'));
@@ -173,6 +176,13 @@ app.use('/admin/media', requireAuth, enforcePasswordChange, csrfProtect, require
 app.use('/admin/plans', requireAuth, enforcePasswordChange, csrfProtect, require('./routes/plans'));
 app.use('/admin/events', requireAuth, enforcePasswordChange, csrfProtect, require('./routes/events'));
 app.use('/admin/bookings', requireAuth, enforcePasswordChange, csrfProtect, require('./routes/bookings'));
+
+// ---- Prenotazione pubblica dinamica (DB + Stripe) ----
+// Le vecchie pagine statiche pack-*.html ora rimandano al checkout dinamico.
+app.get(/^\/(pack-(?:single|gold|red|junior))(?:\.html)?$/, (req, res) => {
+  res.redirect(302, '/reserva/' + req.params[0]);
+});
+app.use(require('./routes/reserva'));
 
 // ---- Sito pubblico statico (pretty URLs, replica nginx) ----
 const SITE = config.DIRS.site;

@@ -19,7 +19,7 @@ const SCHEMA = {
     label: 'Contatti',
     fields: [
       { key: 'contact_phone', label: 'Telefono', type: 'text', def: '+34 672047938' },
-      { key: 'contact_email', label: 'Email', type: 'text', def: 'irene.monticelli@artepassione.it' },
+      { key: 'contact_email', label: 'Email', type: 'text', def: 'info@irenemonticelli.com' },
       { key: 'contact_academia', label: 'Academia', type: 'text', def: 'Academia New Dance Life' },
       { key: 'contact_ciudad', label: 'Ciudad', type: 'text', def: 'Santa Pola - Alicante' },
     ],
@@ -33,7 +33,7 @@ const SCHEMA = {
       { key: 'smtp_user', label: 'Utente', type: 'text' },
       { key: 'smtp_pass', label: 'Password', type: 'password' },
       { key: 'smtp_from_name', label: 'Mittente (nome)', type: 'text', def: 'Irene Monticelli' },
-      { key: 'smtp_from_email', label: 'Mittente (email)', type: 'text' },
+      { key: 'smtp_from_email', label: 'Mittente (email)', type: 'text', def: 'info@irenemonticelli.com' },
     ],
   },
   stripe: {

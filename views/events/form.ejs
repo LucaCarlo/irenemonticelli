@@ -14,6 +14,11 @@
       <div class="field"><label class="field-lbl">Data fine</label><input type="date" name="endDate" value="<%= ev ? dval(ev.endDate) : '' %>"></div>
       <div class="field"><label class="field-lbl">Ordine</label><input type="number" name="sort" value="<%= ev ? ev.sort : 0 %>"></div>
       <div class="field field-full"><label class="field-lbl">Descrizione</label><textarea name="description" rows="3"><%= ev ? ev.description : '' %></textarea></div>
+      <div class="field field-full">
+        <label class="field-lbl">Orari (JSON)</label>
+        <textarea name="slotsJson" rows="2" style="font-family:monospace;font-size:13px"><%= ev ? ev.slotsJson : '' %></textarea>
+        <div class="field-help">Array di orari usati nelle prenotazioni, es. <code>["9:30","11:15","12:30","15:30","16:45","18:00"]</code>. Aggiungi/togli orari da qui. (Mattina = prima delle 14:00)</div>
+      </div>
       <div class="field"><label class="switch"><input type="checkbox" name="active" value="1" <%= !ev || ev.active ? 'checked':'' %>><span>Attivo (visibile)</span></label></div>
     </div>
     <div class="form-actions">

@@ -36,9 +36,11 @@
         <a class="sb-link <%= isActive('/admin/plans') ? 'active' : '' %>" href="/admin/plans"><%- include('icon',{name:'plans'}) %><span>Piani / Pacchetti</span></a>
       <% } %>
       <% if (can('bookings.manage')) { %>
-        <a class="sb-link <%= isActive('/admin/bookings') ? 'active' : '' %>" href="/admin/bookings"><%- include('icon',{name:'bookings'}) %><span>Prenotazioni</span></a>
+        <a class="sb-link <%= (path === '/admin/bookings' || path.indexOf('/admin/bookings/')===0 && path.indexOf('calendar')<0) ? 'active' : '' %>" href="/admin/bookings"><%- include('icon',{name:'bookings'}) %><span>Prenotazioni</span></a>
+        <a class="sb-link <%= isActive('/admin/bookings/calendar') ? 'active' : '' %>" href="/admin/bookings/calendar"><%- include('icon',{name:'calendar'}) %><span>Calendario</span></a>
+      <% } else { %>
+        <span class="sb-link disabled"><%- include('icon',{name:'calendar'}) %><span>Calendario</span><em class="soon">presto</em></span>
       <% } %>
-      <span class="sb-link disabled"><%- include('icon',{name:'calendar'}) %><span>Calendario</span><em class="soon">presto</em></span>
     </div>
 
     <div class="sb-group">

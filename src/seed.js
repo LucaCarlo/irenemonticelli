@@ -118,6 +118,7 @@ async function seedContent() {
       data: { location: 'Pabellon Municipal Lara Gonzalez, Santa Pola - Alicante' },
     });
   }
+  const DEFAULT_SLOTS = JSON.stringify(['9:30', '11:15', '12:30', '15:30', '16:45', '18:00']);
   if (!event) {
     event = await prisma.event.create({
       data: {
@@ -127,36 +128,51 @@ async function seedContent() {
         endDate: new Date('2026-07-31'),
         location: 'Pabellon Municipal Lara Gonzalez, Santa Pola - Alicante',
         description: 'Tres dias de danza frente al Mediterraneo.',
+        slotsJson: DEFAULT_SLOTS,
         active: true,
         sort: 1,
       },
     });
+  } else if (!event.slotsJson) {
+    event = await prisma.event.update({ where: { id: event.id }, data: { slotsJson: DEFAULT_SLOTS } });
   }
 
-  // 2) Pacchetti collegati all'evento. bookingMode di default secondo le regole:
-  //    Gold = none | Red = mattina/pomeriggio | Junior = tutti i gg + orario | Single = giorno+orario
+  // 2) Pacchetti dell'evento con prezzi reali (dal file _77). Modificabili da dashboard.
+  const T = (base, p1, p2) => JSON.stringify({
+    type: 'tiers', base,
+    tiers: [{ until: '2026-06-15', price: p1 }, { until: '2026-07-10', price: p2 }],
+  });
   const plans = [
-    { slug: 'pack-single', name: 'Single Class', bookingMode: 'date_time', badge: '', color: '#175a6e', sort: 1,
-      description: 'Una clase: se elige dia y horario.' },
-    { slug: 'pack-gold', name: 'Pack Gold', bookingMode: 'none', badge: 'Completo', color: '#7a4a0e', sort: 2,
-      description: 'Todos los dias del evento, sin elegir dia ni horario.' },
-    { slug: 'pack-red', name: 'Pack Red', bookingMode: 'three_days_ampm', badge: '', color: '#8a2a1c', sort: 3,
-      description: 'Todos los dias, eligiendo siempre manana o siempre tarde.' },
-    { slug: 'pack-junior', name: 'Pack Junior', bookingMode: 'alldays_time', badge: '', color: '#2f5f1a', sort: 4,
-      description: 'Todos los dias, eligiendo el horario.' },
+    { slug: 'pack-single', name: 'Single class', bookingMode: 'single_lessons', badge: '', color: '#175a6e', sort: 1,
+      price: 35,
+      pricingJson: JSON.stringify({ type: 'lessons', options: [
+        { count: 1, price: 35 }, { count: 3, price: 82.5 }, { count: 6, price: 120 }] }),
+      description: 'La opción más libre. Eliges una sola clase entre todas las propuestas del programa, o combinas varias en el mismo día con tarifa reducida. Ideal si vienes a probar, a descubrir un profesor o un lenguaje específico.' },
+    { slug: 'pack-gold', name: 'Pack GOLD', bookingMode: 'gold', badge: 'Más completo', color: '#7a4a0e', sort: 2,
+      price: 360, pricingJson: T(360, 288, 324),
+      description: 'La inmersión total. Acceso libre a todas las clases de los tres días: ballet, contemporáneo, fusión, LAB coreográfico, modern y stretching. Para quien quiere vivir la experiencia entera.' },
+    { slug: 'pack-red', name: 'Pack RED', bookingMode: 'red', badge: '', color: '#8a2a1c', sort: 3,
+      price: 247, pricingJson: T(247, 198, 222),
+      description: 'Una ruta concentrada de tres clases al día durante los tres días del curso. Equilibrio entre intensidad y respiración. Para cada día eliges mañana o tarde.' },
+    { slug: 'pack-junior', name: 'Pack JUNIOR', bookingMode: 'junior', badge: '', color: '#2f5f1a', sort: 4,
+      price: 150, pricingJson: T(150, 120, 135),
+      description: 'El pack dedicado a los jóvenes bailarines de entre 9 y 12 años. Todos los días por la mañana, de 9:30 a 12:30. Técnica, juego, escucha y composición.' },
   ];
+  const OLD_MODES = ['date_time', 'none', 'three_days_ampm', 'alldays_time'];
   for (const p of plans) {
     const exists = await prisma.plan.findUnique({ where: { slug: p.slug } });
     if (!exists) {
       await prisma.plan.create({
-        data: { ...p, price: 0, currency: 'EUR', ctaLabel: 'Reserva', active: true, eventId: event.id },
+        data: { ...p, currency: 'EUR', ctaLabel: 'Reserva', active: true, eventId: event.id },
       });
     } else {
-      // collega all'evento e imposta il colore di default se mancanti
-      // (non sovrascrive prezzi/personalizzazioni dell'utente)
+      // Aggiorna solo i valori di default iniziali (rispetta personalizzazioni utente)
       const data = {};
       if (!exists.eventId) data.eventId = event.id;
       if (!exists.color || exists.color === '#e0aa00') data.color = p.color;
+      if (OLD_MODES.includes(exists.bookingMode)) data.bookingMode = p.bookingMode;
+      if (!exists.pricingJson) { data.pricingJson = p.pricingJson; data.price = p.price; }
+      if (!exists.description || exists.description.startsWith('Todos los') || exists.description.startsWith('Una clase')) data.description = p.description;
       if (Object.keys(data).length) await prisma.plan.update({ where: { id: exists.id }, data });
     }
   }

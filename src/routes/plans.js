@@ -7,10 +7,10 @@ const A = (fn) => (req, res, next) => Promise.resolve(fn(req, res, next)).catch(
 
 // I 4 comportamenti reali dei pacchetti dell'evento:
 const MODES = [
-  { v: 'none', l: 'Nessuna scelta — tutti i giorni (Gold)' },
-  { v: 'three_days_ampm', l: 'Tutti i giorni — mattina o pomeriggio (Red)' },
-  { v: 'alldays_time', l: 'Tutti i giorni — scelta orario (Junior)' },
-  { v: 'date_time', l: 'Scelta giorno e orario (Single/classico)' },
+  { v: 'single_lessons', l: 'Single — scegli 1/3/6 lezioni (giorno+orario per lezione)' },
+  { v: 'gold', l: 'Gold — nessuna scelta, prezzo a fasce' },
+  { v: 'red', l: 'Red — per giorno mattina/pomeriggio, prezzo a fasce' },
+  { v: 'junior', l: 'Junior — nessuna scelta (mattine fisse), prezzo a fasce' },
 ];
 
 router.use(requirePermission('plans.manage'));
@@ -39,7 +39,8 @@ router.post('/', A(async (req, res) => {
       badge: b.badge || '',
       color: b.color || '#e0aa00',
       description: b.description || '',
-      bookingMode: b.bookingMode || 'date_time',
+      bookingMode: b.bookingMode || 'single_lessons',
+      pricingJson: (b.pricingJson || '').trim(),
       ctaLabel: b.ctaLabel || 'Reserva',
       active: b.active ? true : false,
       sort: parseInt(b.sort, 10) || 0,
@@ -69,7 +70,8 @@ router.post('/:id(\\d+)', A(async (req, res) => {
       badge: b.badge || '',
       color: b.color || '#e0aa00',
       description: b.description || '',
-      bookingMode: b.bookingMode || 'date_time',
+      bookingMode: b.bookingMode || 'single_lessons',
+      pricingJson: (b.pricingJson || '').trim(),
       ctaLabel: b.ctaLabel || 'Reserva',
       active: b.active ? true : false,
       sort: parseInt(b.sort, 10) || 0,

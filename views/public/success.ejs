@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Reserva confirmada — Irene Monticelli</title>
+<link rel="icon" href="/favicon.ico">
+<style>
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;background:#f6f6f4;color:#1c1f26;display:flex;min-height:100vh;align-items:center;justify-content:center;padding:20px}
+  .card{background:#fff;border:1px solid #e7e9ee;border-radius:16px;padding:40px;max-width:520px;text-align:center}
+  .ok{width:64px;height:64px;border-radius:50%;background:#1f9d55;color:#fff;display:flex;align-items:center;justify-content:center;font-size:34px;margin:0 auto 16px}
+  h1{margin:.2em 0}.muted{color:#7a8190}
+  .dl{text-align:left;margin:18px 0;border-top:1px solid #e7e9ee;padding-top:14px}
+  .dl div{display:flex;justify-content:space-between;padding:6px 0;font-size:14px}
+  a.btn{display:inline-block;margin-top:18px;background:#e0aa00;color:#fff;text-decoration:none;font-weight:700;padding:13px 22px;border-radius:10px}
+</style>
+</head>
+<body>
+  <div class="card">
+    <div class="ok">&#10003;</div>
+    <h1>¡Reserva confirmada!</h1>
+    <% if (booking) { %>
+      <p class="muted">Gracias <%= booking.firstName %>. Te hemos enviado la confirmación a <%= booking.customerEmail %>.</p>
+      <div class="dl">
+        <div><span class="muted">Pack</span><strong><%= booking.plan ? booking.plan.name : '' %></strong></div>
+        <div><span class="muted">Evento</span><span><%= booking.event ? booking.event.title : '' %></span></div>
+        <div><span class="muted">Detalle</span><span><%= booking.dateLabel %></span></div>
+        <div><span class="muted">Importe</span><strong><%= booking.amount %> <%= booking.currency %></strong></div>
+        <div><span class="muted">Estado</span><span><%= booking.paymentStatus === 'paid' ? 'Pagado' : 'En verificación' %></span></div>
+      </div>
+    <% } else { %>
+      <p class="muted">Tu reserva se ha registrado.</p>
+    <% } %>
+    <a class="btn" href="/">Volver al inicio</a>
+  </div>
+</body>
+</html>

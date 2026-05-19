@@ -20,6 +20,33 @@ router.get('/', A(async (req, res) => {
   res.render('bookings/list', { title: 'Prenotazioni', bookings, status, STATUSES, counts });
 }));
 
+router.get('/calendar', A(async (req, res) => {
+  const now = new Date();
+  let y = parseInt(req.query.y, 10) || now.getFullYear();
+  let m = parseInt(req.query.m, 10); // 1-12
+  if (!(m >= 1 && m <= 12)) m = now.getMonth() + 1;
+  const start = new Date(y, m - 1, 1);
+  const end = new Date(y, m, 1);
+  const bookings = await prisma.booking.findMany({
+    where: { createdAt: { gte: start, lt: end } },
+    include: { plan: true },
+    orderBy: { createdAt: 'asc' },
+  });
+  const byDay = {};
+  bookings.forEach((b) => {
+    const d = new Date(b.createdAt).getDate();
+    (byDay[d] = byDay[d] || []).push(b);
+  });
+  const firstDow = (start.getDay() + 6) % 7; // lun=0
+  const daysInMonth = new Date(y, m, 0).getDate();
+  const prev = m === 1 ? { y: y - 1, m: 12 } : { y, m: m - 1 };
+  const next = m === 12 ? { y: y + 1, m: 1 } : { y, m: m + 1 };
+  res.render('bookings/calendar', {
+    title: 'Calendario prenotazioni',
+    y, m, byDay, firstDow, daysInMonth, prev, next, total: bookings.length,
+  });
+}));
+
 router.get('/new', A(async (req, res) => {
   const [plans, events] = await Promise.all([
     prisma.plan.findMany({ orderBy: { sort: 'asc' } }),

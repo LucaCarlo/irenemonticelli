@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title><%= title %> — Reserva — Irene Monticelli</title>
+<link rel="icon" href="/favicon.ico">
+<style>
+  :root{--ink:#1c1f26;--mut:#7a8190;--line:#e7e9ee;--accent:<%= plan.color || '#e0aa00' %>}
+  *{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;color:var(--ink);background:#f6f6f4;line-height:1.55}
+  .wrap{max-width:860px;margin:0 auto;padding:28px 18px 60px}
+  .top{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+  .top a{color:var(--mut);text-decoration:none;font-size:14px}
+  .card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:26px;margin-bottom:18px}
+  .pack-head{border-left:5px solid var(--accent);padding-left:16px}
+  h1{font-size:26px;margin:.1em 0}
+  .price{font-size:30px;font-weight:800;color:var(--accent)}
+  .muted{color:var(--mut)}.sm{font-size:13px}
+  h2{font-size:16px;margin:22px 0 10px;text-transform:uppercase;letter-spacing:.06em}
+  label{display:block;font-weight:600;font-size:13px;margin:12px 0 5px}
+  input,select{width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:9px;font-size:15px;font-family:inherit}
+  input:focus,select:focus{outline:2px solid var(--accent)}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .opt{display:flex;align-items:center;gap:10px;border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin:8px 0;cursor:pointer}
+  .opt input{width:auto}
+  .opt.sel{border-color:var(--accent);background:rgba(0,0,0,.02)}
+  .opt b{font-size:16px}.opt .p{margin-left:auto;font-weight:800;color:var(--accent)}
+  .lesson{border:1px dashed var(--line);border-radius:10px;padding:12px 14px;margin:10px 0}
+  .day-row{display:flex;align-items:center;gap:14px;border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin:8px 0;flex-wrap:wrap}
+  .day-row .n{font-weight:700;min-width:150px}
+  .seg{display:flex;gap:8px}
+  .seg label{display:flex;align-items:center;gap:6px;margin:0;font-weight:600;border:1px solid var(--line);border-radius:8px;padding:7px 12px;cursor:pointer}
+  .chk{display:flex;gap:10px;align-items:flex-start;margin:14px 0;font-weight:500}
+  .chk input{width:18px;height:18px;margin-top:2px}
+  .err{background:#fdecec;border:1px solid #f3c9c9;color:#b53636;padding:12px 16px;border-radius:10px;margin-bottom:16px;font-size:14px}
+  .pay{background:var(--accent);color:#fff;border:0;border-radius:10px;padding:15px 22px;font-size:16px;font-weight:800;cursor:pointer;width:100%}
+  .pay:hover{filter:brightness(.94)}
+  .tot{display:flex;justify-content:space-between;align-items:center;font-size:18px;font-weight:800;margin:18px 0}
+  .badge{display:inline-block;background:var(--accent);color:#fff;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;text-transform:uppercase;letter-spacing:.05em}
+  .hidden{display:none}
+  @media(max-width:640px){.row{grid-template-columns:1fr}.day-row .n{min-width:auto;width:100%}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <a href="/pro-dance">&larr; Volver a Pro Dance</a>
+    <a href="/">Irene Monticelli</a>
+  </div>
+
+  <% if (error) { %><div class="err"><%= error %></div><% } %>
+
+  <div class="card">
+    <div class="pack-head">
+      <% if (plan.badge) { %><span class="badge"><%= plan.badge %></span><% } %>
+      <h1><%= plan.name %></h1>
+      <div class="muted"><%= event ? event.title : '' %><% if (event && event.location) { %> · <%= event.location %><% } %></div>
+      <p class="muted sm"><%= plan.description %></p>
+    </div>
+  </div>
+
+  <form method="post" action="/reserva/<%= plan.slug %>" class="card" id="bk">
+    <% if (plan.bookingMode === 'single_lessons') { %>
+      <h2>Elige tu fórmula</h2>
+      <% (pricing.options||[]).forEach(function(o,i){ %>
+        <label class="opt">
+          <input type="radio" name="count" value="<%= o.count %>" data-price="<%= o.price %>" <%= i===0?'checked':'' %>>
+          <b><%= o.count %> clase<%= o.count>1?'s':'' %></b>
+          <span class="p"><%= o.price %> €</span>
+        </label>
+      <% }) %>
+      <h2>Día y horario de cada clase</h2>
+      <div id="lessons"></div>
+    <% } else if (plan.bookingMode === 'red') { %>
+      <h2>Para cada día: mañana o tarde</h2>
+      <% days.forEach(function(d){ %>
+        <div class="day-row">
+          <span class="n"><%= d.label %></span>
+          <div class="seg">
+            <label><input type="radio" name="day_<%= d.iso %>" value="AM" required> Mañana</label>
+            <label><input type="radio" name="day_<%= d.iso %>" value="PM"> Tarde</label>
+          </div>
+        </div>
+      <% }) %>
+      <p class="muted sm">3 clases al día durante los <%= days.length %> días.</p>
+    <% } else if (plan.bookingMode === 'junior') { %>
+      <h2>Programa</h2>
+      <p>Todos los días por la mañana, de <strong>9:30 a 12:30</strong> (<%= days.length %> días). No hay que elegir horario.</p>
+    <% } else { %>
+      <h2>Programa</h2>
+      <p>Acceso libre a todas las clases de los <%= days.length %> días. No hay que elegir nada.</p>
+    <% } %>
+
+    <h2>Tus datos</h2>
+    <div class="row">
+      <div><label>Nombre</label><input type="text" name="firstName" required></div>
+      <div><label>Apellidos</label><input type="text" name="lastName" required></div>
+    </div>
+    <div class="row">
+      <div><label>Email</label><input type="email" name="email" required></div>
+      <div><label>Teléfono</label><input type="tel" name="phone" required></div>
+    </div>
+    <label>Fecha de nacimiento</label>
+    <input type="date" name="birthDate" id="bd" required>
+
+    <div class="chk hidden" id="parentBox">
+      <input type="checkbox" name="parentalConsent" id="pc">
+      <label for="pc" style="margin:0;font-weight:600">Soy el padre/madre/tutor y autorizo la participación del menor (obligatorio para menores de 18 años).</label>
+    </div>
+    <div class="chk">
+      <input type="checkbox" name="imageConsent" id="ic" required>
+      <label for="ic" style="margin:0;font-weight:600">Autorizo el uso de imágenes/vídeos de la actividad (obligatorio).</label>
+    </div>
+
+    <div class="tot"><span>Total</span><span id="tot"><%= (plan.bookingMode==='single_lessons' ? (pricing.options&&pricing.options[0]?pricing.options[0].price:0) : currentPrice) %> €</span></div>
+    <button class="pay" type="submit">Pagar y reservar</button>
+    <p class="muted sm" style="text-align:center;margin-top:10px">Pago seguro con Stripe (tarjeta y otros métodos).</p>
+  </form>
+</div>
+
+<script>
+(function(){
+  var mode = <%- JSON.stringify(plan.bookingMode) %>;
+  var DAYS = <%- JSON.stringify(days) %>;
+  var SLOTS = <%- JSON.stringify(slots) %>;
+  var tot = document.getElementById('tot');
+
+  if (mode === 'single_lessons') {
+    var box = document.getElementById('lessons');
+    function dayOpts(){ return DAYS.map(function(d){return '<option value="'+d.iso+'">'+d.label+'</option>';}).join(''); }
+    function slotOpts(){ return SLOTS.map(function(s){return '<option value="'+s+'">'+s+'</option>';}).join(''); }
+    function render(n, price){
+      var h='';
+      for(var i=0;i<n;i++){
+        h+='<div class="lesson"><strong>Clase '+(i+1)+'</strong><div class="row">'+
+           '<div><label>Día</label><select name="lesson_day_'+i+'" required>'+dayOpts()+'</select></div>'+
+           '<div><label>Horario</label><select name="lesson_slot_'+i+'" required>'+slotOpts()+'</select></div></div></div>';
+      }
+      box.innerHTML=h;
+      tot.textContent = price + ' €';
+    }
+    document.querySelectorAll('input[name=count]').forEach(function(r){
+      r.addEventListener('change',function(){ render(parseInt(r.value,10), r.getAttribute('data-price')); });
+    });
+    var c=document.querySelector('input[name=count]:checked'); render(parseInt(c.value,10), c.getAttribute('data-price'));
+    document.querySelectorAll('.opt input').forEach(function(r){r.addEventListener('change',function(){
+      document.querySelectorAll('.opt').forEach(function(o){o.classList.remove('sel');});
+      if(r.checked) r.closest('.opt').classList.add('sel');
+    });});
+    var cc=document.querySelector('.opt input:checked'); if(cc) cc.closest('.opt').classList.add('sel');
+  }
+
+  // Consenso genitori se minorenne
+  var bd=document.getElementById('bd'), pbox=document.getElementById('parentBox'), pc=document.getElementById('pc');
+  function checkAge(){
+    if(!bd.value){pbox.classList.add('hidden');pc.required=false;return;}
+    var b=new Date(bd.value), n=new Date(), a=n.getFullYear()-b.getFullYear(), m=n.getMonth()-b.getMonth();
+    if(m<0||(m===0&&n.getDate()<b.getDate()))a--;
+    if(a<18){pbox.classList.remove('hidden');pc.required=true;} else {pbox.classList.add('hidden');pc.required=false;pc.checked=false;}
+  }
+  bd.addEventListener('change',checkAge); checkAge();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,46 @@
+<%- include('../partials/header') %>
+<%
+  var MESI=['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
+  var DOW=['Lun','Mar','Mer','Gio','Ven','Sab','Dom'];
+%>
+<div class="card">
+  <div class="card-head">
+    <h2><%= MESI[m-1] %> <%= y %> <span class="muted" style="font-size:14px">· <%= total %> prenotazioni</span></h2>
+    <div class="row-actions">
+      <a class="btn btn-ghost btn-sm" href="/admin/bookings/calendar?y=<%= prev.y %>&m=<%= prev.m %>">&larr; Mese prec.</a>
+      <a class="btn btn-ghost btn-sm" href="/admin/bookings/calendar?y=<%= next.y %>&m=<%= next.m %>">Mese succ. &rarr;</a>
+      <a class="btn btn-ghost btn-sm" href="/admin/bookings">Vista lista</a>
+    </div>
+  </div>
+  <div class="cal">
+    <% DOW.forEach(function(d){ %><div class="cal-h"><%= d %></div><% }) %>
+    <% for (var i=0;i<firstDow;i++){ %><div class="cal-cell empty"></div><% } %>
+    <% for (var day=1; day<=daysInMonth; day++){ var items=byDay[day]||[]; %>
+      <div class="cal-cell">
+        <div class="cal-day"><%= day %><% if(items.length){ %><span class="cal-badge"><%= items.length %></span><% } %></div>
+        <% items.slice(0,4).forEach(function(b){ %>
+          <a class="cal-ev" href="/admin/bookings/<%= b.id %>/edit" title="<%= b.customerName %> — <%= b.plan?b.plan.name:'' %>">
+            <span class="dot <%= b.status %>"></span><%= b.customerName %>
+          </a>
+        <% }) %>
+        <% if(items.length>4){ %><div class="muted" style="font-size:11px">+<%= items.length-4 %> altre</div><% } %>
+      </div>
+    <% } %>
+  </div>
+  <p class="muted" style="font-size:12px;margin-top:12px">
+    <span class="dot confirmed"></span> Confermata &nbsp; <span class="dot pending"></span> In attesa &nbsp; <span class="dot cancelled"></span> Annullata
+  </p>
+</div>
+<style>
+  .cal{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+  .cal-h{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);padding:6px 4px;text-align:center}
+  .cal-cell{min-height:96px;border:1px solid var(--line);border-radius:9px;padding:6px;background:#fff}
+  .cal-cell.empty{background:transparent;border:0}
+  .cal-day{font-weight:700;font-size:13px;display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
+  .cal-badge{background:var(--brand);color:#1c1408;border-radius:20px;font-size:10px;padding:1px 7px}
+  .cal-ev{display:flex;align-items:center;gap:5px;font-size:11.5px;background:#f4f5f8;border-radius:6px;padding:3px 6px;margin:2px 0;text-decoration:none;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .dot{width:8px;height:8px;border-radius:50%;display:inline-block;flex-shrink:0;background:#999}
+  .dot.confirmed{background:#1f9d55}.dot.pending{background:#c98a00}.dot.cancelled{background:#d23f3f}
+  @media(max-width:760px){.cal-cell{min-height:70px}.cal-ev{font-size:10px}}
+</style>
+<%- include('../partials/footer') %>

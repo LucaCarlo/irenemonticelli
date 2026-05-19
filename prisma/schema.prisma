@@ -71,9 +71,13 @@ model Plan {
   badge       String    @default("")
   color       String    @default("#e0aa00")
   description String    @default("")
-  // none = niente scelta (tutti i giorni) | three_days_ampm = tutti i giorni, mattina/pomeriggio
-  // | alldays_time = tutti i giorni, scelta orario | date_time = scelta giorno + orario
-  bookingMode String    @default("date_time")
+  // single_lessons = scegli 1/3/6 lezioni, giorno+orario per lezione
+  // gold = nessuna scelta, prezzo a fasce | red = per giorno mattina/pomeriggio, prezzo a fasce
+  // junior = nessuna scelta (mattine fisse), prezzo a fasce
+  bookingMode String    @default("single_lessons")
+  // JSON prezzi: {"type":"lessons","options":[{"count":1,"price":35}...]}
+  //          oppure {"type":"tiers","base":360,"tiers":[{"until":"2026-06-15","price":288}...]}
+  pricingJson String    @default("")
   ctaLabel    String    @default("Reserva")
   active      Boolean   @default(true)
   sort        Int       @default(0)
@@ -92,6 +96,8 @@ model Event {
   endDate     DateTime?
   location    String    @default("")
   description String    @default("")
+  // Orari modificabili da dashboard: JSON array, es. ["9:30","11:15","12:30","15:30","16:45","18:00"]
+  slotsJson   String    @default("")
   active      Boolean   @default(true)
   sort        Int       @default(0)
   plans       Plan[]
@@ -102,19 +108,32 @@ model Event {
 
 model Booking {
   id            Int      @id @default(autoincrement())
-  customerName  String
+  customerName  String   @default("")
+  firstName     String   @default("")
+  lastName      String   @default("")
   customerEmail String
   phone         String   @default("")
+  birthDate     DateTime?
+  isMinor       Boolean  @default(false)
+  parentalConsent Boolean @default(false)
+  imageConsent  Boolean  @default(false)
   planId        Int?
   plan          Plan?    @relation(fields: [planId], references: [id])
   eventId       Int?
   event         Event?   @relation(fields: [eventId], references: [id])
   dateLabel     String   @default("")
   slot          String   @default("")
+  // dettaglio selezione (lezioni/giorni/slot) JSON
+  itemsJson     String   @default("")
   method        String   @default("")
   amount        Float    @default(0)
+  currency      String   @default("EUR")
   // pending | confirmed | cancelled
   status        String   @default("pending")
+  // unpaid | paid | failed | refunded
+  paymentStatus String   @default("unpaid")
+  stripeSessionId String @default("")
+  stripePaymentIntent String @default("")
   notes         String   @default("")
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt

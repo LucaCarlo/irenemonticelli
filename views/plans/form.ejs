@@ -35,6 +35,14 @@
       </div>
       <div class="field"><label class="field-lbl">Ordine</label><input type="number" name="sort" value="<%= plan ? plan.sort : 0 %>"></div>
       <div class="field field-full"><label class="field-lbl">Descrizione</label><textarea name="description" rows="3"><%= plan ? plan.description : '' %></textarea></div>
+      <div class="field field-full">
+        <label class="field-lbl">Prezzi (JSON)</label>
+        <textarea name="pricingJson" rows="4" style="font-family:monospace;font-size:13px"><%= plan ? plan.pricingJson : '' %></textarea>
+        <div class="field-help">
+          Single (lezioni): <code>{"type":"lessons","options":[{"count":1,"price":35},{"count":3,"price":82.5},{"count":6,"price":120}]}</code><br>
+          Gold/Red/Junior (fasce): <code>{"type":"tiers","base":360,"tiers":[{"until":"2026-06-15","price":288},{"until":"2026-07-10","price":324}]}</code> — prezzo = fascia attiva in base alla data, altrimenti <code>base</code>.
+        </div>
+      </div>
       <div class="field"><label class="switch"><input type="checkbox" name="active" value="1" <%= !plan || plan.active ? 'checked':'' %>><span>Attivo (visibile)</span></label></div>
     </div>
     <div class="form-actions">
