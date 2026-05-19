@@ -1,0 +1,32 @@
+<%- include('../partials/header') %>
+<div class="card">
+  <div class="card-head">
+    <h2>Eventi</h2>
+    <a class="btn btn-primary" href="/admin/events/new">+ Nuovo evento</a>
+  </div>
+  <% if (!events.length) { %><p class="muted">Nessun evento.</p><% } else { %>
+  <div class="table-wrap">
+  <table class="table">
+    <thead><tr><th>Titolo</th><th>Date</th><th>Sede</th><th>Prenotazioni</th><th>Stato</th><th></th></tr></thead>
+    <tbody>
+    <% events.forEach(function(e){
+       var fmt=function(d){ return d ? new Date(d).toLocaleDateString('it-IT') : ''; }; %>
+      <tr>
+        <td><%= e.title %><div class="muted" style="font-size:12px"><%= e.subtitle %></div></td>
+        <td><%= fmt(e.startDate) %><%= e.endDate ? ' — ' + fmt(e.endDate) : '' %></td>
+        <td><%= e.location %></td>
+        <td><%= e._count.bookings %></td>
+        <td><% if (e.active) { %><span class="badge badge-ok">attivo</span><% } else { %><span class="badge badge-off">nascosto</span><% } %></td>
+        <td class="row-actions">
+          <a class="btn btn-ghost btn-sm" href="/admin/events/<%= e.id %>/edit">Modifica</a>
+          <form method="post" action="/admin/events/<%= e.id %>/toggle"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="btn btn-ghost btn-sm"><%= e.active ? 'Nascondi' : 'Attiva' %></button></form>
+          <form method="post" action="/admin/events/<%= e.id %>/delete" onsubmit="return confirm('Eliminare questo evento?')"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="btn btn-danger btn-sm">Elimina</button></form>
+        </td>
+      </tr>
+    <% }) %>
+    </tbody>
+  </table>
+  </div>
+  <% } %>
+</div>
+<%- include('../partials/footer') %>

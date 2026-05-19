@@ -15,6 +15,15 @@ const SCHEMA = {
       { key: 'favicon_media_id', label: 'Favicon (media)', type: 'media', help: 'Usata sia in admin che nel sito pubblico' },
     ],
   },
+  contatti: {
+    label: 'Contatti',
+    fields: [
+      { key: 'contact_phone', label: 'Telefono', type: 'text', def: '+34 672047938' },
+      { key: 'contact_email', label: 'Email', type: 'text', def: 'irene.monticelli@artepassione.it' },
+      { key: 'contact_academia', label: 'Academia', type: 'text', def: 'Academia New Dance Life' },
+      { key: 'contact_ciudad', label: 'Ciudad', type: 'text', def: 'Santa Pola - Alicante' },
+    ],
+  },
   smtp: {
     label: 'SMTP / Email',
     fields: [

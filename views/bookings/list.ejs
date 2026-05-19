@@ -1,0 +1,44 @@
+<%- include('../partials/header') %>
+<%
+  function cnt(s){ var r=counts.find(function(c){return c.status===s;}); return r? r._count._all : 0; }
+  var labels={pending:'In attesa',confirmed:'Confermata',cancelled:'Annullata'};
+  var badge={pending:'badge-warn',confirmed:'badge-ok',cancelled:'badge-off'};
+%>
+<div class="card">
+  <div class="card-head">
+    <h2>Prenotazioni</h2>
+    <a class="btn btn-primary" href="/admin/bookings/new">+ Nuova prenotazione</a>
+  </div>
+  <div class="tabs">
+    <a class="tab <%= status==='' ? 'active':'' %>" href="/admin/bookings">Tutte</a>
+    <% STATUSES.forEach(function(s){ %>
+      <a class="tab <%= status===s ? 'active':'' %>" href="/admin/bookings?status=<%= s %>"><%= labels[s] %> (<%= cnt(s) %>)</a>
+    <% }) %>
+  </div>
+  <% if (!bookings.length) { %><p class="muted">Nessuna prenotazione.</p><% } else { %>
+  <div class="table-wrap">
+  <table class="table">
+    <thead><tr><th>Cliente</th><th>Contatti</th><th>Piano / Evento</th><th>Data / Orario</th><th>Importo</th><th>Stato</th><th></th></tr></thead>
+    <tbody>
+    <% bookings.forEach(function(b){ %>
+      <tr>
+        <td><%= b.customerName %><div class="muted" style="font-size:12px"><%= new Date(b.createdAt).toLocaleString('it-IT') %></div></td>
+        <td style="font-size:12.5px"><%= b.customerEmail %><br><%= b.phone %></td>
+        <td><%= b.plan ? b.plan.name : '' %><%= b.event ? b.event.title : '' %><%= (!b.plan && !b.event) ? '—' : '' %></td>
+        <td><%= b.dateLabel %><% if (b.slot) { %><br><span class="muted"><%= b.slot %></span><% } %></td>
+        <td><%= b.amount ? b.amount + ' &euro;' : '—' %></td>
+        <td><span class="badge <%= badge[b.status] %>"><%= labels[b.status]||b.status %></span></td>
+        <td class="row-actions">
+          <a class="btn btn-ghost btn-sm" href="/admin/bookings/<%= b.id %>/edit">Apri</a>
+          <% if (b.status!=='confirmed') { %><form method="post" action="/admin/bookings/<%= b.id %>/status"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><input type="hidden" name="status" value="confirmed"><button class="btn btn-ghost btn-sm">Conferma</button></form><% } %>
+          <% if (b.status!=='cancelled') { %><form method="post" action="/admin/bookings/<%= b.id %>/status"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><input type="hidden" name="status" value="cancelled"><button class="btn btn-ghost btn-sm">Annulla</button></form><% } %>
+          <form method="post" action="/admin/bookings/<%= b.id %>/delete" onsubmit="return confirm('Eliminare questa prenotazione?')"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="btn btn-danger btn-sm">Elimina</button></form>
+        </td>
+      </tr>
+    <% }) %>
+    </tbody>
+  </table>
+  </div>
+  <% } %>
+</div>
+<%- include('../partials/footer') %>

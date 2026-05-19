@@ -62,6 +62,59 @@ model Media {
   createdAt     DateTime @default(now())
 }
 
+model Plan {
+  id          Int       @id @default(autoincrement())
+  slug        String    @unique
+  name        String
+  price       Float     @default(0)
+  currency    String    @default("EUR")
+  badge       String    @default("")
+  description String    @default("")
+  // none = niente scelta | time = scelta orario | three_days_ampm = 3 giorni, mattina/pomeriggio | date_time = data + orario
+  bookingMode String    @default("date_time")
+  ctaLabel    String    @default("Reserva")
+  active      Boolean   @default(true)
+  sort        Int       @default(0)
+  bookings    Booking[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Event {
+  id          Int       @id @default(autoincrement())
+  title       String
+  subtitle    String    @default("")
+  startDate   DateTime?
+  endDate     DateTime?
+  location    String    @default("")
+  description String    @default("")
+  active      Boolean   @default(true)
+  sort        Int       @default(0)
+  bookings    Booking[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Booking {
+  id            Int      @id @default(autoincrement())
+  customerName  String
+  customerEmail String
+  phone         String   @default("")
+  planId        Int?
+  plan          Plan?    @relation(fields: [planId], references: [id])
+  eventId       Int?
+  event         Event?   @relation(fields: [eventId], references: [id])
+  dateLabel     String   @default("")
+  slot          String   @default("")
+  method        String   @default("")
+  amount        Float    @default(0)
+  // pending | confirmed | cancelled
+  status        String   @default("pending")
+  notes         String   @default("")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
 model Session {
   id        String   @id
   sid       String   @unique

@@ -99,6 +99,50 @@ async function runSeed() {
   } catch (e) {
     console.error('[seedSiteLogo]', e.message);
   }
+
+  try {
+    await seedContent();
+  } catch (e) {
+    console.error('[seedContent]', e.message);
+  }
+}
+
+// Dati base di Piani ed Eventi (creati solo se mancanti).
+async function seedContent() {
+  const plans = [
+    { slug: 'pack-single', name: 'Single Class', bookingMode: 'date_time', badge: '', sort: 1,
+      description: 'Una clase a elegir: dia y horario.' },
+    { slug: 'pack-gold', name: 'Pack Gold', bookingMode: 'none', badge: 'Completo', sort: 2,
+      description: 'Pack entero: no hace falta elegir dia ni horario.' },
+    { slug: 'pack-red', name: 'Pack Red', bookingMode: 'three_days_ampm', badge: '', sort: 3,
+      description: 'Los 3 dias, eligiendo horario de manana o de tarde.' },
+    { slug: 'pack-junior', name: 'Pack Junior', bookingMode: 'date_time', badge: '', sort: 4,
+      description: 'Pack junior.' },
+  ];
+  for (const p of plans) {
+    const exists = await prisma.plan.findUnique({ where: { slug: p.slug } });
+    if (!exists) {
+      await prisma.plan.create({
+        data: { ...p, price: 0, currency: 'EUR', ctaLabel: 'Reserva', active: true },
+      });
+    }
+  }
+
+  const evCount = await prisma.event.count();
+  if (evCount === 0) {
+    await prisma.event.create({
+      data: {
+        title: 'Pro Dance Experience',
+        subtitle: 'Tres dias de danza',
+        startDate: new Date('2026-07-29'),
+        endDate: new Date('2026-07-31'),
+        location: 'Santa Pola - Alicante',
+        description: 'Tres dias de danza frente al Mediterraneo.',
+        active: true,
+        sort: 1,
+      },
+    });
+  }
 }
 
 module.exports = { runSeed };

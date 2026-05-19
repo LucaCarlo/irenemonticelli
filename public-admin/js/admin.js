@@ -75,7 +75,9 @@
     if (!drawer) return;
     drawer.hidden = false;
     body.innerHTML = '<p class="muted">Caricamento...</p>';
-    fetch('/admin/media/' + id + '.json').then(function (r) { return r.json(); }).then(function (m) {
+    fetch('/admin/media/' + id + '.json', { credentials: 'same-origin' })
+      .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+      .then(function (m) {
       var img = m.isImage ? '<img class="detail-img" src="' + m.path + '" alt="">' : '';
       body.innerHTML = img +
         row('Nome originale', escapeHtml(m.originalName)) +
@@ -101,6 +103,9 @@
         f.innerHTML = '<input type="hidden" name="_csrf" value="' + (window.MEDIA_CSRF || '') + '">';
         document.body.appendChild(f); f.submit();
       });
+    })
+    .catch(function (e) {
+      body.innerHTML = '<div class="flash flash-error">Impossibile caricare il dettaglio (' + e.message + '). Chiudi e riprova.</div>';
     });
     function row(k, v) { return '<div class="detail-row"><span>' + k + '</span><span>' + v + '</span></div>'; }
   }
@@ -158,7 +163,9 @@
       pickerModal.hidden = false;
       var g = $('#pickerGrid');
       g.innerHTML = '<p class="muted">Caricamento...</p>';
-      fetch('/admin/media/picker.json').then(function (r) { return r.json(); }).then(function (list) {
+      fetch('/admin/media/picker.json', { credentials: 'same-origin' })
+        .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+        .then(function (list) {
         if (!list.length) { g.innerHTML = '<p class="muted">Nessuna immagine. Carica prima qualcosa in Media.</p>'; return; }
         g.innerHTML = '';
         list.forEach(function (m) {
@@ -173,6 +180,9 @@
           });
           g.appendChild(t);
         });
+      })
+      .catch(function (e) {
+        g.innerHTML = '<div class="flash flash-error">Impossibile caricare la libreria (' + e.message + ').</div>';
       });
     }
   }

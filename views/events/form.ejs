@@ -1,0 +1,23 @@
+<%- include('../partials/header') %>
+<%
+  function dval(d){ if(!d) return ''; var x=new Date(d); return x.toISOString().slice(0,10); }
+%>
+<div class="card form-card">
+  <h2><%= ev ? 'Modifica evento' : 'Nuovo evento' %></h2>
+  <form method="post" action="<%= ev ? '/admin/events/'+ev.id : '/admin/events' %>" class="form">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <div class="field"><label class="field-lbl">Titolo</label><input type="text" name="title" required value="<%= ev ? ev.title : '' %>"></div>
+    <div class="field"><label class="field-lbl">Sottotitolo</label><input type="text" name="subtitle" value="<%= ev ? ev.subtitle : '' %>"></div>
+    <div class="field"><label class="field-lbl">Data inizio</label><input type="date" name="startDate" value="<%= ev ? dval(ev.startDate) : '' %>"></div>
+    <div class="field"><label class="field-lbl">Data fine</label><input type="date" name="endDate" value="<%= ev ? dval(ev.endDate) : '' %>"></div>
+    <div class="field"><label class="field-lbl">Sede</label><input type="text" name="location" value="<%= ev ? ev.location : '' %>"></div>
+    <div class="field"><label class="field-lbl">Descrizione</label><input type="text" name="description" value="<%= ev ? ev.description : '' %>"></div>
+    <div class="field"><label class="field-lbl">Ordine</label><input type="number" name="sort" value="<%= ev ? ev.sort : 0 %>"></div>
+    <div class="field"><label class="switch"><input type="checkbox" name="active" value="1" <%= !ev || ev.active ? 'checked':'' %>><span>Attivo (visibile)</span></label></div>
+    <div class="form-actions">
+      <button class="btn btn-primary"><%= ev ? 'Salva' : 'Crea' %></button>
+      <a class="btn btn-ghost" href="/admin/events">Annulla</a>
+    </div>
+  </form>
+</div>
+<%- include('../partials/footer') %>

@@ -1,0 +1,28 @@
+<%- include('../partials/header') %>
+<div class="card form-card">
+  <h2><%= plan ? 'Modifica piano' : 'Nuovo piano' %></h2>
+  <form method="post" action="<%= plan ? '/admin/plans/'+plan.id : '/admin/plans' %>" class="form">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <div class="field"><label class="field-lbl">Nome</label><input type="text" name="name" required value="<%= plan ? plan.name : '' %>"></div>
+    <div class="field"><label class="field-lbl">Slug</label><input type="text" name="slug" required value="<%= plan ? plan.slug : '' %>" placeholder="es. pack-gold"><div class="field-help">Identificativo usato per collegare il pacchetto al sito.</div></div>
+    <div class="field"><label class="field-lbl">Prezzo</label><input type="number" step="0.01" name="price" value="<%= plan ? plan.price : 0 %>"></div>
+    <div class="field"><label class="field-lbl">Valuta</label><input type="text" name="currency" value="<%= plan ? plan.currency : 'EUR' %>"></div>
+    <div class="field"><label class="field-lbl">Badge (opzionale)</label><input type="text" name="badge" value="<%= plan ? plan.badge : '' %>" placeholder="es. Mas popular"></div>
+    <div class="field"><label class="field-lbl">Descrizione</label><input type="text" name="description" value="<%= plan ? plan.description : '' %>"></div>
+    <div class="field">
+      <label class="field-lbl">Comportamento prenotazione</label>
+      <select name="bookingMode">
+        <% MODES.forEach(function(m){ %><option value="<%= m.v %>" <%= plan && plan.bookingMode===m.v ? 'selected':'' %>><%= m.l %></option><% }) %>
+      </select>
+      <div class="field-help">Single: data+orario · Gold: nessuna scelta · Red: 3 giorni mattina/pomeriggio.</div>
+    </div>
+    <div class="field"><label class="field-lbl">Etichetta bottone</label><input type="text" name="ctaLabel" value="<%= plan ? plan.ctaLabel : 'Reserva' %>"></div>
+    <div class="field"><label class="field-lbl">Ordine</label><input type="number" name="sort" value="<%= plan ? plan.sort : 0 %>"></div>
+    <div class="field"><label class="switch"><input type="checkbox" name="active" value="1" <%= !plan || plan.active ? 'checked':'' %>><span>Attivo (visibile)</span></label></div>
+    <div class="form-actions">
+      <button class="btn btn-primary"><%= plan ? 'Salva' : 'Crea' %></button>
+      <a class="btn btn-ghost" href="/admin/plans">Annulla</a>
+    </div>
+  </form>
+</div>
+<%- include('../partials/footer') %>

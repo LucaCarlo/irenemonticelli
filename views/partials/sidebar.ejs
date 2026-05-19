@@ -16,53 +16,59 @@
   <nav class="sb-nav">
     <div class="sb-group">
       <div class="sb-group-title">Panoramica</div>
-      <a class="sb-link <%= path === '/admin' ? 'active' : '' %>" href="/admin">Dashboard</a>
+      <a class="sb-link <%= path === '/admin' ? 'active' : '' %>" href="/admin"><%- include('icon',{name:'dashboard'}) %><span>Dashboard</span></a>
     </div>
 
     <div class="sb-group">
       <div class="sb-group-title">Contenuti</div>
-      <span class="sb-link disabled">Eventi <em class="soon">presto</em></span>
-      <span class="sb-link disabled">Pagine <em class="soon">presto</em></span>
+      <% if (can('events.manage')) { %>
+        <a class="sb-link <%= isActive('/admin/events') ? 'active' : '' %>" href="/admin/events"><%- include('icon',{name:'events'}) %><span>Eventi</span></a>
+      <% } %>
+      <span class="sb-link disabled"><%- include('icon',{name:'pages'}) %><span>Pagine</span><em class="soon">presto</em></span>
       <% if (can('media.view')) { %>
-        <a class="sb-link <%= isActive('/admin/media') ? 'active' : '' %>" href="/admin/media">Media</a>
+        <a class="sb-link <%= isActive('/admin/media') ? 'active' : '' %>" href="/admin/media"><%- include('icon',{name:'media'}) %><span>Media</span></a>
       <% } %>
     </div>
 
     <div class="sb-group">
       <div class="sb-group-title">Prenotazioni</div>
-      <span class="sb-link disabled">Piani / Pacchetti <em class="soon">presto</em></span>
-      <span class="sb-link disabled">Prenotazioni <em class="soon">presto</em></span>
-      <span class="sb-link disabled">Calendario <em class="soon">presto</em></span>
+      <% if (can('plans.manage')) { %>
+        <a class="sb-link <%= isActive('/admin/plans') ? 'active' : '' %>" href="/admin/plans"><%- include('icon',{name:'plans'}) %><span>Piani / Pacchetti</span></a>
+      <% } %>
+      <% if (can('bookings.manage')) { %>
+        <a class="sb-link <%= isActive('/admin/bookings') ? 'active' : '' %>" href="/admin/bookings"><%- include('icon',{name:'bookings'}) %><span>Prenotazioni</span></a>
+      <% } %>
+      <span class="sb-link disabled"><%- include('icon',{name:'calendar'}) %><span>Calendario</span><em class="soon">presto</em></span>
     </div>
 
     <div class="sb-group">
       <div class="sb-group-title">Comunicazione</div>
-      <span class="sb-link disabled">Newsletter <em class="soon">presto</em></span>
-      <span class="sb-link disabled">Messaggi contatto <em class="soon">presto</em></span>
+      <span class="sb-link disabled"><%- include('icon',{name:'newsletter'}) %><span>Newsletter</span><em class="soon">presto</em></span>
+      <span class="sb-link disabled"><%- include('icon',{name:'messages'}) %><span>Messaggi contatto</span><em class="soon">presto</em></span>
     </div>
 
     <div class="sb-group">
       <div class="sb-group-title">Amministrazione</div>
       <% if (can('users.view')) { %>
-        <a class="sb-link <%= isActive('/admin/users') ? 'active' : '' %>" href="/admin/users">Utenti admin</a>
+        <a class="sb-link <%= isActive('/admin/users') ? 'active' : '' %>" href="/admin/users"><%- include('icon',{name:'users'}) %><span>Utenti admin</span></a>
       <% } %>
       <% if (can('roles.view')) { %>
-        <a class="sb-link <%= isActive('/admin/roles') ? 'active' : '' %>" href="/admin/roles">Ruoli</a>
+        <a class="sb-link <%= isActive('/admin/roles') ? 'active' : '' %>" href="/admin/roles"><%- include('icon',{name:'roles'}) %><span>Ruoli</span></a>
       <% } %>
       <% if (can('settings.view')) { %>
-        <a class="sb-link <%= path === '/admin/settings' ? 'active' : '' %>" href="/admin/settings">Impostazioni</a>
+        <a class="sb-link <%= path === '/admin/settings' ? 'active' : '' %>" href="/admin/settings"><%- include('icon',{name:'settings'}) %><span>Impostazioni</span></a>
       <% } %>
     </div>
 
     <div class="sb-group">
       <div class="sb-group-title">Sistema</div>
       <% if (can('stats.view')) { %>
-        <a class="sb-link <%= isActive('/admin/settings/stats') ? 'active' : '' %>" href="/admin/settings/stats">Statistiche</a>
+        <a class="sb-link <%= isActive('/admin/settings/stats') ? 'active' : '' %>" href="/admin/settings/stats"><%- include('icon',{name:'stats'}) %><span>Statistiche</span></a>
       <% } %>
       <% if (can('backup.manage')) { %>
-        <a class="sb-link <%= isActive('/admin/settings/backup') ? 'active' : '' %>" href="/admin/settings/backup">Backup</a>
+        <a class="sb-link <%= isActive('/admin/settings/backup') ? 'active' : '' %>" href="/admin/settings/backup"><%- include('icon',{name:'backup'}) %><span>Backup</span></a>
       <% } %>
-      <span class="sb-link disabled">Log attivita <em class="soon">presto</em></span>
+      <span class="sb-link disabled"><%- include('icon',{name:'logs'}) %><span>Log attivita</span><em class="soon">presto</em></span>
     </div>
   </nav>
 

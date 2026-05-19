@@ -1,0 +1,35 @@
+<%- include('../partials/header') %>
+<div class="card form-card">
+  <h2><%= booking ? 'Modifica prenotazione' : 'Nuova prenotazione' %></h2>
+  <form method="post" action="<%= booking ? '/admin/bookings/'+booking.id : '/admin/bookings' %>" class="form">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <div class="field"><label class="field-lbl">Nome cliente</label><input type="text" name="customerName" required value="<%= booking ? booking.customerName : '' %>"></div>
+    <div class="field"><label class="field-lbl">Email</label><input type="email" name="customerEmail" required value="<%= booking ? booking.customerEmail : '' %>"></div>
+    <div class="field"><label class="field-lbl">Telefono</label><input type="text" name="phone" value="<%= booking ? booking.phone : '' %>"></div>
+    <div class="field"><label class="field-lbl">Piano</label>
+      <select name="planId"><option value="">—</option>
+      <% plans.forEach(function(p){ %><option value="<%= p.id %>" <%= booking && booking.planId===p.id ? 'selected':'' %>><%= p.name %></option><% }) %>
+      </select>
+    </div>
+    <div class="field"><label class="field-lbl">Evento</label>
+      <select name="eventId"><option value="">—</option>
+      <% events.forEach(function(e){ %><option value="<%= e.id %>" <%= booking && booking.eventId===e.id ? 'selected':'' %>><%= e.title %></option><% }) %>
+      </select>
+    </div>
+    <div class="field"><label class="field-lbl">Data (etichetta)</label><input type="text" name="dateLabel" value="<%= booking ? booking.dateLabel : '' %>" placeholder="es. 29 Julio 2026"></div>
+    <div class="field"><label class="field-lbl">Orario</label><input type="text" name="slot" value="<%= booking ? booking.slot : '' %>" placeholder="es. 9:30 / Mañana"></div>
+    <div class="field"><label class="field-lbl">Metodo pagamento</label><input type="text" name="method" value="<%= booking ? booking.method : '' %>"></div>
+    <div class="field"><label class="field-lbl">Importo</label><input type="number" step="0.01" name="amount" value="<%= booking ? booking.amount : 0 %>"></div>
+    <div class="field"><label class="field-lbl">Stato</label>
+      <select name="status">
+      <% STATUSES.forEach(function(s){ %><option value="<%= s %>" <%= booking && booking.status===s ? 'selected':'' %>><%= s %></option><% }) %>
+      </select>
+    </div>
+    <div class="field"><label class="field-lbl">Note</label><input type="text" name="notes" value="<%= booking ? booking.notes : '' %>"></div>
+    <div class="form-actions">
+      <button class="btn btn-primary"><%= booking ? 'Salva' : 'Crea' %></button>
+      <a class="btn btn-ghost" href="/admin/bookings">Annulla</a>
+    </div>
+  </form>
+</div>
+<%- include('../partials/footer') %>

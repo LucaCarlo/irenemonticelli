@@ -128,8 +128,19 @@ app.use(async (req, res, next) => {
   next();
 });
 
-// Asset admin + media caricati
-app.use('/public-admin', express.static(config.DIRS.publicAdmin, { maxAge: '7d' }));
+// Versione asset (cambia ad ogni riavvio/deploy) per il cache-busting
+const ASSET_V = String(Date.now());
+app.use((req, res, next) => { res.locals.assetV = ASSET_V; next(); });
+
+// Asset admin: niente cache lunga (con ?v= il browser prende sempre l'ultima)
+app.use(
+  '/public-admin',
+  express.static(config.DIRS.publicAdmin, {
+    maxAge: 0,
+    etag: true,
+    setHeaders: (res) => res.setHeader('Cache-Control', 'no-cache'),
+  })
+);
 app.use('/uploads', express.static(config.DIRS.uploads, { maxAge: '30d' }));
 
 // Favicon condivisa (admin + sito pubblico). Browser la richiede da solo.
@@ -159,6 +170,9 @@ app.use('/admin/settings', requireAuth, enforcePasswordChange, csrfProtect, requ
 app.use('/admin/users', requireAuth, enforcePasswordChange, csrfProtect, require('./routes/users'));
 app.use('/admin/roles', requireAuth, enforcePasswordChange, csrfProtect, require('./routes/roles'));
 app.use('/admin/media', requireAuth, enforcePasswordChange, csrfProtect, require('./routes/media'));
+app.use('/admin/plans', requireAuth, enforcePasswordChange, csrfProtect, require('./routes/plans'));
+app.use('/admin/events', requireAuth, enforcePasswordChange, csrfProtect, require('./routes/events'));
+app.use('/admin/bookings', requireAuth, enforcePasswordChange, csrfProtect, require('./routes/bookings'));
 
 // ---- Sito pubblico statico (pretty URLs, replica nginx) ----
 const SITE = config.DIRS.site;
