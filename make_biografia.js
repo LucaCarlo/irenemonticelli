@@ -60,12 +60,15 @@ const tlRows = TL.map(([y, t]) => `
 const galTiles = GAL.map((g) => `<div class="ph ph-${g.n} reveal"><img loading="lazy" src="${g.src}" alt="${g.a}"><span class="ph-caption">${g.c}</span></div>`).join('\n');
 
 const sideImgs = GAL.slice(0, 3).map((g) => `<figure class="qs-side-fig reveal"><img loading="lazy" src="${g.src}" alt="${g.a}"><figcaption>${g.c}</figcaption></figure>`).join('\n');
-const htlCards = TL.map(([y, t]) => `
-      <div class="qs-htl-card reveal">
-        <div class="qs-htl-year">${y}</div>
-        <div class="qs-htl-line" aria-hidden="true"><span></span></div>
-        <p class="qs-htl-text">${t}</p>
-      </div>`).join('');
+const htlCards = TL.map(([y, t], i) => `
+        <div class="qs-tl2-item ${i % 2 === 0 ? 'qs-up' : 'qs-down'}">
+          <div class="qs-tl2-card">
+            <div class="qs-tl2-year">${y}</div>
+            <p class="qs-tl2-text">${t}</p>
+          </div>
+          <span class="qs-tl2-stem" aria-hidden="true"></span>
+          <span class="qs-tl2-dot" aria-hidden="true"></span>
+        </div>`).join('');
 
 const CONTENT = `
 <style>
@@ -82,16 +85,25 @@ const CONTENT = `
   .qs-side-fig img{display:block;width:100%;height:100%;object-fit:cover;aspect-ratio:4/3;transition:transform .9s ease}
   .qs-side-fig:hover img{transform:scale(1.05)}
   .qs-side-fig figcaption{position:absolute;left:12px;bottom:10px;color:#fff;font-size:12px;letter-spacing:.04em;text-shadow:0 1px 6px rgba(0,0,0,.5)}
-  /* Timeline orizzontale dinamica */
-  .qs-htl-wrap{margin-top:42px;overflow-x:auto;padding:8px 0 22px;-webkit-overflow-scrolling:touch}
-  .qs-htl{display:flex;gap:0;min-width:max-content;position:relative}
-  .qs-htl::before{content:"";position:absolute;left:0;right:0;top:74px;height:2px;background:linear-gradient(90deg,rgba(0,0,0,.08),var(--yellow,#e0aa00),rgba(0,0,0,.08))}
-  .qs-htl-card{position:relative;width:300px;padding:0 26px;flex:0 0 auto}
-  .qs-htl-year{font-family:Fraunces,Georgia,serif;font-size:34px;font-weight:600;color:var(--yellow,#c8970a);height:54px}
-  .qs-htl-line{height:40px;display:flex;align-items:center}
-  .qs-htl-line span{width:18px;height:18px;border-radius:50%;background:var(--yellow,#e0aa00);box-shadow:0 0 0 6px rgba(224,170,0,.15);position:relative;z-index:1}
-  .qs-htl-text{margin:14px 0 0;font-size:15px;line-height:1.65;color:#3a3d44;border-left:2px solid rgba(224,170,0,.35);padding-left:16px}
-  .qs-htl-card:hover .qs-htl-line span{transform:scale(1.18);transition:transform .3s}
+  /* Timeline: linea centrale, riquadri alternati sopra/sotto, frecce, auto-scroll, NO scrollbar */
+  .qs-tl2{position:relative;margin-top:54px;padding:0 56px}
+  .qs-tl2-viewport{overflow:hidden;position:relative}
+  .qs-tl2-viewport::before{content:"";position:absolute;left:0;right:0;top:50%;height:2px;transform:translateY(-50%);background:linear-gradient(90deg,rgba(0,0,0,.06),var(--yellow,#e0aa00) 20%,var(--yellow,#e0aa00) 80%,rgba(0,0,0,.06))}
+  .qs-tl2-track{display:flex;transition:transform .75s cubic-bezier(.7,0,.2,1);will-change:transform}
+  .qs-tl2-item{flex:0 0 340px;width:340px;height:380px;position:relative}
+  .qs-tl2-card{position:absolute;left:24px;right:24px;background:#fff;border:1px solid rgba(0,0,0,.07);border-radius:14px;padding:18px 20px;box-shadow:0 20px 44px -26px rgba(0,0,0,.3)}
+  .qs-up .qs-tl2-card{bottom:calc(50% + 46px)}
+  .qs-down .qs-tl2-card{top:calc(50% + 46px)}
+  .qs-tl2-stem{position:absolute;left:50%;width:2px;background:rgba(224,170,0,.55);transform:translateX(-50%)}
+  .qs-up .qs-tl2-stem{bottom:50%;height:46px}
+  .qs-down .qs-tl2-stem{top:50%;height:46px}
+  .qs-tl2-dot{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:18px;height:18px;border-radius:50%;background:var(--yellow,#e0aa00);box-shadow:0 0 0 6px rgba(224,170,0,.16);z-index:2}
+  .qs-tl2-year{font-family:Fraunces,Georgia,serif;font-size:30px;font-weight:600;color:var(--yellow,#c8970a);margin-bottom:6px}
+  .qs-tl2-text{font-size:14.5px;line-height:1.62;color:#3a3d44;margin:0}
+  .qs-tl2-nav{position:absolute;top:50%;transform:translateY(-50%);z-index:6;width:46px;height:46px;border-radius:50%;border:1px solid rgba(0,0,0,.14);background:#fff;color:#1c1f26;font-size:22px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 20px -10px rgba(0,0,0,.25);transition:transform .2s,background .2s}
+  .qs-tl2-nav:hover{background:var(--yellow,#e0aa00);color:#fff;transform:translateY(-50%) scale(1.06)}
+  .qs-prev{left:4px}.qs-next{right:4px}
+  @media(max-width:760px){.qs-tl2{padding:0 44px}.qs-tl2-item{flex-basis:280px;width:280px;height:360px}.qs-tl2-card{left:14px;right:14px;padding:15px 16px}}
   @media(max-width:920px){.qs-split{grid-template-columns:1fr;gap:30px}.qs-side{position:static;flex-direction:row;overflow-x:auto}.qs-side-fig{flex:0 0 70%}}
   @media(max-width:860px){.qs-intro{grid-template-columns:1fr}.qs-intro-img{min-height:54vh;order:-1}}
 </style>
@@ -127,12 +139,36 @@ ${sideImgs}
   <div class="container">
     <div class="sec-num reveal"><span class="sec-dash" aria-hidden="true"></span>La experiencia</div>
     <h2 class="h-section reveal">Como <i class="it yel">bailarina</i>.</h2>
-    <div class="qs-htl-wrap">
-      <div class="qs-htl">${htlCards}
+    <div class="qs-tl2">
+      <button type="button" class="qs-tl2-nav qs-prev" aria-label="Anterior">&#8249;</button>
+      <button type="button" class="qs-tl2-nav qs-next" aria-label="Siguiente">&#8250;</button>
+      <div class="qs-tl2-viewport">
+        <div class="qs-tl2-track" id="qsTrack">${htlCards}
+        </div>
       </div>
     </div>
   </div>
 </section>
+<script>
+(function(){
+  var track=document.getElementById('qsTrack'); if(!track) return;
+  var items=track.children, n=items.length, idx=0, timer=null;
+  function iw(){ return items.length ? items[0].getBoundingClientRect().width : 340; }
+  function vis(){ var vp=track.parentElement.getBoundingClientRect().width; return Math.max(1, Math.floor(vp/iw())); }
+  function maxI(){ return Math.max(0, n - vis()); }
+  function go(i){ var m=maxI(); idx = i>m ? 0 : (i<0 ? m : i); track.style.transform='translateX('+(-idx*iw())+'px)'; }
+  function next(){ go(idx+1); }
+  function start(){ stop(); timer=setInterval(next, 4500); }
+  function stop(){ if(timer){ clearInterval(timer); timer=null; } }
+  var wrap=track.closest('.qs-tl2');
+  wrap.querySelector('.qs-next').addEventListener('click', function(){ next(); start(); });
+  wrap.querySelector('.qs-prev').addEventListener('click', function(){ go(idx-1); start(); });
+  wrap.addEventListener('mouseenter', stop);
+  wrap.addEventListener('mouseleave', start);
+  window.addEventListener('resize', function(){ go(Math.min(idx, maxI())); });
+  go(0); start();
+})();
+</script>
 
 <section class="quote">
   <span class="quote-deco-l" aria-hidden="true"></span>
