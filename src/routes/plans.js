@@ -16,13 +16,17 @@ const MODES = [
 router.use(requirePermission('plans.manage'));
 
 router.get('/', A(async (req, res) => {
-  const plans = await prisma.plan.findMany({ orderBy: [{ sort: 'asc' }, { id: 'asc' }] });
+  const plans = await prisma.plan.findMany({
+    orderBy: [{ sort: 'asc' }, { id: 'asc' }],
+    include: { event: { select: { title: true } } },
+  });
   res.render('plans/list', { title: 'Piani / Pacchetti', plans, MODES });
 }));
 
-router.get('/new', (req, res) => {
-  res.render('plans/form', { title: 'Nuovo piano', plan: null, MODES });
-});
+router.get('/new', A(async (req, res) => {
+  const events = await prisma.event.findMany({ orderBy: { sort: 'asc' } });
+  res.render('plans/form', { title: 'Nuovo piano', plan: null, MODES, events });
+}));
 
 router.post('/', A(async (req, res) => {
   const b = req.body;
@@ -33,11 +37,13 @@ router.post('/', A(async (req, res) => {
       price: parseFloat(b.price) || 0,
       currency: b.currency || 'EUR',
       badge: b.badge || '',
+      color: b.color || '#e0aa00',
       description: b.description || '',
       bookingMode: b.bookingMode || 'date_time',
       ctaLabel: b.ctaLabel || 'Reserva',
       active: b.active ? true : false,
       sort: parseInt(b.sort, 10) || 0,
+      eventId: b.eventId ? +b.eventId : null,
     },
   });
   req.flash('success', 'Piano creato.');
@@ -47,7 +53,8 @@ router.post('/', A(async (req, res) => {
 router.get('/:id(\\d+)/edit', A(async (req, res) => {
   const plan = await prisma.plan.findUnique({ where: { id: +req.params.id } });
   if (!plan) return res.redirect('/admin/plans');
-  res.render('plans/form', { title: 'Modifica piano', plan, MODES });
+  const events = await prisma.event.findMany({ orderBy: { sort: 'asc' } });
+  res.render('plans/form', { title: 'Modifica piano', plan, MODES, events });
 }));
 
 router.post('/:id(\\d+)', A(async (req, res) => {
@@ -60,11 +67,13 @@ router.post('/:id(\\d+)', A(async (req, res) => {
       price: parseFloat(b.price) || 0,
       currency: b.currency || 'EUR',
       badge: b.badge || '',
+      color: b.color || '#e0aa00',
       description: b.description || '',
       bookingMode: b.bookingMode || 'date_time',
       ctaLabel: b.ctaLabel || 'Reserva',
       active: b.active ? true : false,
       sort: parseInt(b.sort, 10) || 0,
+      eventId: b.eventId ? +b.eventId : null,
     },
   });
   req.flash('success', 'Piano aggiornato.');

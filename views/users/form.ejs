@@ -1,8 +1,9 @@
 <%- include('../partials/header') %>
-<div class="card form-card">
+<div class="card form-card wide">
   <h2><%= user ? 'Modifica utente' : 'Nuovo utente' %></h2>
   <form method="post" action="<%= user ? '/admin/users/'+user.id : '/admin/users' %>" class="form">
     <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <div class="form-grid">
     <div class="field">
       <label class="field-lbl">Nome</label>
       <input type="text" name="name" required value="<%= user ? user.name : '' %>">
@@ -31,6 +32,7 @@
         <input type="checkbox" name="isActive" value="1" <%= !user || user.isActive ? 'checked' : '' %>>
         <span>Utente attivo</span>
       </label>
+    </div>
     </div>
     <div class="form-actions">
       <button type="submit" class="btn btn-primary"><%= user ? 'Salva modifiche' : 'Crea utente' %></button>

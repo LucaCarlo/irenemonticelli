@@ -69,6 +69,7 @@ model Plan {
   price       Float     @default(0)
   currency    String    @default("EUR")
   badge       String    @default("")
+  color       String    @default("#e0aa00")
   description String    @default("")
   // none = niente scelta (tutti i giorni) | three_days_ampm = tutti i giorni, mattina/pomeriggio
   // | alldays_time = tutti i giorni, scelta orario | date_time = scelta giorno + orario

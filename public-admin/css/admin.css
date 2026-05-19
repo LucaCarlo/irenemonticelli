@@ -94,18 +94,29 @@ img{max-width:100%}
 .btn-sm{padding:6px 11px;font-size:12.5px}
 
 /* Forms */
-.form .field{margin-bottom:16px;max-width:620px}
+.form .field{margin-bottom:16px}
 .field-lbl{display:block;font-weight:600;margin-bottom:6px;font-size:13px}
 .form input[type=text],.form input[type=email],.form input[type=password],
-.form input[type=number],.form select,.search input,.auth-form input{
+.form input[type=number],.form input[type=date],.form select,.form textarea,
+.search input,.auth-form input{
   width:100%;padding:10px 12px;border:1px solid var(--line);
-  border-radius:9px;font-size:14px;background:#fff;color:var(--ink)}
-.form input:focus,.form select:focus{outline:2px solid var(--brand);border-color:var(--brand)}
+  border-radius:9px;font-size:14px;background:#fff;color:var(--ink);font-family:inherit}
+.form textarea{resize:vertical;min-height:74px}
+.form input:focus,.form select:focus,.form textarea:focus{outline:2px solid var(--brand);border-color:var(--brand)}
 .field-help{font-size:12px;color:var(--muted);margin-top:5px}
 .form-actions{display:flex;gap:10px;margin-top:18px;flex-wrap:wrap}
 .switch{display:inline-flex;align-items:center;gap:9px;cursor:pointer;font-size:14px}
 .switch input{width:18px;height:18px}
-.form-card{max-width:840px}
+/* Form a piu colonne, larghezza piena (niente margine inutile a destra) */
+.form-card{max-width:none}
+.form-card.wide{max-width:none}
+.form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px 22px;align-items:start}
+.form-grid .field{margin-bottom:8px}
+.form-grid .field-full{grid-column:1/-1}
+.color-row{display:flex;gap:10px;align-items:center}
+.color-row input[type=color]{width:54px;height:42px;padding:2px;border:1px solid var(--line);border-radius:9px;background:#fff;cursor:pointer}
+.color-row .color-hex{max-width:120px;text-transform:uppercase}
+.color-dot{display:inline-block;width:16px;height:16px;border-radius:50%;border:1px solid rgba(0,0,0,.15);vertical-align:middle}
 .sub{margin-top:10px;font-size:15px}
 
 /* Tabs */

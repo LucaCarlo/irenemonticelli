@@ -7,12 +7,13 @@
   <% if (!plans.length) { %><p class="muted">Nessun piano. Creane uno.</p><% } else { %>
   <div class="table-wrap">
   <table class="table">
-    <thead><tr><th>Nome</th><th>Slug</th><th>Prezzo</th><th>Prenotazione</th><th>CTA</th><th>Stato</th><th></th></tr></thead>
+    <thead><tr><th></th><th>Nome</th><th>Evento</th><th>Prezzo</th><th>Prenotazione</th><th>CTA</th><th>Stato</th><th></th></tr></thead>
     <tbody>
     <% plans.forEach(function(p){ var mode=(MODES.find(function(m){return m.v===p.bookingMode;})||{}).l||p.bookingMode; %>
       <tr>
-        <td><%= p.name %><% if (p.badge) { %> <span class="badge badge-warn"><%= p.badge %></span><% } %></td>
-        <td><code><%= p.slug %></code></td>
+        <td><span class="color-dot" style="background:<%= p.color || '#e0aa00' %>"></span></td>
+        <td><strong><%= p.name %></strong><% if (p.badge) { %> <span class="badge badge-warn"><%= p.badge %></span><% } %><div class="muted" style="font-size:12px"><code><%= p.slug %></code></div></td>
+        <td><%= p.event ? p.event.title : '—' %></td>
         <td><%= p.price %> <%= p.currency %></td>
         <td><%= mode %></td>
         <td><%= p.ctaLabel %></td>

@@ -136,13 +136,13 @@ async function seedContent() {
   // 2) Pacchetti collegati all'evento. bookingMode di default secondo le regole:
   //    Gold = none | Red = mattina/pomeriggio | Junior = tutti i gg + orario | Single = giorno+orario
   const plans = [
-    { slug: 'pack-single', name: 'Single Class', bookingMode: 'date_time', badge: '', sort: 1,
+    { slug: 'pack-single', name: 'Single Class', bookingMode: 'date_time', badge: '', color: '#175a6e', sort: 1,
       description: 'Una clase: se elige dia y horario.' },
-    { slug: 'pack-gold', name: 'Pack Gold', bookingMode: 'none', badge: 'Completo', sort: 2,
+    { slug: 'pack-gold', name: 'Pack Gold', bookingMode: 'none', badge: 'Completo', color: '#7a4a0e', sort: 2,
       description: 'Todos los dias del evento, sin elegir dia ni horario.' },
-    { slug: 'pack-red', name: 'Pack Red', bookingMode: 'three_days_ampm', badge: '', sort: 3,
+    { slug: 'pack-red', name: 'Pack Red', bookingMode: 'three_days_ampm', badge: '', color: '#8a2a1c', sort: 3,
       description: 'Todos los dias, eligiendo siempre manana o siempre tarde.' },
-    { slug: 'pack-junior', name: 'Pack Junior', bookingMode: 'alldays_time', badge: '', sort: 4,
+    { slug: 'pack-junior', name: 'Pack Junior', bookingMode: 'alldays_time', badge: '', color: '#2f5f1a', sort: 4,
       description: 'Todos los dias, eligiendo el horario.' },
   ];
   for (const p of plans) {
@@ -151,9 +151,13 @@ async function seedContent() {
       await prisma.plan.create({
         data: { ...p, price: 0, currency: 'EUR', ctaLabel: 'Reserva', active: true, eventId: event.id },
       });
-    } else if (!exists.eventId) {
-      // collega all'evento i pacchetti gia esistenti (senza toccare prezzi/personalizzazioni)
-      await prisma.plan.update({ where: { id: exists.id }, data: { eventId: event.id } });
+    } else {
+      // collega all'evento e imposta il colore di default se mancanti
+      // (non sovrascrive prezzi/personalizzazioni dell'utente)
+      const data = {};
+      if (!exists.eventId) data.eventId = event.id;
+      if (!exists.color || exists.color === '#e0aa00') data.color = p.color;
+      if (Object.keys(data).length) await prisma.plan.update({ where: { id: exists.id }, data });
     }
   }
 }
