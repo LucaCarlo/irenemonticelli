@@ -54,21 +54,24 @@
   .pk-form .pk-field input[type=date]{color:#2a2a2a}
   /* Niente messaggi d'errore inline (validazione lato server) */
   .pk-form .pk-error{display:none !important}
-  /* ===== Checkout: layout pulito e deterministico ===== */
+  /* ===== Checkout: due colonne CENTRATE (niente vuoto al centro) ===== */
   body{overflow-x:hidden}
-  .pk-booking,.pk-booking-wrap{padding-left:0 !important;padding-right:0 !important}
-  .pk-booking-wrap{max-width:1140px !important;margin:0 auto !important;padding:0 28px !important;width:100% !important;box-sizing:border-box}
-  .pk-checkout-grid{display:grid !important;grid-template-columns:minmax(0,1fr) 380px !important;
-    gap:40px !important;align-items:start !important;width:100% !important}
-  .pk-checkout-main{min-width:0}
+  .pk-booking,.pk-booking-wrap{padding-left:0 !important;padding-right:0 !important;
+    max-width:none !important;width:100% !important;margin:0 !important;box-sizing:border-box}
+  .pk-checkout-grid{display:grid !important;grid-template-columns:560px 360px !important;
+    gap:60px !important;justify-content:center !important;align-items:start !important;
+    width:100% !important;padding:0 28px !important;box-sizing:border-box}
+  /* niente bordo/divisore verticale che spezzava il layout */
+  .pk-checkout-main,.pk-checkout-grid,.pk-booking-wrap{border:0 !important}
+  .pk-checkout-main{min-width:0;width:560px;max-width:560px}
   .pk-checkout-main .pk-form{max-width:none !important;margin:0 !important;width:100% !important}
   .pk-checkout-main,.pk-checkout-main .pk-form{padding-top:0 !important;margin-top:0 !important}
   .pk-checkout-main .pk-form>.pk-block:first-child{padding-top:30px !important;margin-top:0 !important}
   .pk-checkout-main .pk-block-pack{padding-top:30px !important}
   .pk-checkout-main .pk-pack-title{margin:0 !important;padding:0 !important;line-height:1.05}
-  /* Riepilogo: NON sticky, larghezza piena della colonna, righe label/valore */
+  /* Riepilogo: NON sticky, larghezza fissa della sua colonna */
   .pk-summary-sticky{position:static !important;top:auto !important;align-self:start;
-    width:100% !important;min-width:0;max-width:none !important;padding:0 !important;margin:0 !important}
+    width:360px !important;max-width:360px !important;min-width:0;padding:0 !important;margin:0 !important}
   .pk-summary-card{width:100% !important;max-width:none !important;box-sizing:border-box;
     margin:0 !important;padding:30px 28px 26px !important}
   .pk-summary-card .pk-summary-title{margin:0 0 18px !important;padding:0 !important;line-height:1.15;white-space:normal}
@@ -76,9 +79,10 @@
     align-items:baseline;gap:16px;padding:9px 0}
   .pk-summary-label,.pk-summary-card .pk-summary-label{white-space:nowrap}
   .pk-summary-value,.pk-summary-card .pk-summary-value{text-align:right}
-  @media(max-width:900px){
-    .pk-checkout-grid{grid-template-columns:1fr !important;gap:26px !important}
-    .pk-booking-wrap{max-width:640px !important}
+  @media(max-width:980px){
+    .pk-checkout-grid{grid-template-columns:1fr !important;gap:28px !important;
+      max-width:580px;margin:0 auto !important;justify-content:stretch !important}
+    .pk-checkout-main,.pk-summary-sticky{width:auto !important;max-width:none !important}
   }
 </style>
 </head>

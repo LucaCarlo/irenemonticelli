@@ -1,66 +1,76 @@
 <%- shellPrefix %>
 <style>
-  .pf2-wrap{padding:70px 6vw 30px;text-align:center}
-  .pf2-kick{text-transform:uppercase;letter-spacing:.32em;font-size:12px;color:#9a8f7a;margin-bottom:14px}
-  .pf2-h{font-family:'Fraunces',Georgia,serif;font-weight:600;font-size:clamp(34px,5vw,60px);margin:0}
-  .pf2-h em{font-style:italic;color:#b88a1a}
-  .pf2-sub{color:#52555c;max-width:60ch;margin:16px auto 0;font-size:17px;line-height:1.7}
-  .pf2-grid{max-width:1200px;margin:46px auto 90px;padding:0 6vw;display:grid;
-    grid-template-columns:repeat(3,1fr);gap:30px}
+  /* Larghezza ESATTA dell'header del sito (stessa formula della .nav) */
+  .pf2-band{max-width:calc(var(--max-w) + 2*var(--pad-x));margin:0 auto;
+    padding-left:var(--pad-x);padding-right:var(--pad-x);width:100%;box-sizing:border-box}
+  .pf2-head{padding:64px 0 8px;text-align:center}
+  .pf2-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:46px;margin:50px 0 30px}
   .pf2-card{display:flex;flex-direction:column;align-items:center}
-  .pf2-name{font-family:'Fraunces',Georgia,serif;font-weight:700;font-size:clamp(24px,2.4vw,34px);
-    color:#1c1f26;text-align:center;margin:0 0 16px;line-height:1.05}
-  .pf2-stage{display:flex;align-items:stretch;gap:14px;width:100%}
+  .pf2-name{font-family:'Fraunces',Georgia,serif;font-weight:600;
+    font-size:clamp(30px,3.4vw,46px);color:#1c1f26;text-align:center;margin:0 0 22px;line-height:1.04}
+  .pf2-stage{display:flex;align-items:stretch;gap:20px;width:100%}
   .pf2-type{writing-mode:vertical-rl;transform:rotate(180deg);text-transform:uppercase;
-    letter-spacing:.42em;font-size:13px;font-weight:600;color:#1c1f26;display:flex;
-    align-items:center;justify-content:center;padding:6px 0}
-  .pf2-photo{position:relative;flex:1;aspect-ratio:1/1;overflow:hidden;border-radius:4px;background:#e7e4dd;cursor:pointer}
+    letter-spacing:.46em;font-size:14px;font-weight:600;color:#1c1f26;display:flex;
+    align-items:center;justify-content:center;padding:8px 0}
+  .pf2-photo{position:relative;flex:1;aspect-ratio:4/5;overflow:hidden;border-radius:4px;
+    background:#e7e4dd;cursor:pointer}
   .pf2-photo img{width:100%;height:100%;object-fit:cover;display:block;filter:grayscale(1);
     transition:filter .6s ease,transform 1s cubic-bezier(.7,0,.2,1)}
   .pf2-card:hover .pf2-photo img,.pf2-photo.open img{filter:grayscale(0);transform:scale(1.04)}
-  .pf2-desc{position:absolute;inset:0;background:linear-gradient(180deg,rgba(20,18,14,.25),rgba(20,18,14,.92));
-    color:#fff;display:flex;align-items:flex-end;padding:26px 24px;font-size:14.5px;line-height:1.7;
+  .pf2-ph-empty{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    color:#b3ac9e;font-size:13px;letter-spacing:.2em;text-transform:uppercase}
+  .pf2-desc{position:absolute;inset:0;background:linear-gradient(180deg,rgba(20,18,14,.30),rgba(20,18,14,.94));
+    color:#fff;display:flex;align-items:flex-end;padding:30px 28px;font-size:14px;line-height:1.7;
     opacity:0;transition:opacity .45s ease;overflow:auto}
-  .pf2-desc p{margin:0 0 .6em}
+  .pf2-desc p{margin:0 0 .7em}.pf2-desc p:last-child{margin:0}
   .pf2-card:hover .pf2-desc,.pf2-photo.open .pf2-desc,.pf2-card:focus-within .pf2-desc{opacity:1}
-  .pf2-empty{text-align:center;color:#7a8190;padding:60px 20px}
-  .pf2-cta{text-align:center;padding:0 6vw 90px}
-  .pf2-cta a{display:inline-block;background:#1c1f26;color:#fff;text-decoration:none;font-weight:700;padding:15px 30px;border-radius:40px}
-  @media(max-width:980px){.pf2-grid{grid-template-columns:repeat(2,1fr);gap:22px}}
-  @media(max-width:640px){.pf2-grid{grid-template-columns:1fr;max-width:460px}}
+  .pf2-empty{text-align:center;color:#7a8190;padding:70px 20px}
+  @media(max-width:820px){.pf2-grid{grid-template-columns:1fr;gap:34px}}
 </style>
 
 <section class="sec-white">
-  <div class="pf2-wrap">
-    <div class="pf2-kick reveal">Pro Dance Experience</div>
-    <h1 class="pf2-h reveal">Nuestros <em>profesores</em></h1>
-    <p class="pf2-sub reveal">Pasa o haz clic sobre cada retrato para descubrir su recorrido.</p>
-  </div>
+  <div class="pf2-band">
+    <div class="pf2-head">
+      <div class="sec-num reveal"><span class="sec-dash" aria-hidden="true"></span>Pro Dance Experience</div>
+      <h2 class="h-section reveal">Nuestros <i class="it yel">profesores</i>.</h2>
+      <p class="body-lg reveal">Pasa o haz clic sobre cada retrato para descubrir su recorrido.</p>
+    </div>
 
-  <% if (!profs.length) { %>
-    <div class="pf2-empty">Pronto publicaremos el equipo de profesores.</div>
-  <% } else { %>
-  <div class="pf2-grid">
-    <% profs.forEach(function(p){ %>
-      <article class="pf2-card reveal">
-        <h3 class="pf2-name"><%= p.firstName %> <%= p.lastName %></h3>
-        <div class="pf2-stage">
-          <% if (p.danceType) { %><div class="pf2-type"><%= p.danceType %></div><% } %>
-          <div class="pf2-photo" tabindex="0" role="button" aria-label="Ver descripción de <%= p.firstName %> <%= p.lastName %>">
-            <% if (p.photo) { %><img loading="lazy" src="<%= p.photo.path %>" alt="<%= p.firstName %> <%= p.lastName %>"><% } %>
-            <div class="pf2-desc"><div><%- p.descriptionHtml || '' %></div></div>
+    <% if (!profs.length) { %>
+      <div class="pf2-empty">Pronto publicaremos el equipo de profesores.</div>
+    <% } else { %>
+    <div class="pf2-grid">
+      <% profs.forEach(function(p){ %>
+        <article class="pf2-card reveal">
+          <h3 class="pf2-name"><%= p.firstName %> <%= p.lastName %></h3>
+          <div class="pf2-stage">
+            <% if (p.danceType) { %><div class="pf2-type"><%= p.danceType %></div><% } %>
+            <div class="pf2-photo" tabindex="0" role="button" aria-label="Ver descripción de <%= p.firstName %> <%= p.lastName %>">
+              <% if (p.photo) { %><img loading="lazy" src="<%= p.photo.path %>" alt="<%= p.firstName %> <%= p.lastName %>">
+              <% } else { %><span class="pf2-ph-empty">Foto próximamente</span><% } %>
+              <div class="pf2-desc"><div><%- p.descriptionHtml || '' %></div></div>
+            </div>
           </div>
-        </div>
-      </article>
-    <% }) %>
+        </article>
+      <% }) %>
+    </div>
+    <% } %>
   </div>
-  <% } %>
+</section>
 
-  <div class="pf2-cta"><a href="/pro-dance">Descubre la Pro Dance Experience</a></div>
+<section class="quote">
+  <span class="quote-deco-l" aria-hidden="true"></span>
+  <span class="quote-deco-r" aria-hidden="true"></span>
+  <div class="quote-inner">
+    <div class="quote-eyebrow reveal">Empezamos</div>
+    <div class="quote-body reveal">
+      <blockquote>¿List@ para <i class="it">moverte</i>? Descubre la Pro Dance Experience y <i class="it">elige tu pack</i>.</blockquote>
+    </div>
+    <a href="/pro-dance" data-nav="pro-dance" class="quote-cta reveal">Descubre los packs</a>
+  </div>
 </section>
 
 <script>
-  // Tap/click su mobile: mostra/nascondi la descrizione
   document.querySelectorAll('.pf2-photo').forEach(function(ph){
     ph.addEventListener('click', function(){ ph.classList.toggle('open'); });
     ph.addEventListener('keydown', function(e){ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); ph.classList.toggle('open'); } });
