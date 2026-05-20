@@ -54,24 +54,29 @@
   .pk-form .pk-field input[type=date]{color:#2a2a2a}
   /* Niente messaggi d'errore inline (validazione lato server) */
   .pk-form .pk-error{display:none !important}
-  /* ===== Checkout: due colonne CENTRATE (niente vuoto al centro) ===== */
+  /* ===== Checkout: larghezza = HEADER del sito + colonna destra STICKY ===== */
   body{overflow-x:hidden}
-  .pk-booking,.pk-booking-wrap{padding-left:0 !important;padding-right:0 !important;
-    max-width:none !important;width:100% !important;margin:0 !important;box-sizing:border-box}
-  .pk-checkout-grid{display:grid !important;grid-template-columns:560px 360px !important;
-    gap:60px !important;justify-content:center !important;align-items:start !important;
-    width:100% !important;padding:0 28px !important;box-sizing:border-box}
-  /* niente bordo/divisore verticale che spezzava il layout */
-  .pk-checkout-main,.pk-checkout-grid,.pk-booking-wrap{border:0 !important}
-  .pk-checkout-main{min-width:0;width:560px;max-width:560px}
+  .pk-booking,.pk-booking-wrap{padding:0 !important;max-width:none !important;width:100% !important;
+    margin:0 !important;box-sizing:border-box;border:0 !important}
+  .pk-checkout-grid{display:grid !important;
+    grid-template-columns:minmax(0,1fr) 380px !important;
+    gap:56px !important;align-items:start !important;
+    /* stessa larghezza della .nav (header del sito) */
+    max-width:calc(var(--max-w) + 2*var(--pad-x)) !important;
+    margin:0 auto !important;padding:0 var(--pad-x) !important;
+    width:100% !important;box-sizing:border-box}
+  .pk-checkout-main,.pk-checkout-grid{border:0 !important}
+  .pk-checkout-main{min-width:0}
   .pk-checkout-main .pk-form{max-width:none !important;margin:0 !important;width:100% !important}
   .pk-checkout-main,.pk-checkout-main .pk-form{padding-top:0 !important;margin-top:0 !important}
   .pk-checkout-main .pk-form>.pk-block:first-child{padding-top:30px !important;margin-top:0 !important}
   .pk-checkout-main .pk-block-pack{padding-top:30px !important}
   .pk-checkout-main .pk-pack-title{margin:0 !important;padding:0 !important;line-height:1.05}
-  /* Riepilogo: NON sticky, larghezza fissa della sua colonna */
-  .pk-summary-sticky{position:static !important;top:auto !important;align-self:start;
-    width:360px !important;max-width:360px !important;min-width:0;padding:0 !important;margin:0 !important}
+  /* Riepilogo: STICKY (sotto l'header fisso ~72px). Scorrendo, resta visibile. */
+  .pk-summary-sticky{position:sticky !important;top:88px !important;align-self:start;
+    width:380px !important;max-width:380px !important;min-width:0;padding:0 !important;margin:0 !important;
+    /* limita l'altezza cosi resta visibile anche con riepiloghi lunghi */
+    max-height:calc(100vh - 110px);overflow:auto}
   .pk-summary-card{width:100% !important;max-width:none !important;box-sizing:border-box;
     margin:0 !important;padding:30px 28px 26px !important}
   .pk-summary-card .pk-summary-title{margin:0 0 18px !important;padding:0 !important;line-height:1.15;white-space:normal}
@@ -81,8 +86,9 @@
   .pk-summary-value,.pk-summary-card .pk-summary-value{text-align:right}
   @media(max-width:980px){
     .pk-checkout-grid{grid-template-columns:1fr !important;gap:28px !important;
-      max-width:580px;margin:0 auto !important;justify-content:stretch !important}
-    .pk-checkout-main,.pk-summary-sticky{width:auto !important;max-width:none !important}
+      max-width:640px;justify-content:stretch !important}
+    .pk-summary-sticky{position:static !important;top:auto !important;width:auto !important;max-width:none !important;max-height:none;overflow:visible}
+    .pk-checkout-main{width:auto !important;max-width:none !important}
   }
 </style>
 </head>
@@ -207,7 +213,15 @@
             </div>
             <div class="rv-consent">
               <input type="checkbox" name="imageConsent" id="rvIc" required>
-              <label for="rvIc">Autorizo el uso de <strong>imágenes y vídeos</strong> de la actividad con fines de comunicación (obligatorio).</label>
+              <label for="rvIc">Autorizo a <strong>Pro Dance Experience</strong> la toma de imágenes (foto/video) para difusión del evento en Instagram y página web.</label>
+            </div>
+            <div class="rv-consent">
+              <input type="checkbox" name="dataConsent" id="rvDc" required>
+              <label for="rvDc">Declaro que los datos proporcionados son correctos y acepto las <strong>condiciones de participación</strong>.</label>
+            </div>
+            <div class="rv-consent">
+              <input type="checkbox" name="healthConsent" id="rvHc" required>
+              <label for="rvHc">Declaro tener un <strong>nivel adecuado del estado de salud física</strong> para participar en la actividad.</label>
             </div>
           </section>
 
@@ -368,6 +382,8 @@
     if(fn.length<2||ln.length<2||!ph||!bd.value)return false;
     if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em))return false;
     if(!document.getElementById('rvIc').checked)return false;
+    if(!document.getElementById('rvDc').checked)return false;
+    if(!document.getElementById('rvHc').checked)return false;
     if(pc.required&&!pc.checked)return false;
     return true;
   }

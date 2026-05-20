@@ -51,7 +51,7 @@ const CV = [
 ];
 const TL = [
  ['2003', 'Solista en la compañía dirigida por R. Sabbatini "Zeropositivo" para diversas producciones (hasta 2005).'],
- ['2004', 'Coreografía de D. Ziglioli "Due uomini per un paio di tacchi" en el Hangart Dance Festival de Pesaro; pieza de improvisación con la compañía Lische.'],
+ ['2004', 'Debuta en la coreografía de D. Ziglioli "due uomini per un paio di tacchi" en el Hangart Dance Festival de Pesaro y con la compañía Lische en la obra fructo de una investigación de improvisación.'],
  ['2006', 'Contrato de temporada con la compañía "Ortomagico" para el musical "Jesus Christ Superstar".'],
  ['2010', 'Solista en "El Cascanueces" con música en vivo en el Teatro dell’Aquila de Fermo.'],
  ['2012', 'Primer premio en "Riccione Summer Dance" con la coreografía "Come sorelle", de M. Cursi.'],

@@ -112,14 +112,18 @@ router.post('/reserva/:slug', A(async (req, res) => {
   const isMinor = age != null && age < 18;
   const parentalConsent = !!b.parentalConsent;
   const imageConsent = !!b.imageConsent;
+  const dataConsent = !!b.dataConsent;
+  const healthConsent = !!b.healthConsent;
   if (isMinor && !parentalConsent) return back('Para menores de 18 es obligatorio el consentimiento de los padres');
-  if (!imageConsent) return back('El consentimiento de imagen es obligatorio');
+  if (!imageConsent) return back('Debes autorizar el uso de imágenes y vídeos');
+  if (!dataConsent) return back('Debes aceptar las condiciones de participación');
+  if (!healthConsent) return back('Debes declarar el nivel adecuado de salud física');
 
   const booking = await prisma.booking.create({
     data: {
       firstName, lastName, customerName: `${firstName} ${lastName}`,
       customerEmail: email, phone,
-      birthDate: birth, isMinor, parentalConsent, imageConsent,
+      birthDate: birth, isMinor, parentalConsent, imageConsent, dataConsent, healthConsent,
       planId: plan.id, eventId: plan.eventId || null,
       dateLabel: calc.label, itemsJson: JSON.stringify(calc.items || {}),
       amount: calc.amount, currency: plan.currency || 'EUR',
