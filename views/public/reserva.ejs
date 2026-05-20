@@ -54,41 +54,43 @@
   .pk-form .pk-field input[type=date]{color:#2a2a2a}
   /* Niente messaggi d'errore inline (validazione lato server) */
   .pk-form .pk-error{display:none !important}
-  /* ===== Checkout: larghezza = HEADER del sito + colonna destra STICKY ===== */
+  /* ===== Checkout: struttura del _77 (1fr 1fr, gap:0, divisore al centro) ===== */
   body{overflow-x:hidden}
   .pk-booking,.pk-booking-wrap{padding:0 !important;max-width:none !important;width:100% !important;
     margin:0 !important;box-sizing:border-box;border:0 !important}
   .pk-checkout-grid{display:grid !important;
-    grid-template-columns:minmax(0,1fr) 380px !important;
-    gap:56px !important;align-items:start !important;
-    /* stessa larghezza della .nav (header del sito) */
-    max-width:calc(var(--max-w) + 2*var(--pad-x)) !important;
-    margin:0 auto !important;padding:0 var(--pad-x) !important;
-    width:100% !important;box-sizing:border-box}
-  .pk-checkout-main,.pk-checkout-grid{border:0 !important}
-  .pk-checkout-main{min-width:0}
-  .pk-checkout-main .pk-form{max-width:none !important;margin:0 !important;width:100% !important}
+    grid-template-columns:1fr 1fr !important;
+    gap:0 !important;align-items:start !important;
+    width:100% !important;max-width:none !important;margin:0 !important;padding:0 !important;
+    box-sizing:border-box;min-height:calc(100vh - 72px)}
+  /* SINISTRA: scrolla. Form vicino al divisore centrale. */
+  .pk-checkout-main{min-width:0;background:#fff;
+    border-right:1px solid rgba(42,42,42,.12) !important;
+    padding:40px 30px 80px 8% !important}
+  .pk-checkout-main .pk-form{max-width:560px !important;margin:0 0 0 auto !important;width:100% !important}
   .pk-checkout-main,.pk-checkout-main .pk-form{padding-top:0 !important;margin-top:0 !important}
-  .pk-checkout-main .pk-form>.pk-block:first-child{padding-top:30px !important;margin-top:0 !important}
-  .pk-checkout-main .pk-block-pack{padding-top:30px !important}
+  .pk-checkout-main{padding-top:40px !important}
+  .pk-checkout-main .pk-form>.pk-block:first-child{padding-top:0 !important;margin-top:0 !important}
+  .pk-checkout-main .pk-block-pack{padding-top:0 !important}
   .pk-checkout-main .pk-pack-title{margin:0 !important;padding:0 !important;line-height:1.05}
-  /* Riepilogo: STICKY (sotto l'header fisso ~72px). Scorrendo, resta visibile. */
+  /* DESTRA: sticky (resta ferma). Riepilogo vicino al divisore. */
   .pk-summary-sticky{position:sticky !important;top:88px !important;align-self:start;
-    width:380px !important;max-width:380px !important;min-width:0;padding:0 !important;margin:0 !important;
-    /* limita l'altezza cosi resta visibile anche con riepiloghi lunghi */
-    max-height:calc(100vh - 110px);overflow:auto}
-  .pk-summary-card{width:100% !important;max-width:none !important;box-sizing:border-box;
-    margin:0 !important;padding:30px 28px 26px !important}
+    min-width:0;width:100% !important;max-width:none !important;
+    padding:40px 8% 80px 30px !important;margin:0 !important;
+    max-height:calc(100vh - 88px);overflow:auto}
+  .pk-summary-card{box-sizing:border-box;width:100% !important;max-width:420px !important;
+    margin:0 auto 0 0 !important;padding:30px 28px 26px !important}
   .pk-summary-card .pk-summary-title{margin:0 0 18px !important;padding:0 !important;line-height:1.15;white-space:normal}
   .pk-summary-row,.pk-summary-card .pk-summary-row{display:flex !important;justify-content:space-between;
     align-items:baseline;gap:16px;padding:9px 0}
   .pk-summary-label,.pk-summary-card .pk-summary-label{white-space:nowrap}
   .pk-summary-value,.pk-summary-card .pk-summary-value{text-align:right}
   @media(max-width:980px){
-    .pk-checkout-grid{grid-template-columns:1fr !important;gap:28px !important;
-      max-width:640px;justify-content:stretch !important}
-    .pk-summary-sticky{position:static !important;top:auto !important;width:auto !important;max-width:none !important;max-height:none;overflow:visible}
-    .pk-checkout-main{width:auto !important;max-width:none !important}
+    .pk-checkout-grid{grid-template-columns:1fr !important;min-height:0}
+    .pk-checkout-main{padding:30px 6% 40px !important;border-right:0 !important}
+    .pk-summary-sticky{position:static !important;top:auto !important;
+      padding:0 6% 60px !important;max-height:none;overflow:visible}
+    .pk-summary-card{max-width:none !important;margin:0 !important}
   }
 </style>
 </head>
