@@ -1,0 +1,34 @@
+<%
+  // Usage: include('../partials/dt-pagination', { links, params, basePath })
+  var _basePath = (typeof basePath !== 'undefined' && basePath) ? basePath : '';
+  var _params = params;
+  function urlFor(p){
+    var qs = [];
+    if (_params.q) qs.push('q=' + encodeURIComponent(_params.q));
+    qs.push('sort=' + encodeURIComponent(_params.sort));
+    qs.push('dir=' + _params.dir);
+    qs.push('perPage=' + _params.perPage);
+    if (p && p > 1) qs.push('page=' + p);
+    if (_params._extra) {
+      Object.keys(_params._extra).forEach(function(k){
+        var v = _params._extra[k]; if (v) qs.push(encodeURIComponent(k) + '=' + encodeURIComponent(v));
+      });
+    }
+    return _basePath + (qs.length ? '?' + qs.join('&') : '');
+  }
+%>
+<% if (links && links.length) { %>
+<div class="dt-pagination">
+  <% links.forEach(function(l){ %>
+    <% if (l.ellipsis) { %>
+      <span class="dt-page-ellipsis">…</span>
+    <% } else if (l.disabled) { %>
+      <span class="dt-page disabled"><%= l.label %></span>
+    <% } else if (l.current) { %>
+      <span class="dt-page active"><%= l.label %></span>
+    <% } else { %>
+      <a class="dt-page" href="<%= urlFor(l.page) %>"><%= l.label %></a>
+    <% } %>
+  <% }) %>
+</div>
+<% } %>

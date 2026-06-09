@@ -1,0 +1,66 @@
+<%- include('../partials/header') %>
+<div class="card">
+  <div class="card-head">
+    <h2>Messaggi di contatto</h2>
+  </div>
+  <%- include('../partials/dt-toolbar', {
+    params, total, totalUnfiltered,
+    entitySingular:'messaggio', entityPlural:'messaggi',
+    basePath:'/admin/messages',
+    searchPlaceholder:'Cerca per nome, email, oggetto, testo…',
+    extraFilters:[{ name:'status', value: status, options:[
+      { val:'', label:'Tutti gli stati' },
+      { val:'new', label:'Nuovo ('+counts.new+')' },
+      { val:'read', label:'Letto ('+counts.read+')' },
+      { val:'archived', label:'Archiviato ('+counts.archived+')' },
+    ] }],
+  }) %>
+  <% if (!items.length) { %>
+    <p class="muted" style="padding:30px 0;text-align:center">Nessun messaggio.</p>
+  <% } else { %>
+  <div class="table-wrap">
+  <table class="table">
+    <thead>
+      <tr>
+        <%- include('../partials/dt-th', { label:'Mittente', sortKey:'name', params, basePath:'/admin/messages' }) %>
+        <%- include('../partials/dt-th', { label:'Oggetto', sortKey:'subject', params, basePath:'/admin/messages' }) %>
+        <%- include('../partials/dt-th', { label:'Stato', sortKey:'status', params, basePath:'/admin/messages' }) %>
+        <%- include('../partials/dt-th', { label:'Data', sortKey:'createdAt', params, basePath:'/admin/messages' }) %>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      <% items.forEach(function(m){ %>
+        <tr class="<%= m.status==='new'?'is-new':'' %>">
+          <td>
+            <strong><%= m.name %></strong>
+            <div class="muted" style="font-size:12.5px"><%= m.email %></div>
+          </td>
+          <td><%= m.subject || '(senza oggetto)' %></td>
+          <td><span class="badge badge-<%= m.status %>"><%= m.status %></span></td>
+          <td style="white-space:nowrap">
+            <%= new Date(m.createdAt).toLocaleDateString('it-IT',{day:'2-digit',month:'short',year:'numeric'}) %>
+            <div class="muted" style="font-size:12px"><%= new Date(m.createdAt).toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'}) %></div>
+          </td>
+          <td class="row-actions">
+            <a class="btn-ico btn-ico-open" href="/admin/messages/<%= m.id %>" title="Apri messaggio"><%- include('../partials/ico', { name:'mail-open' }) %></a>
+          </td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
+  </div>
+  <%- include('../partials/dt-pagination', { links, params, basePath:'/admin/messages' }) %>
+  <% } %>
+</div>
+
+<style>
+  .badge{display:inline-block;padding:3px 10px;border-radius:99px;font-size:11px;letter-spacing:.05em;text-transform:uppercase;font-weight:700;background:#eef0f4;color:#5a5e6a}
+  .badge-new{background:#ffeec0;color:#7a5800}
+  .badge-read{background:#e3f0ff;color:#0d5290}
+  .badge-archived{background:#e6e6e6;color:#666}
+  tr.is-new td{background:#fffaeb}
+  .is-on{background:#1c1f26;color:#fff !important}
+  .pager{display:flex;gap:6px;margin-top:18px;justify-content:center;flex-wrap:wrap}
+</style>
+<%- include('../partials/footer') %>

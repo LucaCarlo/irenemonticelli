@@ -1,0 +1,26 @@
+<%
+  // Usage: include('../partials/dt-th', { label, sortKey, params, basePath })
+  var _basePath = (typeof basePath !== 'undefined' && basePath) ? basePath : '';
+  var _label = label || '';
+  var _sortKey = sortKey || '';
+  var _params = params;
+  var active = _params.sort === _sortKey;
+  var nextDir = (active && _params.dir === 'asc') ? 'desc' : 'asc';
+  var arrow = !active ? '⇅' : (_params.dir === 'asc' ? '↑' : '↓');
+  // Build URL
+  var q = _params.q || '';
+  var pp = _params.perPage;
+  var qs = [];
+  if (q) qs.push('q=' + encodeURIComponent(q));
+  qs.push('sort=' + encodeURIComponent(_sortKey));
+  qs.push('dir=' + nextDir);
+  qs.push('perPage=' + pp);
+  // Preserva extra filters
+  if (_params._extra) {
+    Object.keys(_params._extra).forEach(function(k){
+      var v = _params._extra[k]; if (v) qs.push(encodeURIComponent(k) + '=' + encodeURIComponent(v));
+    });
+  }
+  var url = _basePath + '?' + qs.join('&');
+%>
+<th class="dt-th"><a href="<%= url %>"><%= _label %> <span class="dt-th-arrow <%= active ? 'active' : '' %>"><%= arrow %></span></a></th>

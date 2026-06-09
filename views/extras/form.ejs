@@ -1,0 +1,112 @@
+<%- include('../partials/header') %>
+<form method="post" action="<%= extra ? '/admin/extras/'+extra.id : '/admin/extras' %>" class="form fs-page" id="extraForm">
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+  <div class="fs-page-head">
+    <div>
+      <h2><%= extra ? 'Modifica extra' : 'Nuovo extra' %></h2>
+      <p><%= extra ? 'ID #'+extra.id : 'Crea un servizio o prodotto opzionale (assicurazione, materiale, …) acquistabile nel checkout.' %></p>
+    </div>
+    <a class="btn btn-ghost" href="/admin/extras">← Torna agli extras</a>
+  </div>
+
+  <!-- SEZIONE 1: Dettagli -->
+  <section class="fs-section">
+    <div class="fs-section-head">
+      <div class="fs-section-ico" style="background:#fdf2c9;color:#7a5800">🎁</div>
+      <div>
+        <h3 class="fs-section-title">Cosa offri</h3>
+        <p class="fs-section-sub">Nome e descrizione mostrati nel checkout.</p>
+      </div>
+    </div>
+    <div class="fs-grid">
+      <div class="field field-full">
+        <label class="field-lbl">Nome *</label>
+        <input type="text" name="name" required value="<%= extra ? extra.name : '' %>" placeholder="es. Assicurazione obbligatoria">
+      </div>
+      <div class="field field-full">
+        <label class="field-lbl">Descrizione</label>
+        <input type="text" name="description" value="<%= extra ? extra.description : '' %>" placeholder="Breve testo mostrato sotto al nome nel checkout">
+        <div class="field-help">Una sola riga, max ~150 caratteri.</div>
+      </div>
+      <div class="field">
+        <label class="field-lbl">Prezzo (€) *</label>
+        <input type="number" name="price" step="0.01" min="0" required value="<%= extra ? extra.price : '' %>" placeholder="20">
+        <div class="field-help">Prezzo a partecipante. Per gli extras "obbligatori" si moltiplica per il numero di partecipanti.</div>
+      </div>
+      <div class="field">
+        <label class="field-lbl">Ordine</label>
+        <input type="number" name="sort" value="<%= extra ? extra.sort : 0 %>">
+        <div class="field-help">Valore più basso = mostrato per primo nel checkout.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SEZIONE 2: Visibilità -->
+  <section class="fs-section">
+    <div class="fs-section-head">
+      <div class="fs-section-ico" style="background:#e3f0ff;color:#0d5290">🎯</div>
+      <div>
+        <h3 class="fs-section-title">Dove e quando appare</h3>
+        <p class="fs-section-sub">Limita l'extra a determinati pack o eventi. Lascia "Tutti" per mostrarlo ovunque.</p>
+      </div>
+    </div>
+    <div class="fs-grid">
+      <div class="field">
+        <label class="field-lbl">Limita a pacchetto</label>
+        <select name="planId">
+          <option value="">— Tutti i pacchetti —</option>
+          <% plans.forEach(function(p){ %>
+            <option value="<%= p.id %>" <%= extra && extra.planId===p.id ? 'selected':'' %>><%= p.name %></option>
+          <% }) %>
+        </select>
+      </div>
+      <div class="field">
+        <label class="field-lbl">Limita a evento</label>
+        <select name="eventId">
+          <option value="">— Tutti gli eventi —</option>
+          <% events.forEach(function(e){ %>
+            <option value="<%= e.id %>" <%= extra && extra.eventId===e.id ? 'selected':'' %>><%= e.title %></option>
+          <% }) %>
+        </select>
+      </div>
+    </div>
+  </section>
+
+  <!-- SEZIONE 3: Comportamento -->
+  <section class="fs-section">
+    <div class="fs-section-head">
+      <div class="fs-section-ico" style="background:#e7f3ec;color:#1b6b3e">🛡</div>
+      <div>
+        <h3 class="fs-section-title">Comportamento</h3>
+        <p class="fs-section-sub">Come si comporta nel checkout: opzionale o sempre incluso.</p>
+      </div>
+    </div>
+    <div class="fs-grid">
+      <div class="field">
+        <div class="fs-switch-card">
+          <label class="switch" style="margin:0">
+            <input type="checkbox" name="mandatory" value="1" <%= extra && extra.mandatory ? 'checked':'' %>>
+            <span><strong>Obbligatorio</strong></span>
+          </label>
+          <span class="muted" style="font-size:12px">Sempre incluso nel totale del checkout (es. assicurazione).</span>
+        </div>
+      </div>
+      <div class="field">
+        <div class="fs-switch-card">
+          <label class="switch" style="margin:0">
+            <input type="checkbox" name="active" value="1" <%= !extra || extra.active ? 'checked':'' %>>
+            <span><strong>Attivo</strong></span>
+          </label>
+          <span class="muted" style="font-size:12px">Se OFF non viene mai mostrato nel checkout.</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="fs-actions">
+    <a class="btn btn-ghost" href="/admin/extras">Annulla</a>
+    <button class="btn btn-primary" type="submit"><%= extra ? '💾 Salva modifiche' : '✨ Crea extra' %></button>
+  </div>
+</form>
+<%- include('../partials/footer') %>

@@ -1,0 +1,64 @@
+<%- include('../partials/header') %>
+<div class="card">
+  <div class="card-head">
+    <h2>Utenti</h2>
+  </div>
+
+  <%- include('../partials/dt-toolbar', {
+    params: params,
+    total: total,
+    totalUnfiltered: totalUnfiltered,
+    entitySingular: 'utente',
+    entityPlural: 'utenti',
+    basePath: '/admin/contacts',
+    searchPlaceholder: 'Cerca per nome, email, telefono…',
+    extraFilters: [
+      { name: 'source', value: source, options: [
+        { val: '', label: 'Tutte le fonti' },
+        { val: 'booking', label: 'Prenotazioni' },
+        { val: 'contact', label: 'Form contatti' },
+        { val: 'newsletter', label: 'Newsletter' },
+      ] },
+    ],
+  }) %>
+
+  <% if (!contacts.length) { %>
+    <p class="muted" style="padding:20px 0">Nessun contatto trovato.</p>
+  <% } else { %>
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr>
+            <%- include('../partials/dt-th', { label: 'Nome', sortKey: 'name', params: params, basePath: '/admin/contacts' }) %>
+            <%- include('../partials/dt-th', { label: 'Email', sortKey: 'email', params: params, basePath: '/admin/contacts' }) %>
+            <%- include('../partials/dt-th', { label: 'Telefono', sortKey: 'phone', params: params, basePath: '/admin/contacts' }) %>
+            <th>Fonti</th>
+            <%- include('../partials/dt-th', { label: 'Ultima attività', sortKey: 'lastSeen', params: params, basePath: '/admin/contacts' }) %>
+            <th>Attività</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% contacts.forEach(function(c){ %>
+            <tr>
+              <td><strong><%= c.name || '—' %></strong></td>
+              <td><a href="mailto:<%= c.email %>"><%= c.email %></a></td>
+              <td><%= c.phone || '—' %></td>
+              <td>
+                <% if (c.sources.includes('booking')) { %><span class="badge badge-ok">Prenotazione</span><% } %>
+                <% if (c.sources.includes('contact')) { %> <span class="badge badge-warn">Contatto</span><% } %>
+                <% if (c.sources.includes('newsletter')) { %> <span class="badge badge-role">Newsletter</span><% } %>
+              </td>
+              <td><%= new Date(c.lastSeen).toLocaleDateString('it-IT',{day:'2-digit',month:'short',year:'numeric'}) %></td>
+              <td style="font-size:12.5px;color:var(--muted)">
+                <% var pcs = []; if (c.bookingsCount) pcs.push(c.bookingsCount + ' pren.'); if (c.messagesCount) pcs.push(c.messagesCount + ' msg'); if (c.newsletter) pcs.push('iscritto'); %>
+                <%= pcs.join(' · ') || '—' %>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+    <%- include('../partials/dt-pagination', { links: links, params: params, basePath: '/admin/contacts' }) %>
+  <% } %>
+</div>
+<%- include('../partials/footer') %>

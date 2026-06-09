@@ -12,11 +12,22 @@ function parsePerms(body) {
 }
 
 router.get('/', requirePermission('roles.view'), async (req, res) => {
-  const roles = await prisma.role.findMany({
-    include: { _count: { select: { users: true } } },
-    orderBy: { id: 'asc' },
-  });
-  res.render('roles/list', { title: 'Ruoli', roles });
+  const dt = require('../lib/datatable');
+  const params = dt.parseParams(req, { defaultSort: 'name', allowedSorts: ['name','isSystem','createdAt'] });
+  const where = {};
+  if (params.q) where.OR = [
+    { name: { contains: params.q, mode: 'insensitive' } },
+    { description: { contains: params.q, mode: 'insensitive' } },
+  ];
+  const orderBy = {}; orderBy[params.sort] = params.dir;
+  const [totalUnfiltered, total, roles] = await Promise.all([
+    prisma.role.count(),
+    prisma.role.count({ where }),
+    prisma.role.findMany({ where, orderBy, skip: params.skip, take: params.take, include: { _count: { select: { users: true } } } }),
+  ]);
+  const totalPages = Math.max(1, Math.ceil(total / params.perPage));
+  const links = dt.pageLinks(params.page, totalPages);
+  res.render('roles/list', { title: 'Ruoli', roles, params, total, totalUnfiltered, totalPages, links });
 });
 
 router.get('/new', requirePermission('roles.create'), (req, res) => {

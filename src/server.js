@@ -176,7 +176,25 @@ app.use('/admin/media', requireAuth, enforcePasswordChange, csrfProtect, require
 app.use('/admin/plans', requireAuth, enforcePasswordChange, csrfProtect, require('./routes/plans'));
 app.use('/admin/events', requireAuth, enforcePasswordChange, csrfProtect, require('./routes/events'));
 app.use('/admin/professors', requireAuth, enforcePasswordChange, csrfProtect, require('./routes/professors'));
+app.use('/admin/lessons', requireAuth, enforcePasswordChange, csrfProtect, require('./routes/lessons'));
+app.use('/admin/extras', requireAuth, enforcePasswordChange, csrfProtect, require('./routes/extras'));
+app.use('/admin/newsletter', requireAuth, enforcePasswordChange, csrfProtect, require('./routes/newsletter'));
 app.use('/admin/bookings', requireAuth, enforcePasswordChange, csrfProtect, require('./routes/bookings'));
+app.use('/admin/messages', requireAuth, enforcePasswordChange, csrfProtect, require('./routes/messages'));
+app.use('/admin/contacts', requireAuth, enforcePasswordChange, csrfProtect, require('./routes/contacts'));
+app.use('/admin/audit', requireAuth, enforcePasswordChange, csrfProtect, require('./routes/audit'));
+app.use('/admin/pages', requireAuth, enforcePasswordChange, csrfProtect, require('./routes/pages'));
+app.use('/admin/referrals', requireAuth, enforcePasswordChange, csrfProtect, require('./routes/referrals'));
+
+// ---- Area pubblica referrer (registrazione + login + dashboard) ----
+app.use('/area-referral', csrfProtect, require('./routes/area-referral'));
+
+// ---- Endpoint pubblici (form contatto, tracker analytics, api home-video) ----
+app.use(require('./routes/messages').publicRouter); // POST /contacto
+app.use(require('./routes/track'));                  // POST /track, /track/duration
+app.use(require('./routes/pages').publicRouter);     // GET /api/home-video.json
+app.use(require('./routes/legal'));                  // GET /privacidad, /cookies, /api/site-footer.json
+app.use(require('./routes/newsletter').publicRouter); // GET/POST /newsletter/unsubscribe/:token
 
 // ---- Prenotazione pubblica dinamica (DB + Stripe) ----
 // Le vecchie pagine statiche pack-*.html ora rimandano al checkout dinamico.
@@ -199,6 +217,8 @@ app.get(/^\/([A-Za-z0-9_-]+)\.html$/, (req, res) => {
   res.redirect(301, '/' + req.params[0]);
 });
 app.get(['/index', '/index.html'], (req, res) => res.redirect(301, '/'));
+// Legacy /contatti → /contacto (cambio slug da italiano a spagnolo)
+app.get(['/contatti', '/contatti.html'], (req, res) => res.redirect(301, '/contacto'));
 
 // Asset del sito (immagini originali, css fix, ecc.)
 app.use(
@@ -211,7 +231,7 @@ app.use(
   })
 );
 
-// Pretty URL: /contatti -> contatti.html
+// Pretty URL: /<page> -> <page>.html
 app.get(/^\/([A-Za-z0-9_-]+)$/, (req, res, next) => {
   const f = path.join(SITE, req.params[0] + '.html');
   if (fs.existsSync(f)) return res.sendFile(f);

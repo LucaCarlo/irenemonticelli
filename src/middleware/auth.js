@@ -26,17 +26,9 @@ function requireAuth(req, res, next) {
   next();
 }
 
-// Se l'utente deve cambiare password, forzalo li (eccetto logout e la pagina stessa).
-function enforcePasswordChange(req, res, next) {
-  if (
-    req.user &&
-    req.user.mustChangePassword &&
-    !req.path.startsWith('/admin/change-password') &&
-    req.path !== '/admin/logout'
-  ) {
-    return res.redirect('/admin/change-password');
-  }
-  next();
-}
+// Funzione mantenuta per retro-compatibilità (è ancora montata in server.js).
+// Disabilitata su richiesta: niente più forzatura di cambio password al primo login.
+// Se in futuro la vuoi riattivare basta togliere il return next() iniziale.
+function enforcePasswordChange(req, res, next) { return next(); }
 
 module.exports = { loadUser, requireAuth, enforcePasswordChange };

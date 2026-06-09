@@ -1,0 +1,303 @@
+<%- include('_header') %>
+
+<style>
+  .db-wrap{max-width:1100px;margin:0 auto;padding:0 16px}
+
+  /* === HERO HEADER === */
+  .db-hero{display:flex;justify-content:space-between;align-items:flex-end;gap:32px;flex-wrap:wrap;margin-bottom:42px}
+  .db-sec-num{font-size:11.5px;letter-spacing:.28em;text-transform:uppercase;font-weight:500;color:var(--ink-soft);margin-bottom:18px;display:flex;align-items:center;gap:14px}
+  .db-sec-dash{display:inline-block;width:40px;height:1.5px;background:var(--yellow)}
+  .db-hero h1{font-family:var(--serif);font-size:clamp(42px,5vw,64px);font-weight:400;margin:0;line-height:1.02;letter-spacing:-.01em}
+  .db-hero h1 i{font-style:italic;color:var(--yellow-d)}
+  .db-meta{color:var(--ink-soft);font-size:14px;margin:14px 0 0;font-weight:300}
+
+  /* === LOGOUT button === */
+  .db-logout{display:inline-flex;align-items:center;gap:8px;padding:11px 22px;border:1.5px solid var(--line);
+    border-radius:99px;background:#fff;font-family:inherit;font-size:12.5px;color:var(--ink-soft);cursor:pointer;
+    transition:.22s;letter-spacing:.12em;text-transform:uppercase;font-weight:500}
+  .db-logout:hover{border-color:var(--ink);color:var(--ink);transform:translateY(-1px);box-shadow:0 6px 18px -8px rgba(0,0,0,.15)}
+  .db-logout svg{width:14px;height:14px}
+
+  /* === CODICI (priorità: in alto, grandi, eleganti) === */
+  .db-codes-wrap{margin-bottom:42px}
+  .db-codes-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;gap:14px;flex-wrap:wrap}
+  .db-codes-head h2{font-family:var(--serif);font-size:30px;font-weight:500;margin:0;letter-spacing:-.005em}
+  .db-codes-head h2 i{font-style:italic;color:var(--yellow-d)}
+  .db-codes-head p{margin:6px 0 0;font-size:14px;color:var(--ink-soft);font-weight:300;line-height:1.55}
+
+  .db-codes-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(310px,1fr));gap:18px}
+  .db-code-card{background:linear-gradient(135deg,#fffbe8 0%,#fff 65%);border:1.5px solid #ead9a8;
+    border-radius:18px;padding:24px 26px;display:flex;flex-direction:column;gap:14px;
+    position:relative;overflow:hidden;transition:.3s;
+    box-shadow:0 4px 18px -10px rgba(245,197,24,.25)}
+  .db-code-card.is-off{opacity:.55;background:#fafbfc;border-color:var(--line);box-shadow:none}
+  .db-code-card:hover{transform:translateY(-4px);box-shadow:0 22px 50px -22px rgba(245,197,24,.4)}
+  .db-code-card::after{content:"";position:absolute;top:-20px;right:-20px;width:80px;height:80px;
+    background:radial-gradient(circle,rgba(245,197,24,.18),transparent 65%);pointer-events:none}
+
+  .db-code-top{display:flex;justify-content:space-between;align-items:center;gap:12px;position:relative;z-index:1}
+  .db-code-value{font-family:Manrope,monospace;font-size:26px;font-weight:700;letter-spacing:.06em;color:var(--ink);user-select:all;line-height:1}
+  .db-code-copy{padding:8px 16px;background:var(--ink);color:#fff;border:0;border-radius:99px;
+    font-family:inherit;font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;font-weight:700;
+    cursor:pointer;transition:.22s;display:inline-flex;align-items:center;gap:6px;flex-shrink:0}
+  .db-code-copy:hover{background:#000;transform:translateY(-1px);box-shadow:0 10px 22px -8px rgba(0,0,0,.4)}
+  .db-code-copy.copied{background:#1b6b3e}
+
+  .db-code-perks{display:flex;flex-direction:column;gap:8px;font-size:14px;color:var(--ink-soft);line-height:1.5;position:relative;z-index:1}
+  .db-code-perks-row{display:flex;align-items:center;gap:8px}
+  .db-code-perks strong{color:var(--ink);font-weight:600}
+  .db-code-meta{font-size:11.5px;color:var(--muted);padding-top:12px;border-top:1px dashed rgba(0,0,0,.08);
+    letter-spacing:.02em;position:relative;z-index:1}
+
+  /* === KPI === */
+  .db-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin-bottom:36px}
+  .db-stat{background:#fff;border-radius:16px;padding:24px 26px;border:1px solid var(--line);position:relative;overflow:hidden;transition:.25s}
+  .db-stat:hover{transform:translateY(-2px);box-shadow:0 18px 40px -20px rgba(0,0,0,.1)}
+  .db-stat-lbl{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);font-weight:500;margin-bottom:12px}
+  .db-stat-val{font-family:var(--serif);font-size:40px;font-weight:500;line-height:1;letter-spacing:-.02em;color:var(--black)}
+  .db-stat-sub{font-size:12.5px;color:var(--muted);margin-top:6px;font-weight:300}
+  .db-stat-accent{background:linear-gradient(135deg,#fffbe8,#fff);border-color:rgba(245,197,24,.4)}
+  .db-stat-accent::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--yellow),var(--yellow-d))}
+  .db-stat-paid{background:linear-gradient(135deg,#e7f3ec,#fff);border-color:rgba(27,107,62,.3)}
+  .db-stat-paid .db-stat-val{color:#1b6b3e}
+
+  /* === CHART === */
+  .db-chart-card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:26px 30px;margin-bottom:30px}
+  .db-chart-head{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:18px;flex-wrap:wrap;gap:12px}
+  .db-chart-head h3{font-family:var(--serif);font-size:24px;font-weight:500;margin:0}
+  .db-chart-head h3 i{font-style:italic;color:var(--yellow-d)}
+  .db-chart-head p{margin:4px 0 0;font-size:13px;color:var(--ink-soft);font-weight:300}
+  .db-chart-canvas{position:relative;height:240px}
+
+  /* === COMMISSIONI === */
+  .db-section{background:#fff;border:1px solid var(--line);border-radius:16px;padding:26px 30px;margin-bottom:24px}
+  .db-section-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;gap:14px;flex-wrap:wrap}
+  .db-section-head h3{font-family:var(--serif);font-size:24px;font-weight:500;margin:0}
+  .db-section-head h3 i{font-style:italic;color:var(--yellow-d)}
+  .db-section-head p{margin:4px 0 0;font-size:13.5px;color:var(--ink-soft);font-weight:300}
+
+  .db-empty{padding:36px 20px;text-align:center;color:var(--muted);background:#fafbfc;border-radius:12px}
+  .db-empty-ico{font-size:36px;margin-bottom:10px;opacity:.7}
+
+  .db-table{width:100%;border-collapse:collapse;font-size:14px}
+  .db-table th{text-align:left;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:600;padding:12px 8px;border-bottom:1.5px solid var(--line)}
+  .db-table td{padding:14px 8px;border-bottom:1px solid #f4f5f8;vertical-align:middle}
+  .db-table tr:last-child td{border-bottom:0}
+  .db-table tr:hover td{background:#fafbfc}
+  .db-pill{display:inline-block;padding:3px 10px;border-radius:99px;font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
+  .db-pill-pending{background:#fff3d6;color:#7a5800}
+  .db-pill-paid{background:#d6f3df;color:#1b6b3e}
+  .db-pill-cancelled{background:#ffe1dc;color:#8a2a1c}
+
+  @media (max-width:640px){
+    .db-table th:nth-child(2),.db-table td:nth-child(2){display:none}
+    .db-chart-canvas{height:200px}
+    .db-section,.db-chart-card,.db-code-card{padding:20px 18px}
+  }
+</style>
+
+<div class="db-wrap">
+  <!-- HERO + Logout -->
+  <div class="db-hero">
+    <div>
+      <div class="db-sec-num"><span class="db-sec-dash"></span>Área Referidos</div>
+      <h1>Hola, <i><%= referrer.firstName %></i></h1>
+      <p class="db-meta">
+        Tu panel privado.
+        <% if (referrer.lastLoginAt) { %>· Último acceso: <%= new Date(referrer.lastLoginAt).toLocaleDateString('es-ES',{day:'2-digit',month:'long',year:'numeric',hour:'2-digit',minute:'2-digit'}) %><% } %>
+      </p>
+    </div>
+    <form method="post" action="/area-referral/logout" style="margin:0">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <button type="submit" class="db-logout">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        Cerrar sesión
+      </button>
+    </form>
+  </div>
+
+  <!-- ===== CODICI (priorità in alto) ===== -->
+  <div class="db-codes-wrap">
+    <div class="db-codes-head">
+      <div>
+        <h2>Tus <i>códigos</i></h2>
+        <p>Compártelos con tu comunidad — por cada reserva ganarás una comisión.</p>
+      </div>
+    </div>
+    <% if (!codes.length) { %>
+      <div class="db-empty">
+        <div class="db-empty-ico">🎫</div>
+        <p style="margin:0 0 4px;font-size:15px">Todavía no tienes códigos asignados.</p>
+        <p style="margin:0;font-size:13.5px">Contacta con Irene para activar tu primer código.</p>
+      </div>
+    <% } else { %>
+    <div class="db-codes-grid">
+      <% codes.forEach(function(c){ %>
+        <div class="db-code-card <%= c.active ? '' : 'is-off' %>">
+          <div class="db-code-top">
+            <span class="db-code-value"><%= c.code %></span>
+            <button type="button" class="db-code-copy" data-code="<%= c.code %>">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+              Copiar
+            </button>
+          </div>
+          <div class="db-code-perks">
+            <div class="db-code-perks-row">🎁 <span>Descuento cliente: <strong><%= c.discountValue %><%= c.discountType==='fixed' ? ' €' : '%' %></strong></span></div>
+            <div class="db-code-perks-row">💰 <span>Tu comisión: <strong style="color:#1b6b3e"><%= c.commissionPct %>%</strong> sobre el neto</span></div>
+          </div>
+          <div class="db-code-meta">
+            <%= c.usedCount %> us<%= c.usedCount===1?'o':'os' %><% if (c.maxUses) { %> / <%= c.maxUses %><% } %>
+            <% if (c.validUntil) { %> · válido hasta <%= new Date(c.validUntil).toLocaleDateString('es-ES',{day:'2-digit',month:'short',year:'numeric'}) %><% } %>
+            <% if (!c.active) { %> · <span style="color:#8a2a1c;font-weight:700">DESACTIVADO</span><% } %>
+          </div>
+        </div>
+      <% }) %>
+    </div>
+    <% } %>
+  </div>
+
+  <!-- ===== KPI ===== -->
+  <div class="db-stats">
+    <div class="db-stat">
+      <div class="db-stat-lbl">Comisiones</div>
+      <div class="db-stat-val"><%= stats.totalCommissions %></div>
+      <div class="db-stat-sub">ventas con tus códigos</div>
+    </div>
+    <div class="db-stat db-stat-accent">
+      <div class="db-stat-lbl">Ganancias totales</div>
+      <div class="db-stat-val"><%= stats.totalEarnings.toFixed(2) %> €</div>
+      <div class="db-stat-sub">pagadas + pendientes</div>
+    </div>
+    <div class="db-stat">
+      <div class="db-stat-lbl">Pendiente de pago</div>
+      <div class="db-stat-val"><%= stats.pendingAmount.toFixed(2) %> €</div>
+      <div class="db-stat-sub"><%= stats.pendingCount %> comision<%= stats.pendingCount===1?'':'es' %></div>
+    </div>
+    <div class="db-stat db-stat-paid">
+      <div class="db-stat-lbl">Ya pagado</div>
+      <div class="db-stat-val"><%= stats.paidAmount.toFixed(2) %> €</div>
+      <div class="db-stat-sub"><%= stats.paidCount %> comision<%= stats.paidCount===1?'':'es' %></div>
+    </div>
+  </div>
+
+  <!-- ===== CHART ===== -->
+  <div class="db-chart-card">
+    <div class="db-chart-head">
+      <div>
+        <h3>Tendencia <i>últimos 6 meses</i></h3>
+        <p>Ganancias generadas por tus códigos.</p>
+      </div>
+    </div>
+    <div class="db-chart-canvas">
+      <canvas id="dbChart"></canvas>
+    </div>
+  </div>
+
+  <!-- ===== DETTAGLIO COMMISSIONI ===== -->
+  <div class="db-section">
+    <div class="db-section-head">
+      <div>
+        <h3>Detalle <i>comisiones</i></h3>
+        <p>Últimas 30 ventas generadas.</p>
+      </div>
+    </div>
+    <% if (!commissions.length) { %>
+      <div class="db-empty">
+        <div class="db-empty-ico">💸</div>
+        <p style="margin:0 0 4px;font-size:15px">Todavía no has generado comisiones.</p>
+        <p style="margin:0;font-size:13.5px">Cuando alguien reserve usando uno de tus códigos, aparecerá aquí.</p>
+      </div>
+    <% } else { %>
+      <div style="overflow-x:auto">
+      <table class="db-table">
+        <thead><tr>
+          <th>Fecha</th>
+          <th>Código</th>
+          <th>Cliente</th>
+          <th>Comisión</th>
+          <th>Estado</th>
+        </tr></thead>
+        <tbody>
+        <% commissions.forEach(function(c){ %>
+          <tr>
+            <td style="white-space:nowrap"><%= new Date(c.createdAt).toLocaleDateString('es-ES',{day:'2-digit',month:'short',year:'numeric'}) %></td>
+            <td><code style="background:#fffbe8;color:#7a5800;padding:3px 9px;border-radius:5px;font-weight:700;font-size:12.5px"><%= c.code.code %></code></td>
+            <td><%= (c.booking.customerName||'').split(' ')[0] %> <%= ((c.booking.customerName||'').split(' ')[1]||'').charAt(0) %>.</td>
+            <td><strong style="color:#1b6b3e;font-size:15px"><%= c.commissionAmt.toFixed(2) %> €</strong></td>
+            <td><span class="db-pill db-pill-<%= c.status %>"><%= c.status==='pending'?'Pendiente':(c.status==='paid'?'Pagado':'Anulado') %></span></td>
+          </tr>
+        <% }) %>
+        </tbody>
+      </table>
+      </div>
+    <% } %>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script>
+(function(){
+  // Copy code to clipboard
+  document.querySelectorAll('.db-code-copy').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var c = btn.getAttribute('data-code');
+      navigator.clipboard.writeText(c).then(function(){
+        var orig = btn.innerHTML;
+        btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Copiado';
+        btn.classList.add('copied');
+        setTimeout(function(){ btn.innerHTML = orig; btn.classList.remove('copied'); }, 1800);
+      }).catch(function(){
+        // fallback
+        var ta = document.createElement('textarea');
+        ta.value = c; document.body.appendChild(ta); ta.select();
+        try { document.execCommand('copy'); } catch(e){}
+        document.body.removeChild(ta);
+      });
+    });
+  });
+
+  // Chart
+  if (typeof Chart === 'undefined') return;
+  var canvas = document.getElementById('dbChart');
+  if (!canvas) return;
+  var ctx = canvas.getContext('2d');
+  var DATA = <%- JSON.stringify(chart) %>;
+  var grad = ctx.createLinearGradient(0,0,0,240);
+  grad.addColorStop(0,'rgba(245,197,24,.42)');
+  grad.addColorStop(1,'rgba(245,197,24,0)');
+  new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: DATA.labels,
+      datasets: [{
+        label: 'Comisiones',
+        data: DATA.data,
+        borderColor: '#c8970a',
+        borderWidth: 2.5,
+        fill: true,
+        backgroundColor: grad,
+        tension: .4,
+        pointRadius: 5,
+        pointBackgroundColor: '#c8970a',
+        pointBorderColor: '#fff',
+        pointBorderWidth: 2,
+        pointHoverRadius: 7,
+      }],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: { backgroundColor: '#1c1f26', padding: 12, titleFont: {size: 13}, bodyFont: {size: 14}, cornerRadius: 8, callbacks: { label: function(ctx){ return '  ' + ctx.parsed.y.toFixed(2) + ' €'; } } },
+      },
+      scales: {
+        x: { grid: { display: false }, ticks: { color: '#7a8190', font: { size: 12, family: 'Manrope' } } },
+        y: { beginAtZero: true, grid: { color: '#f0f1f4' }, ticks: { color: '#7a8190', font: { size: 11, family: 'Manrope' }, callback: function(v){ return v + ' €'; } } },
+      },
+    },
+  });
+})();
+</script>
+
+<%- include('_footer') %>

@@ -1,0 +1,292 @@
+<%- include('../partials/header') %>
+
+<div class="card pg-head">
+  <div>
+    <h2 style="margin:0 0 4px">Pagine del sito</h2>
+    <p class="muted" style="margin:0;font-size:13.5px">Gestisci hero della homepage e le pagine legali. Le modifiche sono live in tempo reale.</p>
+  </div>
+</div>
+
+<div class="pg-grid">
+  <!-- SIDEBAR TABS -->
+  <aside class="pg-side">
+    <a class="pg-tab <%= activeTab==='home' ? 'is-active':'' %>" href="/admin/pages?tab=home">
+      <div class="pg-tab-ico" style="background:linear-gradient(135deg,#fdf2c9,#ffe39e);color:#7a5800">▶</div>
+      <div class="pg-tab-meta">
+        <div class="pg-tab-title">Homepage</div>
+        <div class="pg-tab-sub">Hero + video</div>
+      </div>
+    </a>
+    <a class="pg-tab <%= activeTab==='privacy' ? 'is-active':'' %>" href="/admin/pages?tab=privacy">
+      <div class="pg-tab-ico" style="background:#eef4ff;color:#0d5290">🔒</div>
+      <div class="pg-tab-meta">
+        <div class="pg-tab-title">Privacy Policy</div>
+        <div class="pg-tab-sub"><%= privacyUsesDefault ? 'Default' : 'Personalizzato' %></div>
+      </div>
+    </a>
+    <a class="pg-tab <%= activeTab==='cookies' ? 'is-active':'' %>" href="/admin/pages?tab=cookies">
+      <div class="pg-tab-ico" style="background:#fff3d6;color:#7a5800">🍪</div>
+      <div class="pg-tab-meta">
+        <div class="pg-tab-title">Cookie Policy</div>
+        <div class="pg-tab-sub"><%= cookiesUsesDefault ? 'Default' : 'Personalizzato' %></div>
+      </div>
+    </a>
+  </aside>
+
+  <!-- MAIN PANEL -->
+  <div class="pg-main">
+
+    <!-- HOMEPAGE -->
+    <% if (activeTab==='home') { %>
+      <div class="card pg-card">
+        <div class="pg-card-head">
+          <h2 style="margin:0">Homepage — Hero video</h2>
+          <a class="btn btn-ghost btn-sm" href="/" target="_blank" rel="noopener">Anteprima sito ↗</a>
+        </div>
+        <p class="muted" style="margin:0 0 18px">Il video viene riprodotto in autoplay nella sezione di apertura. Formati supportati: mp4, webm, mov. <%= defaultVideoNote %></p>
+
+        <form method="post" action="/admin/pages/home-video" class="form">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+          <div class="hero-edit">
+            <div class="hero-preview">
+              <div class="media-picker" data-target="home_video_media_id" data-accept="video/*">
+                <input type="hidden" name="home_video_media_id" value="<%= homeVideo ? homeVideo.id : '' %>">
+                <div class="media-picker-preview hero-video-preview">
+                  <% if (homeVideo) { %>
+                    <video src="<%= homeVideo.path %>" muted autoplay loop playsinline></video>
+                  <% } else { %>
+                    <div class="hero-default">
+                      <div style="font-size:36px;line-height:1">▶</div>
+                      <div style="font-size:13px;margin-top:6px">Video di default</div>
+                    </div>
+                  <% } %>
+                </div>
+                <div class="media-picker-actions" style="display:flex;flex-direction:column;gap:8px;align-items:stretch">
+                  <label class="btn btn-primary" style="cursor:pointer;margin:0;justify-content:center">
+                    ⬆ Carica nuovo video
+                    <input type="file" class="media-picker-file" accept="video/*" hidden>
+                  </label>
+                  <button type="button" class="btn btn-ghost btn-pick">📁 Scegli dalla libreria</button>
+                  <button type="button" class="btn btn-ghost btn-clear">↺ Ripristina default</button>
+                  <div class="media-picker-status muted" style="font-size:13px" hidden></div>
+                </div>
+              </div>
+            </div>
+            <div class="hero-tips">
+              <h4 style="margin:0 0 8px">Consigli</h4>
+              <ul style="margin:0;padding-left:18px;font-size:13px;line-height:1.7;color:var(--muted)">
+                <li>Risoluzione 1920×1080 o superiore</li>
+                <li>Durata 8–20 secondi per loop fluido</li>
+                <li>Peso consigliato &lt; 8 MB (compressione H.264)</li>
+                <li>Senza audio (parte mutato in autoplay)</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button class="btn btn-primary">💾 Salva video hero</button>
+          </div>
+        </form>
+      </div>
+
+      <div class="card">
+        <div class="pg-card-head"><h3 style="margin:0">Altri contenuti dinamici</h3></div>
+        <div class="pg-quick-grid">
+          <a class="pg-quick" href="/admin/settings?tab=general">
+            <div class="pg-quick-ico">🪪</div>
+            <div>
+              <div class="pg-quick-title">Nome e tagline</div>
+              <div class="pg-quick-sub">Impostazioni → Generali</div>
+            </div>
+          </a>
+          <a class="pg-quick" href="/admin/settings?tab=contatti">
+            <div class="pg-quick-ico">📞</div>
+            <div>
+              <div class="pg-quick-title">Contatti pubblici</div>
+              <div class="pg-quick-sub">Impostazioni → Contatti</div>
+            </div>
+          </a>
+          <a class="pg-quick" href="/admin/settings?tab=social">
+            <div class="pg-quick-ico">🔗</div>
+            <div>
+              <div class="pg-quick-title">Social network</div>
+              <div class="pg-quick-sub">Impostazioni → Social</div>
+            </div>
+          </a>
+          <a class="pg-quick" href="/admin/settings?tab=legal">
+            <div class="pg-quick-ico">⚖</div>
+            <div>
+              <div class="pg-quick-title">Footer + dati legali</div>
+              <div class="pg-quick-sub">Impostazioni → Footer + Legali</div>
+            </div>
+          </a>
+          <a class="pg-quick" href="/admin/media">
+            <div class="pg-quick-ico">🖼</div>
+            <div>
+              <div class="pg-quick-title">Libreria media</div>
+              <div class="pg-quick-sub">Immagini e video del sito</div>
+            </div>
+          </a>
+        </div>
+      </div>
+    <% } %>
+
+    <!-- PRIVACY -->
+    <% if (activeTab==='privacy') { %>
+      <div class="card pg-card">
+        <div class="pg-card-head">
+          <div>
+            <h2 style="margin:0">Política de Privacidad</h2>
+            <p class="muted" style="margin:6px 0 0;font-size:13.5px">
+              Contenuto della pagina <code>/privacidad</code>.
+              <% if (privacyUsesDefault) { %><span class="pg-tag pg-tag-default">In uso il default</span>
+              <% } else { %><span class="pg-tag pg-tag-custom">Personalizzato</span><% } %>
+            </p>
+          </div>
+          <a class="btn btn-ghost btn-sm" href="/privacidad" target="_blank">Anteprima pubblica ↗</a>
+        </div>
+
+        <div class="pg-placeholder-info">
+          <strong>Placeholders disponibili:</strong>
+          <code>{{company}}</code> <code>{{email}}</code> <code>{{address}}</code> <code>{{authority}}</code>
+          — valori dalle <a href="/admin/settings?tab=legal">Impostazioni → Footer + Legali</a>
+        </div>
+
+        <form method="post" action="/admin/pages/privacy" class="form" id="privacyForm">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <textarea name="privacy_html" id="editor-privacy" class="rich-editor"><%= privacyHtml %></textarea>
+          <div class="form-actions">
+            <button class="btn btn-primary" type="submit">💾 Salva Privacy Policy</button>
+            <% if (!privacyUsesDefault) { %>
+              <button class="btn btn-ghost" type="submit" formaction="/admin/pages/privacy" onclick="return confirm('Ripristinare il contenuto di default? Le modifiche personalizzate verranno perse.') && (function(){var ed=tinymce.get('editor-privacy'); if (ed) ed.setContent(''); document.getElementById('editor-privacy').value=''; return true;})()">↺ Ripristina default</button>
+            <% } %>
+          </div>
+        </form>
+      </div>
+    <% } %>
+
+    <!-- COOKIES -->
+    <% if (activeTab==='cookies') { %>
+      <div class="card pg-card">
+        <div class="pg-card-head">
+          <div>
+            <h2 style="margin:0">Política de Cookies</h2>
+            <p class="muted" style="margin:6px 0 0;font-size:13.5px">
+              Contenuto della pagina <code>/cookies</code>.
+              <% if (cookiesUsesDefault) { %><span class="pg-tag pg-tag-default">In uso il default</span>
+              <% } else { %><span class="pg-tag pg-tag-custom">Personalizzato</span><% } %>
+            </p>
+          </div>
+          <a class="btn btn-ghost btn-sm" href="/cookies" target="_blank">Anteprima pubblica ↗</a>
+        </div>
+
+        <div class="pg-placeholder-info">
+          <strong>Placeholders disponibili:</strong>
+          <code>{{email}}</code> <code>{{company}}</code>
+          — valori dalle <a href="/admin/settings?tab=legal">Impostazioni → Footer + Legali</a>
+        </div>
+
+        <form method="post" action="/admin/pages/cookies" class="form" id="cookiesForm">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <textarea name="cookies_html" id="editor-cookies" class="rich-editor"><%= cookiesHtml %></textarea>
+          <div class="form-actions">
+            <button class="btn btn-primary" type="submit">💾 Salva Cookie Policy</button>
+            <% if (!cookiesUsesDefault) { %>
+              <button class="btn btn-ghost" type="submit" formaction="/admin/pages/cookies" onclick="return confirm('Ripristinare il contenuto di default? Le modifiche personalizzate verranno perse.') && (function(){var ed=tinymce.get('editor-cookies'); if (ed) ed.setContent(''); document.getElementById('editor-cookies').value=''; return true;})()">↺ Ripristina default</button>
+            <% } %>
+          </div>
+        </form>
+      </div>
+    <% } %>
+
+  </div>
+</div>
+
+<style>
+  .pg-head{padding:18px 20px}
+  .pg-grid{display:grid;grid-template-columns:260px 1fr;gap:20px;align-items:start}
+  .pg-side{display:flex;flex-direction:column;gap:8px;position:sticky;top:80px}
+  .pg-tab{display:flex;align-items:center;gap:12px;padding:12px 14px;background:#fff;border:1px solid var(--line);
+    border-radius:12px;transition:.18s;color:var(--ink)}
+  .pg-tab:hover{text-decoration:none;border-color:#d8c98c;box-shadow:0 3px 14px rgba(0,0,0,.04);transform:translateY(-1px)}
+  .pg-tab.is-active{border-color:var(--brand);background:linear-gradient(135deg,#fffbe8,#fff);box-shadow:0 6px 18px rgba(224,170,0,.12)}
+  .pg-tab-ico{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+  .pg-tab-title{font-weight:600;font-size:14px}
+  .pg-tab-sub{font-size:12px;color:var(--muted)}
+
+  .pg-main{min-width:0}
+  .pg-card{padding:24px}
+  .pg-card-head{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;margin-bottom:16px;flex-wrap:wrap}
+
+  .hero-edit{display:grid;grid-template-columns:1fr 280px;gap:24px;align-items:start;margin:14px 0 4px}
+  .hero-video-preview{width:100% !important;height:280px !important;border-radius:14px;overflow:hidden;background:#0f1115}
+  .hero-video-preview video{width:100%;height:100%;object-fit:cover}
+  .hero-default{display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;height:100%;color:#7a8190}
+  .hero-tips{background:#fafbfc;border:1px solid #eef0f4;border-radius:10px;padding:14px}
+  .hero-tips h4{font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:#7a8190}
+
+  .pg-quick-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}
+  .pg-quick{display:flex;align-items:center;gap:12px;padding:14px;background:#fafbfc;border:1px solid #eef0f4;border-radius:10px;color:var(--ink);transition:.15s}
+  .pg-quick:hover{text-decoration:none;background:#fff;border-color:#d8c98c;transform:translateY(-1px)}
+  .pg-quick-ico{font-size:22px;width:38px;height:38px;background:#fff;border-radius:9px;display:flex;align-items:center;justify-content:center;border:1px solid #eef0f4}
+  .pg-quick-title{font-weight:600;font-size:13.5px}
+  .pg-quick-sub{font-size:11.5px;color:var(--muted)}
+
+  .pg-tag{display:inline-block;padding:2px 9px;border-radius:99px;font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;margin-left:8px;vertical-align:middle}
+  .pg-tag-default{background:#eef0f4;color:#5a5e6a}
+  .pg-tag-custom{background:#d6f3df;color:#1b6b3e}
+
+  .pg-placeholder-info{background:#fffbe8;border:1px solid #ead9a8;border-radius:10px;padding:10px 14px;font-size:12.5px;color:#5a4d20;margin-bottom:14px}
+  .pg-placeholder-info code{background:#fff;border:1px solid #ead9a8;color:#7a5800;margin:0 2px}
+
+  /* TinyMCE polish */
+  .tox-tinymce{border:1px solid var(--line) !important;border-radius:10px !important;overflow:hidden}
+  .tox .tox-toolbar__primary{background:#fafbfc !important}
+
+  @media(max-width:1000px){
+    .pg-grid{grid-template-columns:1fr}
+    .pg-side{position:static;flex-direction:row;overflow-x:auto;padding-bottom:6px}
+    .pg-tab{min-width:220px}
+    .hero-edit{grid-template-columns:1fr}
+  }
+</style>
+
+<script>window.MEDIA_CSRF = "<%= csrfToken %>";</script>
+<!-- Picker modal (used by media-picker JS) -->
+<div class="modal" id="pickerModal" hidden>
+  <div class="modal-box">
+    <div class="modal-head"><h3>Scegli media</h3><button class="modal-x" id="pickerClose">&times;</button></div>
+    <div class="modal-body"><div class="media-grid" id="pickerGrid"><p class="muted">Caricamento...</p></div></div>
+  </div>
+</div>
+
+<% if (activeTab==='privacy' || activeTab==='cookies') { %>
+<script src="https://cdn.jsdelivr.net/npm/tinymce@7.4.1/tinymce.min.js"></script>
+<script>
+(function(){
+  if (typeof tinymce === 'undefined') return;
+  tinymce.init({
+    selector: 'textarea.rich-editor',
+    license_key: 'gpl',
+    base_url: 'https://cdn.jsdelivr.net/npm/tinymce@7.4.1',
+    suffix: '.min',
+    height: 600,
+    menubar: 'edit insert view format table tools',
+    branding: false,
+    promotion: false,
+    plugins: 'advlist autolink lists link image charmap searchreplace visualblocks code fullscreen table help wordcount preview anchor codesample',
+    toolbar: 'undo redo | blocks | bold italic underline strikethrough | forecolor backcolor | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | link image table codesample blockquote | removeformat | code fullscreen preview',
+    block_formats: 'Paragrafo=p; Titolo 1=h1; Titolo 2=h2; Titolo 3=h3; Titolo 4=h4; Preformattato=pre; Citazione=blockquote',
+    content_style: 'body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;font-size:15px;color:#1c1f26;line-height:1.6;padding:18px 22px} h1,h2,h3,h4{color:#1c1f26;margin:1.4em 0 .4em} h1{font-size:24px} h2{font-size:20px} h3{font-size:17px} table{border-collapse:collapse;width:100%;margin:14px 0} table td,table th{border:1px solid #ddd;padding:8px 10px} table th{background:#fafbfc;font-weight:600} ul,ol{padding-left:22px} code{background:#f0f1f4;padding:1px 6px;border-radius:5px;font-size:.9em} blockquote{border-left:3px solid #e0aa00;margin:1em 0;padding-left:14px;color:#5a5e6a}',
+    table_default_attributes: { border: '0' },
+    table_default_styles: { 'border-collapse': 'collapse', width: '100%' },
+    image_advtab: true,
+    setup: function(ed){
+      ed.on('change keyup', function(){ ed.save(); });
+    },
+  });
+})();
+</script>
+<% } %>
+<%- include('../partials/footer') %>

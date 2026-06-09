@@ -1,0 +1,91 @@
+<%- include('../partials/header') %>
+<div class="card">
+  <div class="card-head">
+    <h2>Commissioni referral</h2>
+    <a href="/admin/referrals" class="btn btn-ghost">← Tutti i referrer</a>
+  </div>
+
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:18px">
+    <div style="background:#fffbe8;border:1px solid #ead9a8;border-radius:10px;padding:14px 18px">
+      <div style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#7a5800;font-weight:700">In attesa di pagamento</div>
+      <div style="font-family:Georgia,serif;font-size:28px;margin-top:6px;color:var(--ink)"><%= pendingAmount.toFixed(2) %> €</div>
+      <div style="font-size:12px;color:var(--muted)"><%= statusCounts.pending %> commissioni</div>
+    </div>
+    <div style="background:#e7f3ec;border:1px solid #aedabe;border-radius:10px;padding:14px 18px">
+      <div style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#1b6b3e;font-weight:700">Già pagate</div>
+      <div style="font-family:Georgia,serif;font-size:28px;margin-top:6px;color:var(--ink)"><%= paidAmount.toFixed(2) %> €</div>
+      <div style="font-size:12px;color:var(--muted)"><%= statusCounts.paid %> commissioni</div>
+    </div>
+  </div>
+
+  <%- include('../partials/dt-toolbar', {
+    params, total, totalUnfiltered,
+    entitySingular:'commissione', entityPlural:'commissioni',
+    basePath:'/admin/referrals/commissions',
+    searchPlaceholder:'Cerca per referrer, codice o nota…',
+    extraFilters:[
+      { name:'status', value: status, options:[
+        { val:'', label:'Tutti gli stati' },
+        { val:'pending', label:'In attesa' },
+        { val:'paid', label:'Pagate' },
+        { val:'cancelled', label:'Annullate' },
+      ] },
+      { name:'referrerId', value: referrerId||'', options:[{val:'',label:'Tutti i referrer'}].concat(refs.map(function(r){return { val:r.id, label:r.firstName+' '+r.lastName };})) },
+    ],
+  }) %>
+
+  <% if (!items.length) { %>
+    <p class="muted" style="padding:30px 0;text-align:center">Nessuna commissione trovata.</p>
+  <% } else { %>
+  <div class="table-wrap">
+  <table class="table">
+    <thead><tr>
+      <%- include('../partials/dt-th', { label:'Data', sortKey:'createdAt', params, basePath:'/admin/referrals/commissions' }) %>
+      <th>Referrer</th>
+      <th>Codice</th>
+      <th>Prenotazione cliente</th>
+      <%- include('../partials/dt-th', { label:'Commissione', sortKey:'commissionAmt', params, basePath:'/admin/referrals/commissions' }) %>
+      <%- include('../partials/dt-th', { label:'Stato', sortKey:'status', params, basePath:'/admin/referrals/commissions' }) %>
+      <th></th>
+    </tr></thead>
+    <tbody>
+    <% items.forEach(function(c){ %>
+      <tr class="<%= c.status==='paid' ? 'is-paid' : (c.status==='cancelled' ? 'is-off' : '') %>">
+        <td style="white-space:nowrap"><%= new Date(c.createdAt).toLocaleDateString('it-IT',{day:'2-digit',month:'short',year:'numeric'}) %></td>
+        <td><strong><%= c.referrer.firstName %> <%= c.referrer.lastName %></strong><br><span class="muted" style="font-size:12px"><%= c.referrer.email %></span></td>
+        <td><code style="background:#fffbe8;color:#7a5800;font-weight:700;padding:3px 9px;border-radius:5px;font-size:12.5px"><%= c.code.code %></code></td>
+        <td><%= c.booking.customerName %><br><span class="muted" style="font-size:12px">Booking #<%= c.booking.id %> · lordo: <%= c.bookingGross.toFixed(2) %> €</span></td>
+        <td><strong style="font-size:15px;color:#1b6b3e"><%= c.commissionAmt.toFixed(2) %> €</strong><br><span class="muted" style="font-size:12px"><%= c.commissionPct %>% di <%= c.netBase.toFixed(2) %> €</span></td>
+        <td>
+          <% if (c.status==='pending') { %><span class="badge badge-warn">in attesa</span>
+          <% } else if (c.status==='paid') { %><span class="badge badge-ok">pagata</span><% if (c.paidAt) { %><br><span class="muted" style="font-size:11.5px"><%= new Date(c.paidAt).toLocaleDateString('it-IT') %></span><% } %><% if (c.paidNote) { %><div class="muted" style="font-size:11.5px;font-style:italic;max-width:160px">"<%= c.paidNote %>"</div><% } %>
+          <% } else { %><span class="badge badge-off">annullata</span><% } %>
+        </td>
+        <td class="row-actions">
+          <% if (c.status==='pending') { %>
+            <form method="post" action="/admin/referrals/commissions/<%= c.id %>/pay" onsubmit="var n=prompt('Riferimento pagamento (bonifico/PayPal):',''); if(n===null) return false; this.querySelector('[name=paidNote]').value=n; return true;">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+              <input type="hidden" name="paidNote" value="">
+              <button type="submit" class="btn-ico btn-ico-confirm" title="Segna come pagata"><%- include('../partials/ico', { name:'check' }) %></button>
+            </form>
+          <% } else if (c.status==='paid') { %>
+            <form method="post" action="/admin/referrals/commissions/<%= c.id %>/unpay" onsubmit="return confirm('Tornare in attesa?')">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+              <button type="submit" class="btn-ico" title="Ripristina in attesa"><%- include('../partials/ico', { name:'x' }) %></button>
+            </form>
+          <% } %>
+        </td>
+      </tr>
+    <% }) %>
+    </tbody>
+  </table>
+  </div>
+  <%- include('../partials/dt-pagination', { links, params, basePath:'/admin/referrals/commissions' }) %>
+  <% } %>
+</div>
+
+<style>
+  tr.is-off{opacity:.55}
+  tr.is-paid{background:rgba(231,243,236,.3)}
+</style>
+<%- include('../partials/footer') %>

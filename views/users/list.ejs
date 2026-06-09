@@ -1,44 +1,77 @@
 <%- include('../partials/header') %>
 <div class="card">
   <div class="card-head">
-    <h2>Utenti admin</h2>
-    <% if (can('users.create')) { %><a class="btn btn-primary" href="/admin/users/new">+ Nuovo utente</a><% } %>
+    <h2>Amministratori</h2>
+    <% if (can('users.create')) { %><a class="btn btn-primary" href="/admin/users/new">+ Nuovo amministratore</a><% } %>
   </div>
-  <div class="table-wrap">
-  <table class="table">
-    <thead><tr><th>Nome</th><th>Email</th><th>Ruolo</th><th>Stato</th><th>Ultimo accesso</th><th></th></tr></thead>
-    <tbody>
-    <% users.forEach(function(u){ %>
-      <tr>
-        <td><%= u.name %><% if (u.id === currentUser.id) { %> <span class="badge">tu</span><% } %></td>
-        <td><%= u.email %></td>
-        <td><span class="badge badge-role"><%= u.role ? u.role.name : '—' %></span></td>
-        <td><% if (u.isActive) { %><span class="badge badge-ok">attivo</span><% } else { %><span class="badge badge-off">disattivo</span><% } %>
-          <% if (u.mustChangePassword) { %><span class="badge badge-warn">cambio pw</span><% } %>
-        </td>
-        <td class="muted"><%= u.lastLoginAt ? new Date(u.lastLoginAt).toLocaleString('it-IT') : 'mai' %></td>
-        <td class="row-actions">
-          <% if (can('users.edit')) { %>
-            <a class="btn btn-ghost btn-sm" href="/admin/users/<%= u.id %>/edit">Modifica</a>
-            <form method="post" action="/admin/users/<%= u.id %>/reset-password" onsubmit="return confirm('Generare una nuova password temporanea?')">
-              <input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="btn btn-ghost btn-sm">Reset pw</button>
-            </form>
-            <% if (u.id !== currentUser.id) { %>
-            <form method="post" action="/admin/users/<%= u.id %>/toggle">
-              <input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="btn btn-ghost btn-sm"><%= u.isActive ? 'Disattiva' : 'Attiva' %></button>
-            </form>
-            <% } %>
-          <% } %>
-          <% if (can('users.delete') && u.id !== currentUser.id) { %>
-            <form method="post" action="/admin/users/<%= u.id %>/delete" onsubmit="return confirm('Eliminare definitivamente questo utente?')">
-              <input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="btn btn-danger btn-sm">Elimina</button>
-            </form>
-          <% } %>
-        </td>
-      </tr>
-    <% }) %>
-    </tbody>
-  </table>
-  </div>
+
+  <%- include('../partials/dt-toolbar', {
+    params: params,
+    total: total,
+    totalUnfiltered: totalUnfiltered,
+    entitySingular: 'amministratore',
+    entityPlural: 'amministratori',
+    basePath: '/admin/users',
+    searchPlaceholder: 'Cerca per nome o email…',
+    extraFilters: [
+      { name: 'roleId', value: roleId, options: [{ val: '', label: 'Tutti i ruoli' }].concat(roles.map(function(r){return { val: r.id, label: r.name };})) },
+      { name: 'status', value: status, options: [
+        { val: '', label: 'Tutti gli stati' },
+        { val: 'active', label: 'Attivo' },
+        { val: 'inactive', label: 'Disattivo' },
+      ] },
+    ],
+  }) %>
+
+  <% if (!users.length) { %>
+    <p class="muted" style="padding:20px 0">Nessun amministratore trovato.</p>
+  <% } else { %>
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr>
+            <%- include('../partials/dt-th', { label: 'Nome', sortKey: 'name', params: params, basePath: '/admin/users' }) %>
+            <%- include('../partials/dt-th', { label: 'Email', sortKey: 'email', params: params, basePath: '/admin/users' }) %>
+            <%- include('../partials/dt-th', { label: 'Ruolo', sortKey: 'role.name', params: params, basePath: '/admin/users' }) %>
+            <th>Stato</th>
+            <%- include('../partials/dt-th', { label: 'Ultimo accesso', sortKey: 'lastLoginAt', params: params, basePath: '/admin/users' }) %>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% users.forEach(function(u){ %>
+            <tr>
+              <td><%= u.name %><% if (u.id === currentUser.id) { %> <span class="badge">tu</span><% } %></td>
+              <td><%= u.email %></td>
+              <td><span class="badge badge-role"><%= u.role ? u.role.name : '—' %></span></td>
+              <td><% if (u.isActive) { %><span class="badge badge-ok">attivo</span><% } else { %><span class="badge badge-off">disattivo</span><% } %>
+                <% if (u.mustChangePassword) { %><span class="badge badge-warn">cambio pw</span><% } %>
+              </td>
+              <td class="muted"><%= u.lastLoginAt ? new Date(u.lastLoginAt).toLocaleString('it-IT') : 'mai' %></td>
+              <td class="row-actions">
+                <% if (can('users.edit')) { %>
+                  <a class="btn-ico btn-ico-edit" href="/admin/users/<%= u.id %>/edit" title="Modifica"><%- include('../partials/ico', { name:'edit' }) %></a>
+                  <form method="post" action="/admin/users/<%= u.id %>/reset-password" onsubmit="return confirm('Generare una nuova password temporanea?')">
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>"><button type="submit" class="btn-ico" title="Reset password" style="color:#7a5800"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></button>
+                  </form>
+                  <% if (u.id !== currentUser.id) { %>
+                  <form method="post" action="/admin/users/<%= u.id %>/toggle">
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>"><button type="submit" class="btn-ico <%= u.isActive?'btn-ico-hide':'btn-ico-show' %>" title="<%= u.isActive?'Disattiva (ora attivo)':'Attiva (ora disattivo)' %>"><%- include('../partials/ico', { name: u.isActive?'eye':'eye-off' }) %></button>
+                  </form>
+                  <% } %>
+                <% } %>
+                <% if (can('users.delete') && u.id !== currentUser.id) { %>
+                  <form method="post" action="/admin/users/<%= u.id %>/delete" onsubmit="return confirm('Eliminare definitivamente questo utente?')">
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>"><button type="submit" class="btn-ico btn-ico-danger" title="Elimina"><%- include('../partials/ico', { name:'trash' }) %></button>
+                  </form>
+                <% } %>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+    <%- include('../partials/dt-pagination', { links: links, params: params, basePath: '/admin/users' }) %>
+  <% } %>
 </div>
 <%- include('../partials/footer') %>

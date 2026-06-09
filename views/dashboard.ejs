@@ -1,52 +1,299 @@
 <%- include('partials/header') %>
 
-<div class="cards">
-  <div class="card stat">
-    <div class="stat-num"><%= stats.users %></div>
-    <div class="stat-lbl">Utenti admin</div>
+<% if (configAlerts && configAlerts.length) { %>
+  <div class="dash-alerts">
+    <% configAlerts.forEach(function(a){ %>
+      <a class="dash-alert dash-alert-<%= a.type %>" href="<%= a.href %>">
+        <span class="dash-alert-icon"><%= a.type==='error' ? '⚠' : 'ℹ' %></span>
+        <span><%- a.msg %></span>
+        <span class="dash-alert-arrow">→</span>
+      </a>
+    <% }) %>
   </div>
-  <div class="card stat">
-    <div class="stat-num"><%= stats.roles %></div>
-    <div class="stat-lbl">Ruoli</div>
-  </div>
-  <div class="card stat">
-    <div class="stat-num"><%= stats.media %></div>
-    <div class="stat-lbl">Media caricati</div>
-  </div>
-  <div class="card stat">
-    <div class="stat-num"><%= fmtBytes(stats.storageBytes) %></div>
-    <div class="stat-lbl">Spazio media</div>
-  </div>
+<% } %>
+
+<!-- ═══════════ KPI strip ═══════════ -->
+<div class="kpi-grid">
+  <a class="kpi" href="/admin/bookings">
+    <div class="kpi-head"><span class="kpi-ico" style="background:#fdf2c9;color:#7a5800">🎟</span><span class="kpi-lbl">Prenotazioni totali</span></div>
+    <div class="kpi-val"><%= kpi.bookingsTotal %></div>
+    <div class="kpi-sub"><strong style="color:#1b6b3e"><%= kpi.bookingsConfirmed %></strong> confermate · <strong style="color:#7a5800"><%= kpi.bookingsPending %></strong> in attesa</div>
+  </a>
+  <a class="kpi" href="/admin/bookings">
+    <div class="kpi-head"><span class="kpi-ico" style="background:#e3f0ff;color:#0d5290">📈</span><span class="kpi-lbl">Ultimi 30 giorni</span></div>
+    <div class="kpi-val"><%= kpi.bookings30 %></div>
+    <div class="kpi-sub">nuove prenotazioni</div>
+  </a>
+  <a class="kpi kpi-accent" href="/admin/bookings">
+    <div class="kpi-head"><span class="kpi-ico" style="background:#fff;color:#7a5800">💰</span><span class="kpi-lbl">Entrate 30 giorni</span></div>
+    <div class="kpi-val"><%= kpi.revenue30.toLocaleString('it-IT') %>€</div>
+    <div class="kpi-sub">totali storiche: <strong><%= kpi.revenueAllAmount.toLocaleString('it-IT') %>€</strong></div>
+  </a>
+  <a class="kpi" href="/admin/messages">
+    <div class="kpi-head"><span class="kpi-ico" style="background:#e7f3ec;color:#1b6b3e">✉</span><span class="kpi-lbl">Messaggi nuovi</span></div>
+    <div class="kpi-val"><%= kpi.newMessages %></div>
+    <div class="kpi-sub"><%= kpi.totalMessages %> totali</div>
+  </a>
+  <a class="kpi" href="/admin/settings/stats">
+    <div class="kpi-head"><span class="kpi-ico" style="background:#fff3d6;color:#7a5800">👁</span><span class="kpi-lbl">Pageview (7g)</span></div>
+    <div class="kpi-val"><%= kpi.pageviews7.toLocaleString('it-IT') %></div>
+    <div class="kpi-sub"><strong><%= kpi.uniqueVisitors7 %></strong> visitatori unici</div>
+  </a>
+  <a class="kpi" href="/admin/newsletter">
+    <div class="kpi-head"><span class="kpi-ico" style="background:#f0e8f7;color:#5b3a86">📧</span><span class="kpi-lbl">Iscritti newsletter</span></div>
+    <div class="kpi-val"><%= kpi.activeSubscribers %></div>
+    <div class="kpi-sub">attivi</div>
+  </a>
 </div>
 
-<div class="card">
-  <div class="card-head">
-    <h2>Media recenti</h2>
-    <% if (can('media.view')) { %><a class="btn btn-ghost" href="/admin/media">Apri libreria</a><% } %>
-  </div>
-  <% if (recentMedia.length === 0) { %>
-    <p class="muted">Nessun media caricato. Vai in <a href="/admin/media">Media</a> per caricare immagini.</p>
-  <% } else { %>
-    <div class="media-grid sm">
-      <% recentMedia.forEach(function(m){ %>
-        <div class="media-tile">
-          <div class="media-thumb">
-            <% if (m.isImage) { %><img src="<%= m.smallPath %>" alt=""><% } else { %><span class="file-ico"><%= m.ext %></span><% } %>
-          </div>
-          <div class="media-name" title="<%= m.originalName %>"><%= m.originalName %></div>
-        </div>
-      <% }) %>
+<!-- ═══════════ CHART ═══════════ -->
+<div class="card dash-chart-card">
+  <div class="card-head" style="margin-bottom:14px">
+    <div>
+      <h3 style="margin:0">Andamento ultimi 30 giorni</h3>
+      <p class="muted" style="margin:4px 0 0;font-size:12.5px">Pageview giornaliere (linea dorata) e nuove prenotazioni (barre verdi).</p>
     </div>
-  <% } %>
+    <a class="btn btn-ghost btn-sm" href="/admin/settings/stats">Statistiche complete →</a>
+  </div>
+  <div style="position:relative;height:280px">
+    <canvas id="dashChart"></canvas>
+  </div>
 </div>
 
-<div class="card welcome">
-  <h2>Benvenuto, <%= currentUser.name %></h2>
-  <p class="muted">
-    Da qui gestisci il sito di Irene Monticelli. Le sezioni <strong>Eventi</strong>,
-    <strong>Piani/Prenotazioni</strong>, <strong>Newsletter</strong> e <strong>Log attivita</strong>
-    sono gia previste nel menu e verranno implementate nelle prossime fasi.
-  </p>
+<!-- ═══════════ FEED row 1: prenotazioni + messaggi ═══════════ -->
+<div class="dash-row">
+  <div class="card dash-col">
+    <div class="card-head">
+      <h3>Ultime prenotazioni</h3>
+      <a class="btn btn-ghost btn-sm" href="/admin/bookings">Tutte →</a>
+    </div>
+    <% if (!recentBookings.length) { %>
+      <p class="muted" style="padding:30px 0;text-align:center">Nessuna prenotazione ancora.</p>
+    <% } else { %>
+    <ul class="feed">
+      <% recentBookings.forEach(function(b){ %>
+        <li>
+          <a href="/admin/bookings/<%= b.id %>/edit" class="feed-link">
+            <div class="feed-avatar" style="background:#fdf2c9;color:#7a5800"><%= (b.customerName||'?').slice(0,1).toUpperCase() %></div>
+            <div class="feed-body">
+              <div class="feed-main">
+                <strong><%= b.customerName %></strong>
+                <span class="badge-<%= b.status %>"><%= b.status %></span>
+              </div>
+              <div class="feed-sub">
+                <%= b.plan ? b.plan.name : '—' %>
+                <% if (b.amount) { %> · <strong><%= b.amount %>€</strong><% } %>
+                · <%= new Date(b.createdAt).toLocaleString('it-IT',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}) %>
+              </div>
+            </div>
+          </a>
+        </li>
+      <% }) %>
+    </ul>
+    <% } %>
+  </div>
+
+  <div class="card dash-col">
+    <div class="card-head">
+      <h3>Messaggi recenti</h3>
+      <a class="btn btn-ghost btn-sm" href="/admin/messages">Tutti →</a>
+    </div>
+    <% if (!recentMessages.length) { %>
+      <p class="muted" style="padding:30px 0;text-align:center">Nessun messaggio.</p>
+    <% } else { %>
+    <ul class="feed">
+      <% recentMessages.forEach(function(m){ %>
+        <li>
+          <a href="/admin/messages/<%= m.id %>" class="feed-link <%= m.status==='new'?'is-new':'' %>">
+            <div class="feed-avatar" style="background:#e3f0ff;color:#0d5290"><%= (m.name||'?').slice(0,1).toUpperCase() %></div>
+            <div class="feed-body">
+              <div class="feed-main">
+                <strong><%= m.name %></strong>
+                <% if (m.status==='new') { %><span class="badge-new">NUOVO</span><% } %>
+              </div>
+              <div class="feed-sub">
+                <%= m.subject || '(senza oggetto)' %>
+                <span class="muted"> · <%= new Date(m.createdAt).toLocaleString('it-IT',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}) %></span>
+              </div>
+            </div>
+          </a>
+        </li>
+      <% }) %>
+    </ul>
+    <% } %>
+  </div>
 </div>
+
+<!-- ═══════════ FEED row 2: eventi + attività ═══════════ -->
+<div class="dash-row">
+  <div class="card dash-col">
+    <div class="card-head">
+      <h3>Eventi attivi</h3>
+      <a class="btn btn-ghost btn-sm" href="/admin/events">Gestisci →</a>
+    </div>
+    <% if (!activeEvents.length) { %>
+      <p class="muted" style="padding:30px 0;text-align:center">Nessun evento attivo.</p>
+    <% } else { %>
+    <ul class="feed">
+      <% activeEvents.forEach(function(ev){ %>
+        <li>
+          <a href="/admin/events/<%= ev.id %>/edit" class="feed-link">
+            <div class="feed-avatar" style="background:#e7f3ec;color:#1b6b3e">🎭</div>
+            <div class="feed-body">
+              <div class="feed-main">
+                <strong><%= ev.title %></strong>
+                <span class="muted" style="font-size:12px"><%= ev._count.bookings %> pren.</span>
+              </div>
+              <div class="feed-sub">
+                <% if (ev.startDate) { %><%= new Date(ev.startDate).toLocaleDateString('it-IT',{day:'2-digit',month:'short',year:'numeric'}) %><% } %>
+                <% if (ev.endDate) { %> → <%= new Date(ev.endDate).toLocaleDateString('it-IT',{day:'2-digit',month:'short',year:'numeric'}) %><% } %>
+                <% if (ev.location) { %> · <%= ev.location %><% } %>
+              </div>
+            </div>
+          </a>
+        </li>
+      <% }) %>
+    </ul>
+    <% } %>
+  </div>
+
+  <div class="card dash-col">
+    <div class="card-head">
+      <h3>Attività recente</h3>
+      <a class="btn btn-ghost btn-sm" href="/admin/audit">Vedi tutto →</a>
+    </div>
+    <% if (!recentAudit.length) { %>
+      <p class="muted" style="padding:30px 0;text-align:center">Nessuna attività registrata.</p>
+    <% } else { %>
+    <ul class="feed">
+      <% recentAudit.forEach(function(a){ %>
+        <li>
+          <div class="feed-link" style="cursor:default">
+            <div class="feed-avatar" style="background:#fff3d6;color:#7a5800">⚡</div>
+            <div class="feed-body">
+              <div class="feed-main">
+                <code class="audit-act"><%= a.action %></code>
+                <span class="muted" style="font-size:12px"><%= a.userEmail||'sistema' %></span>
+              </div>
+              <div class="feed-sub">
+                <% if (a.entity) { %><%= a.entity %><% if (a.entityId) { %> #<%= a.entityId %><% } %><% } %>
+                <span class="muted"> · <%= new Date(a.createdAt).toLocaleString('it-IT',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}) %></span>
+              </div>
+            </div>
+          </div>
+        </li>
+      <% }) %>
+    </ul>
+    <% } %>
+  </div>
+</div>
+
+<!-- ═══════════ AZIONI RAPIDE ═══════════ -->
+<div class="card">
+  <h3 style="margin-top:0">Azioni rapide</h3>
+  <div class="qa-grid">
+    <a class="qa" href="/admin/newsletter/new"><span class="qa-ico" style="background:#fdf2c9;color:#7a5800">📧</span><span>Nuova newsletter</span></a>
+    <a class="qa" href="/admin/professors"><span class="qa-ico" style="background:#e3f0ff;color:#0d5290">👥</span><span>Professori</span></a>
+    <a class="qa" href="/admin/lessons"><span class="qa-ico" style="background:#fff3d6;color:#7a5800">📅</span><span>Programma lezioni</span></a>
+    <a class="qa" href="/admin/bookings/calendar"><span class="qa-ico" style="background:#e7f3ec;color:#1b6b3e">🗓</span><span>Calendario</span></a>
+    <a class="qa" href="/admin/extras"><span class="qa-ico" style="background:#f0e8f7;color:#5b3a86">➕</span><span>Extras</span></a>
+    <a class="qa" href="/admin/pages"><span class="qa-ico" style="background:#fff;color:#7a5800;border:1px solid #ead9a8">📄</span><span>Pagine</span></a>
+    <a class="qa" href="/admin/media"><span class="qa-ico" style="background:#eef4ff;color:#3b4a7a">🖼</span><span>Media</span></a>
+    <a class="qa" href="/admin/settings"><span class="qa-ico" style="background:#fafbfc;color:#5a5e6a">⚙</span><span>Impostazioni</span></a>
+  </div>
+</div>
+
+<style>
+  .dash-alerts{display:flex;flex-direction:column;gap:8px;margin-bottom:20px}
+  .dash-alert{display:flex;align-items:center;gap:12px;padding:14px 18px;border-radius:10px;color:#1c1f26;font-size:14px;transition:transform .2s ease,box-shadow .2s ease}
+  .dash-alert:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(0,0,0,.06)}
+  .dash-alert-icon{font-size:18px;flex-shrink:0}
+  .dash-alert-arrow{margin-left:auto;color:#7a8190;font-weight:700}
+  .dash-alert-error{background:#ffe1dc;border:1px solid #f4b3a8}
+  .dash-alert-warn{background:#fff3d6;border:1px solid #f0d28a}
+
+  .kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-bottom:20px}
+  .kpi{background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px 20px;color:inherit;
+    transition:transform .25s ease,box-shadow .25s ease,border-color .25s ease;display:block;position:relative;overflow:hidden}
+  .kpi::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--brand),var(--brand-d));opacity:0;transition:opacity .25s}
+  .kpi:hover::before{opacity:1}
+  .kpi:hover{transform:translateY(-3px);box-shadow:0 12px 28px rgba(0,0,0,.07);border-color:var(--brand)}
+  .kpi-accent{background:linear-gradient(135deg,#fffbe8,#fdf2c9);border-color:#ead9a8}
+  .kpi-head{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+  .kpi-ico{width:32px;height:32px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+  .kpi-lbl{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#7a8190;font-weight:700}
+  .kpi-val{font-family:Georgia,serif;font-size:34px;font-weight:600;color:#1c1f26;line-height:1.1;margin-bottom:6px}
+  .kpi-sub{font-size:12.5px;color:#7a8190;line-height:1.4}
+
+  .dash-chart-card{padding:22px 24px}
+
+  .dash-row{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px}
+  @media(max-width:980px){.dash-row{grid-template-columns:1fr}}
+  .dash-col{padding:20px 22px;margin-bottom:0}
+  .dash-col .card-head{padding-bottom:12px;margin-bottom:8px;border-bottom:1px solid #eef0f4}
+  .dash-col h3{font-size:15px}
+
+  .feed{list-style:none;padding:0;margin:0}
+  .feed li{border-bottom:1px solid #f4f5f8}
+  .feed li:last-child{border-bottom:0}
+  .feed-link{display:flex;align-items:center;gap:12px;padding:12px 6px;color:#1c1f26;border-radius:8px;transition:background .15s}
+  .feed-link:hover{background:#fafbfc}
+  .feed-link.is-new{background:#fffbe8}
+  .feed-link.is-new:hover{background:#fdf2c9}
+  .feed-avatar{width:38px;height:38px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px}
+  .feed-body{flex:1;min-width:0}
+  .feed-main{display:flex;align-items:center;gap:10px;font-size:14px;margin-bottom:2px}
+  .feed-main strong{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .feed-sub{font-size:12.5px;color:#7a8190;line-height:1.4;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .audit-act{background:#f1ede3;padding:1px 7px;border-radius:4px;font-size:11.5px;color:#7a5800;font-family:Consolas,monospace}
+
+  .badge-pending,.badge-confirmed,.badge-cancelled,.badge-new{font-size:10px;padding:2px 8px;border-radius:99px;font-weight:700;letter-spacing:.05em;text-transform:uppercase}
+  .badge-pending{background:#fff3d6;color:#7a5800}
+  .badge-confirmed{background:#d6f3df;color:#1b6b3e}
+  .badge-cancelled{background:#ffe1dc;color:#8a2a1c}
+  .badge-new{background:#e0aa00;color:#1c1408}
+
+  .qa-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px}
+  .qa{display:flex;flex-direction:column;align-items:center;gap:10px;padding:18px 14px;
+    background:#fafbfc;border:1px solid #eef0f4;border-radius:12px;color:#1c1f26;font-size:13px;
+    font-weight:600;text-align:center;transition:.2s}
+  .qa:hover{background:#fff;border-color:var(--brand);transform:translateY(-2px);box-shadow:0 6px 18px rgba(0,0,0,.05)}
+  .qa-ico{font-size:22px;width:42px;height:42px;border-radius:11px;display:flex;align-items:center;justify-content:center}
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script>
+(function(){
+  if (typeof Chart === 'undefined') return;
+  var ctx = document.getElementById('dashChart').getContext('2d');
+  var CHART_DATA = <%- JSON.stringify(chart) %>;
+  var grad = ctx.createLinearGradient(0,0,0,280);
+  grad.addColorStop(0,'rgba(224,170,0,.35)');
+  grad.addColorStop(1,'rgba(224,170,0,0)');
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: CHART_DATA.labels,
+      datasets: [
+        { type:'bar', label:'Prenotazioni', data:CHART_DATA.bookings, backgroundColor:'#1b6b3e', borderRadius:5, barThickness:8, order:2, yAxisID:'y2' },
+        { type:'line', label:'Pageview', data:CHART_DATA.pageviews, borderColor:'#e0aa00', borderWidth:2.5,
+          fill:true, backgroundColor:grad, tension:.4, pointRadius:0, pointHoverRadius:5, pointHoverBackgroundColor:'#e0aa00', order:1, yAxisID:'y' },
+      ],
+    },
+    options: {
+      responsive:true, maintainAspectRatio:false, interaction:{mode:'index',intersect:false},
+      plugins:{
+        legend:{display:true,position:'top',align:'end',labels:{usePointStyle:true,boxWidth:10,font:{size:12}}},
+        tooltip:{backgroundColor:'#1c1f26',padding:10,titleFont:{size:12},bodyFont:{size:13},cornerRadius:8},
+      },
+      scales:{
+        x:{grid:{display:false},ticks:{color:'#7a8190',font:{size:10.5},maxRotation:0,autoSkip:true,maxTicksLimit:10}},
+        y:{position:'left',beginAtZero:true,grid:{color:'#f0f1f4'},ticks:{color:'#7a8190',font:{size:11}},title:{display:true,text:'Pageview',color:'#7a8190',font:{size:11}}},
+        y2:{position:'right',beginAtZero:true,grid:{display:false},ticks:{color:'#7a8190',font:{size:11},precision:0},title:{display:true,text:'Prenotazioni',color:'#7a8190',font:{size:11}}},
+      },
+    },
+  });
+})();
+</script>
 
 <%- include('partials/footer') %>

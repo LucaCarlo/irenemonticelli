@@ -1,0 +1,93 @@
+<%- include('../partials/header') %>
+
+<div class="card">
+  <div class="card-head">
+    <h2>Iscritti newsletter</h2>
+    <div class="head-tools">
+      <a class="btn btn-ghost" href="/admin/newsletter">← Campagne</a>
+      <form method="post" action="/admin/newsletter/subscribers/import" style="display:inline">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <button class="btn btn-ghost" type="submit" title="Aggiunge automaticamente gli email dei clienti che hanno prenotato con consenso dati">⤓ Importa da prenotazioni</button>
+      </form>
+    </div>
+  </div>
+
+  <h3 style="margin-top:0">+ Aggiungi iscritto manualmente</h3>
+  <form method="post" action="/admin/newsletter/subscribers" style="display:flex;gap:10px;align-items:end;margin-bottom:24px;flex-wrap:wrap">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <div class="field" style="flex:1;min-width:240px"><label class="field-lbl">Email</label><input type="email" name="email" required placeholder="nome@dominio.com"></div>
+    <div class="field" style="flex:1;min-width:200px"><label class="field-lbl">Nome (opzionale)</label><input type="text" name="name" placeholder="Maria Garcia"></div>
+    <button class="btn btn-primary">Aggiungi</button>
+  </form>
+
+  <%- include('../partials/dt-toolbar', {
+    params, total, totalUnfiltered,
+    entitySingular:'iscritto', entityPlural:'iscritti',
+    basePath:'/admin/newsletter/subscribers',
+    searchPlaceholder:'Cerca per email o nome…',
+    extraFilters:[
+      { name:'status', value: status, options:[
+        { val:'', label:'Tutti gli stati' },
+        { val:'active', label:'Attivi' },
+        { val:'unsubscribed', label:'Disiscritti' },
+        { val:'bounced', label:'Bounced' },
+      ] },
+      { name:'source', value: source, options:[
+        { val:'', label:'Tutte le origini' },
+        { val:'booking', label:'Prenotazione' },
+        { val:'contact', label:'Form contatti' },
+        { val:'manual', label:'Manuale' },
+      ] },
+    ],
+  }) %>
+
+  <% if (!subs.length) { %>
+    <p class="muted" style="padding:20px 0">Nessun iscritto.</p>
+  <% } else { %>
+  <div class="table-wrap">
+  <table class="table">
+    <thead><tr>
+      <%- include('../partials/dt-th', { label:'Email', sortKey:'email', params, basePath:'/admin/newsletter/subscribers' }) %>
+      <%- include('../partials/dt-th', { label:'Nome', sortKey:'name', params, basePath:'/admin/newsletter/subscribers' }) %>
+      <%- include('../partials/dt-th', { label:'Origine', sortKey:'source', params, basePath:'/admin/newsletter/subscribers' }) %>
+      <%- include('../partials/dt-th', { label:'Stato', sortKey:'status', params, basePath:'/admin/newsletter/subscribers' }) %>
+      <%- include('../partials/dt-th', { label:'Iscritto il', sortKey:'createdAt', params, basePath:'/admin/newsletter/subscribers' }) %>
+      <%- include('../partials/dt-th', { label:'Ultima email', sortKey:'lastSentAt', params, basePath:'/admin/newsletter/subscribers' }) %>
+      <th></th>
+    </tr></thead>
+    <tbody>
+      <% subs.forEach(function(s){ %>
+        <tr class="<%= s.status!=='active'?'is-off':'' %>">
+          <td><%= s.email %></td>
+          <td><%= s.name || '—' %></td>
+          <td><span class="src src-<%= s.source %>"><%= s.source %></span></td>
+          <td><span class="badge badge-<%= s.status %>"><%= s.status %></span></td>
+          <td><%= new Date(s.createdAt).toLocaleDateString('it-IT') %></td>
+          <td><%= s.lastSentAt ? new Date(s.lastSentAt).toLocaleDateString('it-IT') : '—' %></td>
+          <td class="row-actions">
+            <form method="post" action="/admin/newsletter/subscribers/<%= s.id %>/delete" onsubmit="return confirm('Eliminare questo iscritto?')">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+              <button type="submit" class="btn-ico btn-ico-danger" title="Elimina"><%- include('../partials/ico', { name:'trash' }) %></button>
+            </form>
+          </td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
+  </div>
+  <%- include('../partials/dt-pagination', { links, params, basePath:'/admin/newsletter/subscribers' }) %>
+  <% } %>
+</div>
+
+<style>
+  tr.is-off{opacity:.55}
+  .src{display:inline-block;padding:2px 8px;border-radius:99px;font-size:11px;background:#eef0f4;color:#5a5e6a}
+  .src-booking{background:#d6f3df;color:#1b6b3e}
+  .src-contact{background:#e3f0ff;color:#0d5290}
+  .src-manual{background:#fff3d6;color:#7a5800}
+  .badge{display:inline-block;padding:2px 8px;border-radius:99px;font-size:11px;font-weight:600;text-transform:uppercase}
+  .badge-active{background:#d6f3df;color:#1b6b3e}
+  .badge-unsubscribed{background:#eef0f4;color:#5a5e6a}
+  .badge-bounced{background:#ffe1dc;color:#8a2a1c}
+</style>
+<%- include('../partials/footer') %>

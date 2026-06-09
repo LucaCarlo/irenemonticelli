@@ -1,0 +1,48 @@
+<%- include('../partials/header') %>
+<div class="card">
+  <div class="card-head">
+    <h2>Log attività</h2>
+  </div>
+  <%- include('../partials/dt-toolbar', {
+    params, total, totalUnfiltered,
+    entitySingular:'evento', entityPlural:'eventi',
+    basePath:'/admin/audit',
+    searchPlaceholder:'Cerca per email, entità, dettagli…',
+    extraFilters:[
+      { name:'action', value: action, options:[{val:'',label:'Tutte le azioni'}].concat(actions.map(function(a){ return { val:a.action, label:a.action+' ('+a._count._all+')' }; })) },
+    ],
+  }) %>
+  <% if (!items.length) { %>
+    <p class="muted" style="padding:20px 0">Nessun log per i filtri selezionati.</p>
+  <% } else { %>
+  <div class="table-wrap">
+  <table class="table">
+    <thead><tr>
+      <%- include('../partials/dt-th', { label:'Quando', sortKey:'createdAt', params, basePath:'/admin/audit' }) %>
+      <%- include('../partials/dt-th', { label:'Utente', sortKey:'userEmail', params, basePath:'/admin/audit' }) %>
+      <%- include('../partials/dt-th', { label:'Azione', sortKey:'action', params, basePath:'/admin/audit' }) %>
+      <%- include('../partials/dt-th', { label:'Entità', sortKey:'entity', params, basePath:'/admin/audit' }) %>
+      <th>Dettagli</th>
+      <th>IP</th>
+    </tr></thead>
+    <tbody>
+      <% items.forEach(function(a){ %>
+        <tr>
+          <td style="white-space:nowrap"><%= new Date(a.createdAt).toLocaleString('it-IT') %></td>
+          <td><strong><%= a.userEmail || '—' %></strong></td>
+          <td><code class="al-act"><%= a.action %></code></td>
+          <td><%= a.entity %><%= a.entityId?(' #'+a.entityId):'' %></td>
+          <td class="muted" style="max-width:380px;font-size:12.5px;font-family:monospace;word-break:break-all"><%= a.details || '' %></td>
+          <td class="muted" style="font-size:12.5px"><%= a.ip %></td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
+  </div>
+  <%- include('../partials/dt-pagination', { links, params, basePath:'/admin/audit' }) %>
+  <% } %>
+</div>
+<style>
+  .al-act{background:#f1ede3;padding:2px 8px;border-radius:5px;font-size:12px;color:#7a5800}
+</style>
+<%- include('../partials/footer') %>

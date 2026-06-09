@@ -1,0 +1,169 @@
+<%- include('../partials/header') %>
+
+<div class="card">
+  <div class="card-head">
+    <h2>Newsletter</h2>
+    <div class="head-tools">
+      <a class="btn btn-ghost" href="/admin/newsletter/subscribers">Iscritti</a>
+      <a class="btn btn-primary" href="/admin/newsletter/new">+ Nuova campagna</a>
+    </div>
+  </div>
+
+  <div class="nl-kpi-grid">
+    <div class="nl-kpi">
+      <div class="nl-kpi-val"><%= subStats.active %></div>
+      <div class="nl-kpi-lbl">Iscritti attivi</div>
+    </div>
+    <div class="nl-kpi">
+      <div class="nl-kpi-val"><%= subStats.unsubscribed %></div>
+      <div class="nl-kpi-lbl">Disiscritti</div>
+    </div>
+    <div class="nl-kpi">
+      <div class="nl-kpi-val"><%= subStats.bounced %></div>
+      <div class="nl-kpi-lbl">Bounced</div>
+    </div>
+    <div class="nl-kpi nl-kpi-accent">
+      <div class="nl-kpi-val"><%= campaigns.length %></div>
+      <div class="nl-kpi-lbl">Campagne totali</div>
+    </div>
+  </div>
+</div>
+
+<%
+  var drafts = campaigns.filter(function(c){ return c.status==='draft'; });
+  var sent = campaigns.filter(function(c){ return c.status!=='draft'; });
+%>
+
+<!-- BOZZE -->
+<% if (drafts.length) { %>
+<div class="card">
+  <div class="card-head">
+    <h3>Bozze (da inviare)</h3>
+  </div>
+  <div class="nl-list">
+    <% drafts.forEach(function(c){ %>
+      <div class="nl-row nl-row-draft">
+        <div class="nl-row-info">
+          <div class="nl-row-subject">
+            <strong><%= c.subject %></strong>
+            <span class="nl-tag nl-tag-draft">Bozza</span>
+          </div>
+          <% if (c.preheader) { %>
+            <div class="nl-row-pre"><%= c.preheader.slice(0,140) %><%= c.preheader.length>140?'…':'' %></div>
+          <% } %>
+          <div class="nl-row-meta">
+            Creata il <%= new Date(c.createdAt).toLocaleDateString('it-IT',{day:'2-digit',month:'short',year:'numeric'}) %>
+            <% if (c.audience) { %> · Audience preimpostata: <strong><%= c.audience %></strong><% } %>
+          </div>
+        </div>
+
+        <!-- Form invio rapido con audience picker -->
+        <form method="post" action="/admin/newsletter/<%= c.id %>/send"
+              onsubmit="return confirm('Inviare la newsletter \''+ <%- JSON.stringify(c.subject) %> +'\' a tutti gli iscritti dell\\'audience selezionata? Operazione non reversibile.')"
+              class="nl-row-send">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <label class="nl-row-aud">
+            <span class="muted" style="font-size:11.5px">A chi inviare:</span>
+            <select name="audience">
+              <option value="all" <%= c.audience==='all'?'selected':'' %>>Tutti gli iscritti (<%= subStats.active %>)</option>
+              <option value="bookings" <%= c.audience==='bookings'?'selected':'' %>>Solo chi ha prenotato</option>
+              <option value="contacts" <%= c.audience==='contacts'?'selected':'' %>>Solo dal form contatti</option>
+            </select>
+          </label>
+          <div class="nl-row-actions">
+            <a class="btn btn-ghost btn-sm" href="/admin/newsletter/<%= c.id %>/edit">Modifica</a>
+            <a class="btn btn-ghost btn-sm" href="/admin/newsletter/<%= c.id %>/preview" target="_blank">Anteprima</a>
+            <button class="btn btn-primary btn-sm" type="submit">Invia ora</button>
+          </div>
+        </form>
+
+        <form method="post" action="/admin/newsletter/<%= c.id %>/delete" style="margin:0" onsubmit="return confirm('Eliminare la bozza?')">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <button class="nl-row-del" type="submit" title="Elimina bozza">×</button>
+        </form>
+      </div>
+    <% }) %>
+  </div>
+</div>
+<% } %>
+
+<!-- INVIATE / IN INVIO / FALLITE -->
+<div class="card">
+  <div class="card-head">
+    <h3>Cronologia</h3>
+  </div>
+  <% if (!sent.length) { %>
+    <p class="muted" style="text-align:center;padding:30px 0">Nessuna campagna inviata ancora.</p>
+  <% } else { %>
+  <div class="nl-list">
+    <% sent.forEach(function(c){ %>
+      <div class="nl-row">
+        <div class="nl-row-info">
+          <div class="nl-row-subject">
+            <strong><%= c.subject %></strong>
+            <span class="nl-tag nl-tag-<%= c.status %>"><%= c.status %></span>
+          </div>
+          <% if (c.preheader) { %>
+            <div class="nl-row-pre"><%= c.preheader.slice(0,140) %><%= c.preheader.length>140?'…':'' %></div>
+          <% } %>
+          <div class="nl-row-meta">
+            <% if (c.sentAt) { %>Inviata il <%= new Date(c.sentAt).toLocaleString('it-IT',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}) %> · <% } %>
+            Audience: <strong><%= c.audience %></strong> ·
+            <strong><%= c.successCount %>/<%= c.totalRecipients %></strong> consegnate
+            <% if (c.failureCount) { %> · <span style="color:#8a2a1c"><%= c.failureCount %> falliti</span><% } %>
+          </div>
+        </div>
+        <div class="nl-row-actions">
+          <a class="btn btn-ghost btn-sm" href="/admin/newsletter/<%= c.id %>/preview" target="_blank">Anteprima</a>
+        </div>
+        <form method="post" action="/admin/newsletter/<%= c.id %>/delete" style="margin:0" onsubmit="return confirm('Eliminare questa campagna dallo storico?')">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <button class="nl-row-del" type="submit" title="Elimina dallo storico">×</button>
+        </form>
+      </div>
+    <% }) %>
+  </div>
+  <% } %>
+</div>
+
+<style>
+  .nl-kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px}
+  .nl-kpi{background:#fafbfc;border:1px solid #eef0f4;border-radius:10px;padding:14px 18px;text-align:center}
+  .nl-kpi-accent{background:linear-gradient(135deg,#fffbe8,#fdf2c9);border-color:#ead9a8}
+  .nl-kpi-val{font-family:Georgia,serif;font-size:30px;font-weight:600;color:#1c1f26;line-height:1.1}
+  .nl-kpi-lbl{font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;color:#7a8190;margin-top:4px;font-weight:600}
+
+  .nl-list{display:flex;flex-direction:column;gap:10px}
+  .nl-row{display:flex;align-items:center;gap:14px;padding:16px 18px;border:1px solid #eef0f4;border-radius:10px;
+    background:#fff;transition:border-color .25s ease,box-shadow .25s ease}
+  .nl-row:hover{border-color:#e0aa00;box-shadow:0 6px 20px rgba(0,0,0,.04)}
+  .nl-row-draft{background:linear-gradient(135deg,#fffbe8 0%,#ffffff 60%);border-color:#ead9a8}
+  .nl-row-info{flex:1;min-width:0}
+  .nl-row-subject{display:flex;align-items:center;gap:10px;margin-bottom:4px}
+  .nl-row-subject strong{font-size:15px;color:#1c1f26;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .nl-row-pre{font-size:12.5px;color:#7a8190;margin-bottom:5px;line-height:1.4}
+  .nl-row-meta{font-size:12px;color:#7a8190}
+
+  .nl-row-send{display:flex;align-items:flex-end;gap:14px;margin:0;flex-shrink:0}
+  .nl-row-aud{display:flex;flex-direction:column;gap:4px}
+  .nl-row-aud select{padding:7px 10px;border:1px solid #ddd;border-radius:6px;font-size:13px;background:#fff;min-width:200px}
+  .nl-row-actions{display:flex;gap:6px;flex-wrap:wrap}
+
+  .nl-row-del{background:transparent;border:0;color:#9aa1b2;font-size:22px;line-height:1;
+    width:32px;height:32px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;
+    transition:background .2s ease,color .2s ease;flex-shrink:0}
+  .nl-row-del:hover{background:#ffe1dc;color:#8a2a1c}
+
+  .nl-tag{display:inline-block;padding:2px 9px;border-radius:99px;font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase}
+  .nl-tag-draft{background:#fff3d6;color:#7a5800}
+  .nl-tag-sending{background:#e3f0ff;color:#0d5290}
+  .nl-tag-sent{background:#d6f3df;color:#1b6b3e}
+  .nl-tag-failed{background:#ffe1dc;color:#8a2a1c}
+
+  @media(max-width:880px){
+    .nl-row{flex-direction:column;align-items:stretch}
+    .nl-row-send{flex-direction:column;align-items:stretch}
+    .nl-row-aud select{min-width:0;width:100%}
+  }
+</style>
+<%- include('../partials/footer') %>

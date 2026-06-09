@@ -1,55 +1,115 @@
 <%- include('../partials/header') %>
-<div class="card form-card wide">
-  <h2><%= prof ? 'Modifica professore' : 'Nuovo professore' %></h2>
-  <form method="post" action="<%= prof ? '/admin/professors/'+prof.id : '/admin/professors' %>" class="form" id="profForm">
-    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-    <div class="form-grid">
-      <div class="field"><label class="field-lbl">Nome</label><input type="text" name="firstName" required value="<%= prof ? prof.firstName : '' %>"></div>
-      <div class="field"><label class="field-lbl">Cognome</label><input type="text" name="lastName" required value="<%= prof ? prof.lastName : '' %>"></div>
-      <div class="field"><label class="field-lbl">Tipo di danza</label><input type="text" name="danceType" value="<%= prof ? prof.danceType : '' %>" placeholder="es. Contemporáneo, Ballet, Modern"></div>
-      <div class="field"><label class="field-lbl">Ordine</label><input type="number" name="sort" value="<%= prof ? prof.sort : 0 %>"></div>
-      <div class="field">
-        <label class="field-lbl">Foto</label>
+
+<form method="post" action="<%= prof ? '/admin/professors/'+prof.id : '/admin/professors' %>" class="form fs-page" id="profForm">
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+  <div class="fs-page-head">
+    <div>
+      <h2><%= prof ? 'Modifica professore' : 'Nuovo professore' %></h2>
+      <p><%= prof ? 'ID #'+prof.id+' · dati anagrafici, biografia e foto.' : 'Aggiungi un nuovo professore: anagrafica, foto profilo e biografia.' %></p>
+    </div>
+    <a class="btn btn-ghost" href="/admin/professors">← Torna ai professori</a>
+  </div>
+
+  <!-- SEZIONE 1: Anagrafica + foto -->
+  <section class="fs-section">
+    <div class="fs-section-head">
+      <div class="fs-section-ico" style="background:#fdf2c9;color:#7a5800">👤</div>
+      <div>
+        <h3 class="fs-section-title">Anagrafica e foto</h3>
+        <p class="fs-section-sub">Nome visibile sul sito + foto profilo usata nelle card e nel programma.</p>
+      </div>
+    </div>
+
+    <div class="prof-layout">
+      <div class="prof-photo">
+        <label class="field-lbl">Foto profilo</label>
         <div class="media-picker" data-target="photoMediaId">
           <input type="hidden" name="photoMediaId" value="<%= prof && prof.photoMediaId ? prof.photoMediaId : '' %>">
-          <div class="media-picker-preview">
-            <% if (photo) { %><img src="<%= photo.smallPath || photo.path %>" alt=""><% } else { %><span class="muted">Nessuna immagine</span><% } %>
+          <div class="media-picker-preview prof-photo-preview">
+            <% if (photo) { %><img src="<%= photo.smallPath || photo.path %>" alt=""><% } else { %><div class="prof-photo-empty"><div style="font-size:38px">👤</div><div style="font-size:12px;margin-top:6px">Nessuna foto</div></div><% } %>
           </div>
-          <div class="media-picker-actions">
-            <button type="button" class="btn btn-ghost btn-pick">Scegli dalla libreria</button>
-            <button type="button" class="btn btn-ghost btn-clear">Rimuovi</button>
+          <div class="media-picker-actions" style="display:flex;flex-direction:column;gap:6px;align-items:stretch">
+            <label class="btn btn-primary" style="cursor:pointer;margin:0;justify-content:center">
+              ⬆ Carica file
+              <input type="file" class="media-picker-file" accept="image/*" hidden>
+            </label>
+            <button type="button" class="btn btn-ghost btn-pick">📁 Libreria</button>
+            <button type="button" class="btn btn-ghost btn-clear">↺ Rimuovi</button>
+            <div class="media-picker-status muted" style="font-size:13px" hidden></div>
           </div>
         </div>
+        <div class="field-help" style="margin-top:8px">Consigliata foto verticale 600×800 o più, sfondo neutro.</div>
       </div>
-      <div class="field"><label class="switch"><input type="checkbox" name="active" value="1" <%= !prof || prof.active ? 'checked':'' %>><span>Attivo (visibile sul sito)</span></label></div>
-      <div class="field field-full">
-        <label class="field-lbl">Descrizione</label>
-        <div class="rte">
-          <div class="rte-bar">
-            <button type="button" data-cmd="bold" title="Grassetto"><b>B</b></button>
-            <button type="button" data-cmd="italic" title="Corsivo"><i>I</i></button>
-            <button type="button" data-cmd="underline" title="Sottolineato"><u>U</u></button>
-            <span class="rte-sep"></span>
-            <button type="button" data-cmd="insertUnorderedList" title="Elenco puntato">&#8226; List</button>
-            <button type="button" data-cmd="insertOrderedList" title="Elenco numerato">1. List</button>
-            <span class="rte-sep"></span>
-            <button type="button" data-cmd="createLink" title="Link">&#128279;</button>
-            <button type="button" data-cmd="removeFormat" title="Rimuovi formattazione">T&#10005;</button>
-          </div>
-          <div class="rte-area" id="rteArea" contenteditable="true"><%- prof ? prof.descriptionHtml : '' %></div>
-        </div>
-        <textarea name="descriptionHtml" id="rteHidden" hidden></textarea>
-        <div class="field-help">Puoi usare grassetto, corsivo, sottolineato, elenchi e link.</div>
-      </div>
-    </div>
-    <div class="form-actions">
-      <button class="btn btn-primary"><%= prof ? 'Salva' : 'Crea' %></button>
-      <a class="btn btn-ghost" href="/admin/professors">Annulla</a>
-    </div>
-  </form>
-</div>
 
-<!-- Media picker modal (gestito da admin.js) -->
+      <div class="prof-fields">
+        <div class="fs-grid">
+          <div class="field">
+            <label class="field-lbl">Nome *</label>
+            <input type="text" name="firstName" required value="<%= prof ? prof.firstName : '' %>" placeholder="es. Irene">
+          </div>
+          <div class="field">
+            <label class="field-lbl">Cognome *</label>
+            <input type="text" name="lastName" required value="<%= prof ? prof.lastName : '' %>" placeholder="es. Monticelli">
+          </div>
+          <div class="field field-full">
+            <label class="field-lbl">Tipo di danza</label>
+            <input type="text" name="danceType" value="<%= prof ? prof.danceType : '' %>" placeholder="es. Contemporáneo, Ballet, Modern">
+            <div class="field-help">Stile principale insegnato. Compare nella sezione professori del sito.</div>
+          </div>
+          <div class="field">
+            <label class="field-lbl">Ordine</label>
+            <input type="number" name="sort" value="<%= prof ? prof.sort : 0 %>">
+            <div class="field-help">Valore più basso = mostrato per primo.</div>
+          </div>
+          <div class="field">
+            <div class="fs-switch-card" style="height:100%">
+              <label class="switch" style="margin:0">
+                <input type="checkbox" name="active" value="1" <%= !prof || prof.active ? 'checked':'' %>>
+                <span><strong>Visibile</strong></span>
+              </label>
+              <span class="muted" style="font-size:12px">Se OFF, non compare sul sito.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SEZIONE 2: Biografia -->
+  <section class="fs-section">
+    <div class="fs-section-head">
+      <div class="fs-section-ico" style="background:#e3f0ff;color:#0d5290">📖</div>
+      <div>
+        <h3 class="fs-section-title">Biografia</h3>
+        <p class="fs-section-sub">Testo lungo della scheda professore: formazione, esperienza, premi.</p>
+      </div>
+    </div>
+    <textarea name="descriptionHtml" class="rich-editor"><%= prof ? prof.descriptionHtml : '' %></textarea>
+    <div class="field-help" style="margin-top:10px">Supporta grassetto, corsivo, elenchi puntati e numerati, link, tabelle, immagini, citazioni e codice.</div>
+  </section>
+
+  <div class="fs-actions">
+    <a class="btn btn-ghost" href="/admin/professors">Annulla</a>
+    <button class="btn btn-primary" type="submit"><%= prof ? '💾 Salva modifiche' : '✨ Crea professore' %></button>
+  </div>
+</form>
+
+<style>
+  .prof-layout{display:grid;grid-template-columns:260px 1fr;gap:24px;align-items:start}
+  .prof-photo .media-picker{display:flex;flex-direction:column;gap:12px}
+  .prof-photo-preview{width:100% !important;height:280px !important;border-radius:14px;overflow:hidden;background:#fafbfc;border:1px dashed var(--line);display:flex;align-items:center;justify-content:center}
+  .prof-photo-preview img{width:100%;height:100%;object-fit:cover}
+  .prof-photo-empty{display:flex;flex-direction:column;align-items:center;color:#9aa1b2}
+  .prof-fields{min-width:0}
+  @media(max-width:780px){
+    .prof-layout{grid-template-columns:1fr}
+    .prof-photo-preview{height:240px}
+  }
+</style>
+
+<script>window.MEDIA_CSRF = "<%= csrfToken %>";</script>
+<!-- Media picker modal -->
 <div class="modal" id="pickerModal" hidden>
   <div class="modal-box">
     <div class="modal-head"><h3>Scegli immagine</h3><button class="modal-x" id="pickerClose">&times;</button></div>
@@ -57,28 +117,5 @@
   </div>
 </div>
 
-<style>
-  .rte{border:1px solid var(--line);border-radius:10px;overflow:hidden}
-  .rte-bar{display:flex;flex-wrap:wrap;gap:4px;padding:8px;background:#f7f8fa;border-bottom:1px solid var(--line)}
-  .rte-bar button{background:#fff;border:1px solid var(--line);border-radius:7px;min-width:34px;height:32px;padding:0 9px;cursor:pointer;font-size:13px}
-  .rte-bar button:hover{background:var(--brand);color:#1c1408;border-color:var(--brand)}
-  .rte-sep{width:1px;background:var(--line);margin:2px 4px}
-  .rte-area{min-height:200px;padding:14px 16px;font-size:15px;line-height:1.7;outline:none}
-  .rte-area:focus{box-shadow:inset 0 0 0 2px rgba(224,170,0,.25)}
-  .rte-area p{margin:0 0 .7em}
-</style>
-<script>
-(function(){
-  var area=document.getElementById('rteArea'),hidden=document.getElementById('rteHidden'),form=document.getElementById('profForm');
-  document.querySelectorAll('.rte-bar button').forEach(function(btn){
-    btn.addEventListener('click',function(){
-      var c=btn.getAttribute('data-cmd');
-      area.focus();
-      if(c==='createLink'){ var u=prompt('URL del link:','https://'); if(u) document.execCommand(c,false,u); }
-      else document.execCommand(c,false,null);
-    });
-  });
-  form.addEventListener('submit',function(){ hidden.value=area.innerHTML; });
-})();
-</script>
+<%- include('../partials/tinymce') %>
 <%- include('../partials/footer') %>

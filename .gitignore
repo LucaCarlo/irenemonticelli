@@ -11,3 +11,21 @@ uploads/*
 backups/*
 !backups/.gitkeep
 .tmp77/
+
+# Asset sorgenti pesanti (video, zip, foto originali) — non vanno nel repo
+Foto sito Irene Monticelli/
+.deploy/
+*.zip
+*.mp4
+*.MOV
+*.MP4
+sito_irene_monticelli*.html
+.quote.html
+
+# Script di migrazione/inject one-shot
+inject_*.js
+migrate_*.js
+build_pages.js
+frontend_edits*.js
+frontend_pack_stub.js
+make_biografia.js

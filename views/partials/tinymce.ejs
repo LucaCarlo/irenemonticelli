@@ -1,0 +1,45 @@
+<%
+  // Includi nelle pagine che hanno <textarea class="rich-editor"> per attivare il WYSIWYG.
+  // Default: toolbar completa (bold, lists, table, link, ecc.). Per una versione minimale,
+  // passa il parametro `mode: 'mini'` includendo questo partial.
+  var _mode = (typeof mode !== 'undefined') ? mode : 'full';
+%>
+<script src="https://cdn.jsdelivr.net/npm/tinymce@7.4.1/tinymce.min.js"></script>
+<script>
+(function(){
+  if (typeof tinymce === 'undefined') return;
+  var mode = '<%= _mode %>';
+  var plugins, toolbar, menubar, height;
+  if (mode === 'mini') {
+    plugins = 'autolink lists link table charmap';
+    toolbar = 'bold italic underline | bullist numlist | link | table | removeformat';
+    menubar = false;
+    height = 320;
+  } else {
+    plugins = 'advlist autolink lists link image charmap searchreplace visualblocks code fullscreen table help wordcount preview anchor codesample';
+    toolbar = 'undo redo | blocks | bold italic underline strikethrough | forecolor backcolor | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | link image table codesample blockquote | removeformat | code fullscreen preview';
+    menubar = 'edit insert view format table tools';
+    height = 480;
+  }
+  tinymce.init({
+    selector: 'textarea.rich-editor',
+    license_key: 'gpl',
+    base_url: 'https://cdn.jsdelivr.net/npm/tinymce@7.4.1',
+    suffix: '.min',
+    height: height,
+    menubar: menubar,
+    branding: false,
+    promotion: false,
+    plugins: plugins,
+    toolbar: toolbar,
+    block_formats: 'Paragrafo=p; Titolo 1=h1; Titolo 2=h2; Titolo 3=h3; Titolo 4=h4; Preformattato=pre; Citazione=blockquote',
+    content_style: 'body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;font-size:15px;color:#1c1f26;line-height:1.65;padding:18px 22px} h1,h2,h3,h4{color:#1c1f26;margin:1.3em 0 .4em} h1{font-size:22px} h2{font-size:18px} h3{font-size:16px} table{border-collapse:collapse;width:100%;margin:14px 0} table td,table th{border:1px solid #ddd;padding:8px 10px} table th{background:#fafbfc;font-weight:600} ul,ol{padding-left:22px} code{background:#f0f1f4;padding:1px 6px;border-radius:5px;font-size:.9em} blockquote{border-left:3px solid #e0aa00;margin:1em 0;padding-left:14px;color:#5a5e6a}',
+    table_default_attributes: { border: '0' },
+    table_default_styles: { 'border-collapse': 'collapse', width: '100%' },
+    image_advtab: true,
+    setup: function(ed){
+      ed.on('change keyup', function(){ ed.save(); });
+    },
+  });
+})();
+</script>

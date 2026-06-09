@@ -2,6 +2,7 @@ const express = require('express');
 const bcrypt = require('bcryptjs');
 const rateLimit = require('express-rate-limit');
 const prisma = require('../lib/db');
+const audit = require('../lib/audit');
 
 const router = express.Router();
 
@@ -26,16 +27,22 @@ router.post('/login', loginLimiter, async (req, res) => {
   });
   const ok = user && user.isActive && (await bcrypt.compare(String(password || ''), user.passwordHash));
   if (!ok) {
+    // Audit log: tentativo fallito (mostra l'email tentata)
+    await audit.log(req, 'auth.login.failed', { details: { email: String(email||'').trim() } });
     return res.status(401).render('login', { title: 'Accedi', error: 'Credenziali non valide o utente disattivato.' });
   }
   await prisma.user.update({ where: { id: user.id }, data: { lastLoginAt: new Date() } });
   req.session.userId = user.id;
+  // Audit log: login riuscito
+  req.user = user; // così audit.log capta l'utente
+  await audit.log(req, 'auth.login.success', { entity: 'User', entityId: String(user.id) });
   const dest = req.session.returnTo || '/admin';
   delete req.session.returnTo;
   res.redirect(user.mustChangePassword ? '/admin/change-password' : dest);
 });
 
-router.post('/logout', (req, res) => {
+router.post('/logout', async (req, res) => {
+  await audit.log(req, 'auth.logout', req.user ? { entity: 'User', entityId: String(req.user.id) } : {});
   req.session.destroy(() => res.redirect('/admin/login'));
 });
 

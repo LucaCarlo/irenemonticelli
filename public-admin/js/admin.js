@@ -141,20 +141,73 @@
     xhr.upload.onprogress = function (e) {
       if (e.lengthComputable && bar) bar.style.width = Math.round((e.loaded / e.total) * 100) + '%';
     };
-    xhr.onload = function () { location.reload(); };
-    xhr.onerror = function () { alert('Upload fallito'); };
+    xhr.onload = function () {
+      if (xhr.status >= 200 && xhr.status < 300) { location.reload(); return; }
+      var msg = 'Upload fallito (HTTP ' + xhr.status + ')';
+      if (xhr.status === 413) msg = 'File troppo grande (limite 100MB).';
+      else if (xhr.status === 403) msg = 'Sessione scaduta o CSRF non valido. Ricarica e riprova.';
+      else {
+        try { var j = JSON.parse(xhr.responseText); if (j && j.error) msg = 'Upload fallito: ' + j.error; } catch (e) {}
+      }
+      if (prog) prog.hidden = true;
+      alert(msg);
+    };
+    xhr.onerror = function () { if (prog) prog.hidden = true; alert('Upload fallito: errore di rete'); };
     xhr.send(fd);
   }
 
-  // ---- Media picker (impostazioni: logo / favicon) ----
+  // Upload dal media-picker (settings, professori, ...) — carica + selezione automatica
+  function uploadFromPicker(mp, file) {
+    var fd = new FormData();
+    fd.append('_csrf', window.MEDIA_CSRF || (mp.dataset && mp.dataset.csrf) || '');
+    fd.append('files', file);
+    var act = mp.querySelector('.media-picker-status');
+    if (act) { act.hidden = false; act.textContent = 'Caricamento di "' + file.name + '"...'; }
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST', '/admin/media/upload');
+    xhr.setRequestHeader('Accept', 'application/json');
+    xhr.onload = function () {
+      try {
+        var j = JSON.parse(xhr.responseText || '{}');
+        if (xhr.status >= 200 && xhr.status < 300 && j && j.ok && j.media && j.media[0]) {
+          var m = j.media[0];
+          mp.querySelector('input[type=hidden]').value = m.id;
+          var prev;
+          if (m.isImage) prev = '<img src="' + (m.smallPath || m.path) + '" alt="">';
+          else if (/^video\//.test(m.mime||'')) prev = '<video src="' + m.path + '" muted autoplay loop playsinline style="width:100%;height:100%;object-fit:cover"></video>';
+          else prev = '<span class="muted">' + escapeHtml(m.originalName) + '</span>';
+          mp.querySelector('.media-picker-preview').innerHTML = prev;
+          if (act) { act.textContent = 'Caricato ✓'; setTimeout(function(){ act.hidden = true; }, 1800); }
+          return;
+        }
+        var msg = (j && j.error) ? j.error : 'HTTP ' + xhr.status;
+        if (xhr.status === 413) msg = 'File troppo grande (limite 100MB).';
+        if (act) { act.textContent = 'Errore: ' + msg; } else alert('Upload fallito: ' + msg);
+      } catch (e) {
+        if (act) { act.textContent = 'Errore upload (HTTP ' + xhr.status + ')'; } else alert('Upload fallito (HTTP ' + xhr.status + ')');
+      }
+    };
+    xhr.onerror = function () { if (act) act.textContent = 'Errore di rete'; else alert('Errore di rete'); };
+    xhr.send(fd);
+  }
+
+  // ---- Media picker (impostazioni: logo / favicon / foto professore) ----
   var pickerModal = $('#pickerModal');
   if (pickerModal) {
     var activePicker = null;
     $$('.media-picker').forEach(function (mp) {
-      $('.btn-pick', mp).addEventListener('click', function () { activePicker = mp; openPicker(); });
-      $('.btn-clear', mp).addEventListener('click', function () {
+      var pick = $('.btn-pick', mp);
+      var clear = $('.btn-clear', mp);
+      var upInput = $('.media-picker-file', mp);
+      if (pick) pick.addEventListener('click', function () { activePicker = mp; openPicker(); });
+      if (clear) clear.addEventListener('click', function () {
         mp.querySelector('input[type=hidden]').value = '';
         mp.querySelector('.media-picker-preview').innerHTML = '<span class="muted">Nessuna immagine</span>';
+      });
+      if (upInput) upInput.addEventListener('change', function () {
+        var f = upInput.files && upInput.files[0]; if (!f) return;
+        uploadFromPicker(mp, f);
+        upInput.value = ''; // reset
       });
     });
     $('#pickerClose').addEventListener('click', function () { pickerModal.hidden = true; });
@@ -163,19 +216,30 @@
       pickerModal.hidden = false;
       var g = $('#pickerGrid');
       g.innerHTML = '<p class="muted">Caricamento...</p>';
-      fetch('/admin/media/picker.json', { credentials: 'same-origin' })
+      // Tipo media dal picker attivo (data-accept="video/*" → video, default image)
+      var accept = (activePicker && activePicker.dataset && activePicker.dataset.accept) || 'image/*';
+      var type = /video/i.test(accept) ? 'video' : 'image';
+      fetch('/admin/media/picker.json?type=' + type, { credentials: 'same-origin' })
         .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
         .then(function (list) {
-        if (!list.length) { g.innerHTML = '<p class="muted">Nessuna immagine. Carica prima qualcosa in Media.</p>'; return; }
+        if (!list.length) { g.innerHTML = '<p class="muted">Nessun media. Carica prima qualcosa in Media o usa "Carica file".</p>'; return; }
         g.innerHTML = '';
         list.forEach(function (m) {
           var t = document.createElement('div');
           t.className = 'media-tile';
-          t.innerHTML = '<div class="media-thumb"><img src="' + m.smallPath + '" alt=""></div><div class="media-name">' + escapeHtml(m.originalName) + '</div>';
+          var thumb;
+          if (m.isImage) thumb = '<img src="' + m.smallPath + '" alt="">';
+          else if (/^video\//.test(m.mime||'')) thumb = '<video src="' + m.path + '" muted playsinline preload="metadata" style="width:100%;height:100%;object-fit:cover"></video>';
+          else thumb = '<span class="file-ico">' + (m.ext||'').toUpperCase() + '</span>';
+          t.innerHTML = '<div class="media-thumb">' + thumb + '</div><div class="media-name">' + escapeHtml(m.originalName) + '</div>';
           t.addEventListener('click', function () {
             if (!activePicker) return;
             activePicker.querySelector('input[type=hidden]').value = m.id;
-            activePicker.querySelector('.media-picker-preview').innerHTML = '<img src="' + m.smallPath + '" alt="">';
+            var prev;
+            if (m.isImage) prev = '<img src="' + (m.smallPath || m.path) + '" alt="">';
+            else if (/^video\//.test(m.mime||'')) prev = '<video src="' + m.path + '" muted autoplay loop playsinline style="width:100%;height:100%;object-fit:cover"></video>';
+            else prev = '<span class="muted">' + escapeHtml(m.originalName) + '</span>';
+            activePicker.querySelector('.media-picker-preview').innerHTML = prev;
             pickerModal.hidden = true;
           });
           g.appendChild(t);

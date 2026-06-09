@@ -36,9 +36,28 @@ async function withPhoto(list) {
 router.use(requirePermission('professors.manage'));
 
 router.get('/', A(async (req, res) => {
-  let profs = await prisma.professor.findMany({ orderBy: [{ sort: 'asc' }, { id: 'asc' }] });
-  profs = await withPhoto(profs);
-  res.render('professors/list', { title: 'Professori', profs });
+  const dt = require('../lib/datatable');
+  const params = dt.parseParams(req, { defaultSort: 'sort', allowedSorts: ['firstName','lastName','danceType','active','sort'] });
+  const status = String(req.query.status || '').trim();
+  params._extra = { status };
+  const where = {};
+  if (params.q) where.OR = [
+    { firstName: { contains: params.q, mode: 'insensitive' } },
+    { lastName: { contains: params.q, mode: 'insensitive' } },
+    { danceType: { contains: params.q, mode: 'insensitive' } },
+  ];
+  if (status === 'active') where.active = true;
+  if (status === 'inactive') where.active = false;
+  const orderBy = {}; orderBy[params.sort] = params.dir;
+  const [totalUnfiltered, total, rawProfs] = await Promise.all([
+    prisma.professor.count(),
+    prisma.professor.count({ where }),
+    prisma.professor.findMany({ where, orderBy, skip: params.skip, take: params.take }),
+  ]);
+  const profs = await withPhoto(rawProfs);
+  const totalPages = Math.max(1, Math.ceil(total / params.perPage));
+  const links = dt.pageLinks(params.page, totalPages);
+  res.render('professors/list', { title: 'Professori', profs, params, total, totalUnfiltered, totalPages, links, status });
 }));
 
 router.get('/new', (req, res) => {

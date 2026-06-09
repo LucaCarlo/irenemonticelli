@@ -1,0 +1,93 @@
+<%- include('../partials/header') %>
+<div class="card">
+  <div class="card-head">
+    <h2>Referral</h2>
+    <div class="muted" style="font-size:13px">
+      <span class="badge badge-warn"><%= statusCounts.pending %></span> in attesa ·
+      <span class="badge badge-ok"><%= statusCounts.approved %></span> attivi ·
+      <span class="badge badge-off"><%= statusCounts.disabled %></span> disattivati
+    </div>
+  </div>
+
+  <%- include('../partials/dt-toolbar', {
+    params, total, totalUnfiltered,
+    entitySingular: 'referrer', entityPlural: 'referrer',
+    basePath: '/admin/referrals',
+    searchPlaceholder: 'Cerca per nome, cognome o email…',
+    extraFilters: [
+      { name: 'status', value: status, options: [
+        { val: '', label: 'Tutti gli stati' },
+        { val: 'pending', label: 'In attesa di approvazione' },
+        { val: 'approved', label: 'Approvati / Attivi' },
+        { val: 'disabled', label: 'Disattivati' },
+      ] },
+    ],
+  }) %>
+
+  <% if (!referrers.length) { %>
+    <p class="muted" style="padding:30px 0;text-align:center">Nessun referrer.</p>
+  <% } else { %>
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr>
+            <%- include('../partials/dt-th', { label: 'Nome', sortKey: 'firstName', params, basePath: '/admin/referrals' }) %>
+            <%- include('../partials/dt-th', { label: 'Email', sortKey: 'email', params, basePath: '/admin/referrals' }) %>
+            <th>Telefono</th>
+            <%- include('../partials/dt-th', { label: 'Stato', sortKey: 'status', params, basePath: '/admin/referrals' }) %>
+            <%- include('../partials/dt-th', { label: 'Richiesta il', sortKey: 'createdAt', params, basePath: '/admin/referrals' }) %>
+            <%- include('../partials/dt-th', { label: 'Ultimo accesso', sortKey: 'lastLoginAt', params, basePath: '/admin/referrals' }) %>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% referrers.forEach(function(r){ %>
+            <tr class="<%= r.status==='disabled'?'is-off':'' %>">
+              <td>
+                <strong><%= r.firstName %> <%= r.lastName %></strong>
+                <% if (r.notes) { %><div class="muted" style="font-size:12px;margin-top:2px;max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="<%= r.notes %>">"<%= r.notes %>"</div><% } %>
+              </td>
+              <td><a href="mailto:<%= r.email %>"><%= r.email %></a></td>
+              <td><%= r.phone || '—' %></td>
+              <td>
+                <% if (r.status==='pending') { %><span class="badge badge-warn">In attesa</span>
+                <% } else if (r.status==='approved') { %><span class="badge badge-ok">Attivo</span>
+                <% } else { %><span class="badge badge-off">Disattivato</span><% } %>
+              </td>
+              <td class="muted" style="white-space:nowrap"><%= new Date(r.createdAt).toLocaleDateString('it-IT',{day:'2-digit',month:'short',year:'numeric'}) %></td>
+              <td class="muted" style="white-space:nowrap"><%= r.lastLoginAt ? new Date(r.lastLoginAt).toLocaleDateString('it-IT',{day:'2-digit',month:'short',year:'numeric'}) : 'mai' %></td>
+              <td class="row-actions">
+                <a class="btn-ico btn-ico-edit" href="/admin/referrals/<%= r.id %>/edit" title="Modifica"><%- include('../partials/ico', { name:'edit' }) %></a>
+                <% if (r.status==='pending') { %>
+                  <form method="post" action="/admin/referrals/<%= r.id %>/approve" onsubmit="return confirm('Approvare questo referrer? Verrà inviata una email con le credenziali di accesso.')">
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                    <button type="submit" class="btn-ico btn-ico-confirm" title="Approva (manda email con credenziali)"><%- include('../partials/ico', { name:'check' }) %></button>
+                  </form>
+                <% } else { %>
+                  <form method="post" action="/admin/referrals/<%= r.id %>/toggle">
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                    <button type="submit" class="btn-ico <%= r.status==='approved'?'btn-ico-hide':'btn-ico-show' %>" title="<%= r.status==='approved'?'Disattiva (ora attivo)':'Riattiva (ora disattivato)' %>"><%- include('../partials/ico', { name: r.status==='approved'?'eye':'eye-off' }) %></button>
+                  </form>
+                  <form method="post" action="/admin/referrals/<%= r.id %>/reset-password" onsubmit="return confirm('Reimpostare la password e inviarla via email?')">
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                    <button type="submit" class="btn-ico" title="Reset password (manda email)" style="color:#7a5800"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></button>
+                  </form>
+                <% } %>
+                <form method="post" action="/admin/referrals/<%= r.id %>/delete" onsubmit="return confirm('Eliminare definitivamente questo referrer?')">
+                  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                  <button type="submit" class="btn-ico btn-ico-danger" title="Elimina"><%- include('../partials/ico', { name:'trash' }) %></button>
+                </form>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+    <%- include('../partials/dt-pagination', { links, params, basePath: '/admin/referrals' }) %>
+  <% } %>
+</div>
+
+<style>
+  tr.is-off{opacity:.55}
+</style>
+<%- include('../partials/footer') %>

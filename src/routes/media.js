@@ -35,13 +35,18 @@ router.get(
   })
 );
 
-// JSON: media picker (es. logo/favicon nelle impostazioni)
+// JSON: media picker. Filtro opzionale ?type=image|video|all (default: image)
 router.get(
   '/picker.json',
   requirePermission('media.view'),
   A(async (req, res) => {
+    const type = String(req.query.type || 'image').toLowerCase();
+    let where = {};
+    if (type === 'image') where = { isImage: true };
+    else if (type === 'video') where = { mime: { startsWith: 'video/' } };
+    else if (type === 'all') where = {};
     const media = await prisma.media.findMany({
-      where: { isImage: true },
+      where,
       orderBy: { createdAt: 'desc' },
       take: 100,
     });

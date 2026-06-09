@@ -78,12 +78,18 @@ model Plan {
   // JSON prezzi: {"type":"lessons","options":[{"count":1,"price":35}...]}
   //          oppure {"type":"tiers","base":360,"tiers":[{"until":"2026-06-15","price":288}...]}
   pricingJson String    @default("")
+  // Sconto quantità: quando il numero partecipanti >= discountThreshold,
+  // si applica discountPercent% di sconto SUL PREZZO BASE del pacchetto (NON sugli extras).
+  // 0 = nessuno sconto attivo.
+  discountThreshold Int   @default(0)
+  discountPercent   Float @default(0)
   ctaLabel    String    @default("Reserva")
   active      Boolean   @default(true)
   sort        Int       @default(0)
   eventId     Int?
   event       Event?    @relation(fields: [eventId], references: [id])
   bookings    Booking[]
+  extras      BookingExtra[]
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 }
@@ -98,16 +104,23 @@ model Event {
   description String    @default("")
   // Orari modificabili da dashboard: JSON array, es. ["9:30","11:15","12:30","15:30","16:45","18:00"]
   slotsJson   String    @default("")
+  // Per pack "red" (scelta mattina/pomeriggio): orari mostrati al cliente
+  morningHours   String @default("9:30 - 12:30")
+  afternoonHours String @default("15:30 - 18:30")
   active      Boolean   @default(true)
   sort        Int       @default(0)
   plans       Plan[]
   bookings    Booking[]
+  lessons     Lesson[]
+  extras      BookingExtra[]
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 }
 
 model Booking {
   id            Int      @id @default(autoincrement())
+  // Dati PAGANTE (chi compra/paga, riceve email e ricevuta).
+  // Per le booking legacy "1 persona = 1 partecipante" questi sono anche i dati del partecipante.
   customerName  String   @default("")
   firstName     String   @default("")
   lastName      String   @default("")
@@ -127,6 +140,8 @@ model Booking {
   slot          String   @default("")
   // dettaglio selezione (lezioni/giorni/slot) JSON
   itemsJson     String   @default("")
+  // extras selezionati durante checkout: JSON array [{id,name,price,mandatory}]
+  extrasJson    String   @default("")
   method        String   @default("")
   amount        Float    @default(0)
   currency      String   @default("EUR")
@@ -137,8 +152,77 @@ model Booking {
   stripeSessionId String @default("")
   stripePaymentIntent String @default("")
   notes         String   @default("")
+  // Dati fatturazione del pagante (opzionali — se compilati genera factura formale)
+  billingAddress  String  @default("")
+  billingCity     String  @default("")
+  billingZip      String  @default("")
+  billingCountry  String  @default("")
+  billingNif      String  @default("")
+  // Multi-partecipanti: numero di persone coperte dalla booking.
+  participantsCount     Int     @default(1)
+  // Numero di classi per partecipante (solo per pack single_lessons; 1/3/6).
+  // Per gold/red ignorato perche' il pack ha classi fisse.
+  classesPerParticipant Int     @default(1)
+  // Breakdown prezzo: subtotal = pack * partecipanti (BEFORE discount).
+  subtotal      Float    @default(0)
+  // Sconto applicato (se il pack ha discountThreshold/Percent attivi e N raggiunge la soglia)
+  discountAmount Float   @default(0)
+  extrasTotal   Float    @default(0)
+  // Codice referral usato in checkout (opzionale)
+  referralCodeId   Int?
+  referralCode     ReferralCode? @relation(fields: [referralCodeId], references: [id])
+  referralCodeSnap String   @default("")  // snapshot del codice usato (case-uppercase) — sopravvive a eliminazione codice
+  referralDiscount Float   @default(0)    // € scontati grazie al codice referral
+  participants  Participant[]
+  tutorBlocks   TutorBlock[]
+  commission    ReferralCommission?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+}
+
+// Partecipante della booking: 1 booking -> N partecipanti.
+// Se isMinor=true: email/phone vuoti, c'e' un tutorBlockId.
+model Participant {
+  id           Int         @id @default(autoincrement())
+  bookingId    Int
+  booking      Booking     @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  firstName    String
+  lastName     String
+  birthDate    DateTime
+  isMinor      Boolean     @default(false)
+  email        String      @default("")
+  phone        String      @default("")
+  address      String      @default("")
+  city         String      @default("")
+  zip          String      @default("")
+  country      String      @default("ES")
+  tutorBlockId Int?
+  tutorBlock   TutorBlock? @relation(fields: [tutorBlockId], references: [id], onDelete: SetNull)
+  sort         Int         @default(0)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  @@index([bookingId, sort])
+  @@index([tutorBlockId])
+}
+
+// Blocco tutor: 1 booking -> N tutori. Ogni tutore puo' essere associato a piu' partecipanti minorenni.
+// Cosi' "stesso tutor per i miei 3 figli" -> 1 TutorBlock, 3 Participant che lo referenziano.
+model TutorBlock {
+  id           Int           @id @default(autoincrement())
+  bookingId    Int
+  booking      Booking       @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  firstName    String
+  lastName     String
+  email        String
+  phone        String
+  // madre | padre | tutor_legale | otro
+  relationship String        @default("")
+  participants Participant[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  @@index([bookingId])
 }
 
 model Professor {
@@ -150,8 +234,86 @@ model Professor {
   photoMediaId    Int?
   active          Boolean  @default(true)
   sort            Int      @default(0)
+  lessons         Lesson[]
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
+}
+
+// Newsletter — iscritti
+model NewsletterSubscriber {
+  id              Int      @id @default(autoincrement())
+  email           String   @unique
+  name            String   @default("")
+  source          String   @default("manual") // manual | booking | contact | imported
+  status          String   @default("active") // active | unsubscribed | bounced
+  unsubscribeToken String  @unique
+  lastSentAt      DateTime?
+  unsubscribedAt  DateTime?
+  createdAt       DateTime @default(now())
+
+  @@index([status])
+  @@index([source])
+}
+
+// Newsletter — campagne
+model NewsletterCampaign {
+  id              Int       @id @default(autoincrement())
+  subject         String
+  preheader       String    @default("")
+  htmlBody        String    @default("")
+  status          String    @default("draft") // draft | sending | sent | failed
+  audience        String    @default("all") // all | bookings | contacts
+  sentAt          DateTime?
+  totalRecipients Int       @default(0)
+  successCount    Int       @default(0)
+  failureCount    Int       @default(0)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([status])
+  @@index([createdAt])
+}
+
+// Extras / Suplementi: spese aggiuntive (obbligatorie o opzionali) sul checkout.
+// Es.: "Asicurazione obbligatoria 20€", "Maglietta evento 25€".
+// Scope ibrido: planId/eventId opzionali. Se entrambi null → vale per tutti i pack.
+model BookingExtra {
+  id          Int       @id @default(autoincrement())
+  name        String
+  description String    @default("")
+  price       Float     // in EUR (positivo)
+  mandatory   Boolean   @default(false)
+  active      Boolean   @default(true)
+  sort        Int       @default(0)
+  planId      Int?
+  plan        Plan?     @relation(fields: [planId], references: [id], onDelete: SetNull)
+  eventId     Int?
+  event       Event?    @relation(fields: [eventId], references: [id], onDelete: SetNull)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([active, sort])
+}
+
+// Lezione del Programa: ogni evento ha N lezioni (es. 18 totali su 3 giorni).
+// Ogni lezione = giorno + orario + titolo + professore.
+model Lesson {
+  id          Int        @id @default(autoincrement())
+  eventId     Int
+  event       Event      @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  dayIndex    Int        // 1, 2, 3, ... (giorno dell'evento)
+  time        String     // "9:30", "11:15", "12:30", "15:30", "16:45", "18:00"
+  title       String     // "Ballet", "Contemporáneo fusión", "LAB Coreográfico", ...
+  professorId Int?
+  professor   Professor? @relation(fields: [professorId], references: [id], onDelete: SetNull)
+  isAfternoon Boolean    @default(false)
+  isPause     Boolean    @default(false) // es. Lunch time
+  sort        Int        @default(0)
+  active      Boolean    @default(true)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  @@index([eventId, dayIndex, sort])
 }
 
 model Session {
@@ -159,4 +321,149 @@ model Session {
   sid       String   @unique
   data      String
   expiresAt DateTime
+}
+
+// Messaggi dal form di contatto pubblico
+model ContactMessage {
+  id         Int       @id @default(autoincrement())
+  name       String
+  email      String
+  subject    String    @default("")
+  body       String
+  ip         String    @default("")
+  userAgent  String    @default("")
+  status     String    @default("new") // new | read | archived
+  repliedAt  DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([createdAt])
+  @@index([status])
+}
+
+// Log azioni admin (sessioni, modifiche, eliminazioni, upload, ecc.)
+model AuditLog {
+  id         Int      @id @default(autoincrement())
+  userId     Int?
+  userEmail  String   @default("")
+  action     String
+  entity     String   @default("")
+  entityId   String   @default("")
+  details    String   @default("")
+  ip         String   @default("")
+  userAgent  String   @default("")
+  createdAt  DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([action])
+  @@index([userId])
+}
+
+// Tracking analytics: ogni pageview ne crea uno.
+// La "session" è derivata: stesso sessionId entro 30 minuti = stessa sessione.
+model PageView {
+  id            Int      @id @default(autoincrement())
+  sessionId     String              // generato lato client (storage), random
+  visitorId     String   @default("") // long-term (anonimo, su localStorage)
+  path          String
+  title         String   @default("")
+  referrer      String   @default("")
+  referrerHost  String   @default("")
+  country       String   @default("")
+  countryCode   String   @default("")
+  region        String   @default("")
+  city          String   @default("")
+  deviceType    String   @default("") // desktop | mobile | tablet | bot
+  browser       String   @default("")
+  browserVer    String   @default("")
+  os            String   @default("")
+  durationMs    Int      @default(0)
+  isBot         Boolean  @default(false)
+  ipHash        String   @default("") // hashed IP for unique counting senza salvare l'IP in chiaro
+  createdAt     DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([sessionId])
+  @@index([visitorId])
+  @@index([path])
+  @@index([country])
+}
+
+// Referrer = persona che porta nuovi clienti tramite codice sconto.
+// Si registra autonomamente da /area-referral/register (status=pending),
+// Irene approva manualmente da admin → email con credenziali → status=approved.
+model Referrer {
+  id            Int       @id @default(autoincrement())
+  firstName     String
+  lastName      String
+  email         String    @unique
+  phone         String    @default("")
+  notes         String    @default("")  // testo dal referrer al momento della richiesta
+  internalNotes String    @default("")  // note interne admin
+  status        String    @default("pending") // pending | approved | disabled
+  passwordHash  String    @default("")        // valorizzato all'approvazione
+  mustChangePw  Boolean   @default(false)
+  approvedAt    DateTime?
+  approvedById  Int?
+  lastLoginAt   DateTime?
+  resetToken    String?
+  resetTokenExp DateTime?
+  codes         ReferralCode[]
+  commissions   ReferralCommission[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([status])
+  @@index([email])
+}
+
+// Codice sconto associato a un Referrer. Più codici per referrer possibili.
+// Uppercase per case-insensitive lookup.
+model ReferralCode {
+  id              Int       @id @default(autoincrement())
+  code            String    @unique          // es. "MARIA20" — UPPERCASE
+  referrerId      Int
+  referrer        Referrer  @relation(fields: [referrerId], references: [id], onDelete: Cascade)
+  // Sconto cliente: % sul net pacchetto (esclude IVA + extras).
+  discountType    String    @default("percent") // "percent" | "fixed"
+  discountValue   Float     @default(0)         // percent: 20 = 20%; fixed: 10 = 10€
+  // Commissione referrer: % sul net post-sconto (esclude IVA + extras).
+  commissionPct   Float     @default(0)         // 10 = 10%
+  // Limiti opzionali
+  maxUses         Int?                            // null = illimitato
+  usedCount       Int       @default(0)
+  validUntil      DateTime?
+  active          Boolean   @default(true)
+  internalNotes   String    @default("")
+  bookings        Booking[]
+  commissions     ReferralCommission[]
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([referrerId])
+  @@index([active])
+}
+
+// Commissione generata quando un Booking viene pagato con un ReferralCode.
+// pending = ancora da pagare a referrer; paid = bonifico/PayPal fatto da Irene.
+model ReferralCommission {
+  id              Int           @id @default(autoincrement())
+  referrerId      Int
+  referrer        Referrer      @relation(fields: [referrerId], references: [id], onDelete: Cascade)
+  codeId          Int
+  code            ReferralCode  @relation(fields: [codeId], references: [id], onDelete: Cascade)
+  bookingId       Int           @unique
+  booking         Booking       @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  bookingGross    Float                       // totale pagato dal cliente (€)
+  netBase         Float                       // base per il calcolo commissione (€)
+  commissionPct   Float                       // snapshot della % al momento della vendita
+  commissionAmt   Float                       // importo da pagare al referrer (€)
+  status          String        @default("pending") // pending | paid | cancelled
+  paidAt          DateTime?
+  paidNote        String        @default("")      // riferimento bonifico/PayPal libero
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@index([referrerId])
+  @@index([codeId])
+  @@index([status])
 }

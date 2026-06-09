@@ -1,0 +1,204 @@
+<%- include('../partials/header') %>
+<form method="post" action="/admin/referrals/<%= referrer.id %>" class="form fs-page" id="referrerForm">
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+  <div class="fs-page-head">
+    <div>
+      <h2>Referrer #<%= referrer.id %></h2>
+      <p>
+        Stato:
+        <% if (referrer.status==='pending') { %><strong style="color:#7a5800">In attesa di approvazione</strong>
+        <% } else if (referrer.status==='approved') { %><strong style="color:#1b6b3e">Attivo</strong>
+        <% } else { %><strong style="color:#8a2a1c">Disattivato</strong><% } %>
+        · Registrato il <%= new Date(referrer.createdAt).toLocaleDateString('it-IT',{day:'2-digit',month:'long',year:'numeric'}) %>
+      </p>
+    </div>
+    <a class="btn btn-ghost" href="/admin/referrals">← Torna alla lista</a>
+  </div>
+
+  <section class="fs-section">
+    <div class="fs-section-head">
+      <div class="fs-section-ico" style="background:#fdf2c9;color:#7a5800">👤</div>
+      <div>
+        <h3 class="fs-section-title">Anagrafica</h3>
+        <p class="fs-section-sub">Dati forniti dal referrer in fase di registrazione.</p>
+      </div>
+    </div>
+    <div class="fs-grid">
+      <div class="field">
+        <label class="field-lbl">Nome *</label>
+        <input type="text" name="firstName" required value="<%= referrer.firstName %>">
+      </div>
+      <div class="field">
+        <label class="field-lbl">Cognome *</label>
+        <input type="text" name="lastName" required value="<%= referrer.lastName %>">
+      </div>
+      <div class="field">
+        <label class="field-lbl">Email *</label>
+        <input type="email" name="email" required value="<%= referrer.email %>">
+        <div class="field-help">Verrà usata per il login in area riservata.</div>
+      </div>
+      <div class="field">
+        <label class="field-lbl">Telefono</label>
+        <input type="text" name="phone" value="<%= referrer.phone %>">
+      </div>
+    </div>
+  </section>
+
+  <% if (referrer.notes) { %>
+  <section class="fs-section">
+    <div class="fs-section-head">
+      <div class="fs-section-ico" style="background:#e3f0ff;color:#0d5290">💬</div>
+      <div>
+        <h3 class="fs-section-title">Messaggio dal referrer</h3>
+        <p class="fs-section-sub">Lasciato in fase di registrazione (sola lettura).</p>
+      </div>
+    </div>
+    <p style="background:#fafbfc;padding:14px 18px;border-radius:10px;font-style:italic;color:#5a5e6a;margin:0;line-height:1.6;white-space:pre-wrap"><%= referrer.notes %></p>
+  </section>
+  <% } %>
+
+  <section class="fs-section">
+    <div class="fs-section-head">
+      <div class="fs-section-ico" style="background:#fff3d6;color:#7a5800">📝</div>
+      <div>
+        <h3 class="fs-section-title">Note interne</h3>
+        <p class="fs-section-sub">Visibili solo agli amministratori, non al referrer.</p>
+      </div>
+    </div>
+    <textarea name="internalNotes" rows="4" placeholder="Aggiungi note private…"><%= referrer.internalNotes %></textarea>
+  </section>
+
+  <div class="fs-actions">
+    <a class="btn btn-ghost" href="/admin/referrals">Annulla</a>
+    <button class="btn btn-primary" type="submit">💾 Salva modifiche</button>
+  </div>
+</form>
+
+<!-- ========== STATISTICHE ========== -->
+<% if (referrer.status === 'approved' && stats) { %>
+<div class="fs-section" style="margin-top:24px">
+  <div class="fs-section-head">
+    <div class="fs-section-ico" style="background:#e7f3ec;color:#1b6b3e">📊</div>
+    <div>
+      <h3 class="fs-section-title">Statistiche guadagni</h3>
+      <p class="fs-section-sub">Riassunto delle commissioni generate da questo referrer.</p>
+    </div>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px">
+    <div style="background:#fafbfc;border:1px solid var(--line);border-radius:10px;padding:14px 18px">
+      <div style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:700">Totale commissioni</div>
+      <div style="font-family:Georgia,serif;font-size:24px;margin-top:6px;color:var(--ink)"><%= stats.totalCommissions %></div>
+    </div>
+    <div style="background:#fffbe8;border:1px solid #ead9a8;border-radius:10px;padding:14px 18px">
+      <div style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#7a5800;font-weight:700">In attesa di pagamento</div>
+      <div style="font-family:Georgia,serif;font-size:24px;margin-top:6px;color:var(--ink)"><%= stats.pendingAmount.toFixed(2) %> €</div>
+    </div>
+    <div style="background:#e7f3ec;border:1px solid #aedabe;border-radius:10px;padding:14px 18px">
+      <div style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#1b6b3e;font-weight:700">Già pagate</div>
+      <div style="font-family:Georgia,serif;font-size:24px;margin-top:6px;color:var(--ink)"><%= stats.paidAmount.toFixed(2) %> €</div>
+    </div>
+  </div>
+  <a href="/admin/referrals/commissions?referrerId=<%= referrer.id %>" class="btn btn-ghost btn-sm" style="margin-top:14px">Vedi dettaglio commissioni →</a>
+</div>
+<% } %>
+
+<!-- ========== CODICI SCONTO ========== -->
+<% if (referrer.status === 'approved') { %>
+<div class="fs-section" style="margin-top:24px">
+  <div class="fs-section-head">
+    <div class="fs-section-ico" style="background:#fdf2c9;color:#7a5800">🎫</div>
+    <div>
+      <h3 class="fs-section-title">Codici sconto</h3>
+      <p class="fs-section-sub">Codici che il referrer può condividere. Ogni codice ha il suo sconto cliente e la sua % commissione.</p>
+    </div>
+  </div>
+
+  <% if (referrer.codes && referrer.codes.length) { %>
+    <div class="table-wrap" style="margin-bottom:18px">
+      <table class="table">
+        <thead><tr>
+          <th>Codice</th>
+          <th>Sconto cliente</th>
+          <th>Commissione %</th>
+          <th>Usi</th>
+          <th>Scadenza</th>
+          <th>Stato</th>
+          <th></th>
+        </tr></thead>
+        <tbody>
+        <% referrer.codes.forEach(function(c){ %>
+          <tr class="<%= c.active ? '' : 'is-off' %>">
+            <td><code style="background:#fffbe8;color:#7a5800;font-weight:700;padding:3px 10px;border-radius:6px;font-size:13px;letter-spacing:.05em"><%= c.code %></code></td>
+            <td><strong><%= c.discountValue %><%= c.discountType==='fixed' ? ' €' : ' %' %></strong></td>
+            <td><strong style="color:#1b6b3e"><%= c.commissionPct %> %</strong></td>
+            <td><%= c.usedCount %><%= c.maxUses ? ' / '+c.maxUses : '' %></td>
+            <td><%= c.validUntil ? new Date(c.validUntil).toLocaleDateString('it-IT') : '—' %></td>
+            <td><% if (c.active) { %><span class="badge badge-ok">attivo</span><% } else { %><span class="badge badge-off">disattivo</span><% } %></td>
+            <td class="row-actions">
+              <form method="post" action="/admin/referrals/codes/<%= c.id %>/toggle">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <button type="submit" class="btn-ico <%= c.active?'btn-ico-hide':'btn-ico-show' %>" title="<%= c.active?'Disattiva':'Riattiva' %>"><%- include('../partials/ico', { name: c.active?'eye':'eye-off' }) %></button>
+              </form>
+              <form method="post" action="/admin/referrals/codes/<%= c.id %>/delete" onsubmit="return confirm('Eliminare il codice <%= c.code %>?')">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <button type="submit" class="btn-ico btn-ico-danger" title="Elimina"><%- include('../partials/ico', { name:'trash' }) %></button>
+              </form>
+            </td>
+          </tr>
+        <% }) %>
+        </tbody>
+      </table>
+    </div>
+  <% } else { %>
+    <p class="muted" style="padding:18px;background:#fafbfc;border-radius:8px;margin-bottom:18px">Nessun codice ancora. Creane uno qui sotto e condividilo col referrer.</p>
+  <% } %>
+
+  <details>
+    <summary style="cursor:pointer;font-weight:600;color:var(--brand-d);padding:10px 0">+ Crea nuovo codice</summary>
+    <form method="post" action="/admin/referrals/<%= referrer.id %>/codes" class="form" style="background:#fafbfc;padding:18px;border-radius:10px;margin-top:10px">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <div class="fs-grid">
+        <div class="field">
+          <label class="field-lbl">Codice (lascia vuoto per generarlo automaticamente)</label>
+          <input type="text" name="code" placeholder="es. <%= referrer.firstName.toUpperCase() %>20" style="text-transform:uppercase;font-family:monospace">
+          <div class="field-help">Solo lettere/numeri/trattini. Case-insensitive.</div>
+        </div>
+        <div class="field">
+          <label class="field-lbl">Tipo sconto</label>
+          <select name="discountType">
+            <option value="percent">Percentuale (%)</option>
+            <option value="fixed">Fisso (€)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label class="field-lbl">Valore sconto</label>
+          <input type="number" name="discountValue" step="0.5" min="0" value="20" required>
+          <div class="field-help">Si applica al netto del pacchetto (senza IVA, senza extras).</div>
+        </div>
+        <div class="field">
+          <label class="field-lbl">Commissione referrer (%)</label>
+          <input type="number" name="commissionPct" step="0.5" min="0" max="100" value="10" required>
+          <div class="field-help">% calcolata sul netto post-sconto.</div>
+        </div>
+        <div class="field">
+          <label class="field-lbl">Numero max usi (opzionale)</label>
+          <input type="number" name="maxUses" min="1" placeholder="illimitato">
+        </div>
+        <div class="field">
+          <label class="field-lbl">Valido fino al (opzionale)</label>
+          <input type="date" name="validUntil">
+        </div>
+        <div class="field field-full">
+          <label class="field-lbl">Note interne</label>
+          <input type="text" name="internalNotes" placeholder="es. campagna instagram estate 2026">
+        </div>
+      </div>
+      <div style="margin-top:14px;display:flex;justify-content:flex-end">
+        <button type="submit" class="btn btn-primary">✨ Crea codice</button>
+      </div>
+    </form>
+  </details>
+</div>
+<% } %>
+<%- include('../partials/footer') %>

@@ -1,30 +1,197 @@
 <%- include('../partials/header') %>
 <%
   function dval(d){ if(!d) return ''; var x=new Date(d); return x.toISOString().slice(0,10); }
+  var slots = [];
+  try { if (ev && ev.slotsJson) { var p = JSON.parse(ev.slotsJson); if (Array.isArray(p)) slots = p.map(String); } } catch(e){}
 %>
-<div class="card form-card wide">
-  <h2><%= ev ? 'Modifica evento' : 'Nuovo evento' %></h2>
-  <form method="post" action="<%= ev ? '/admin/events/'+ev.id : '/admin/events' %>" class="form">
-    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-    <div class="form-grid">
-      <div class="field field-full"><label class="field-lbl">Titolo</label><input type="text" name="title" required value="<%= ev ? ev.title : '' %>"></div>
-      <div class="field"><label class="field-lbl">Sottotitolo</label><input type="text" name="subtitle" value="<%= ev ? ev.subtitle : '' %>"></div>
-      <div class="field"><label class="field-lbl">Sede</label><input type="text" name="location" value="<%= ev ? ev.location : '' %>"></div>
-      <div class="field"><label class="field-lbl">Data inizio</label><input type="date" name="startDate" value="<%= ev ? dval(ev.startDate) : '' %>"></div>
-      <div class="field"><label class="field-lbl">Data fine</label><input type="date" name="endDate" value="<%= ev ? dval(ev.endDate) : '' %>"></div>
-      <div class="field"><label class="field-lbl">Ordine</label><input type="number" name="sort" value="<%= ev ? ev.sort : 0 %>"></div>
-      <div class="field field-full"><label class="field-lbl">Descrizione</label><textarea name="description" rows="3"><%= ev ? ev.description : '' %></textarea></div>
-      <div class="field field-full">
-        <label class="field-lbl">Orari (JSON)</label>
-        <textarea name="slotsJson" rows="2" style="font-family:monospace;font-size:13px"><%= ev ? ev.slotsJson : '' %></textarea>
-        <div class="field-help">Array di orari usati nelle prenotazioni, es. <code>["9:30","11:15","12:30","15:30","16:45","18:00"]</code>. Aggiungi/togli orari da qui. (Mattina = prima delle 14:00)</div>
+<form method="post" action="<%= ev ? '/admin/events/'+ev.id : '/admin/events' %>" class="form fs-page" id="eventForm">
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+  <div class="fs-page-head">
+    <div>
+      <h2><%= ev ? 'Modifica evento' : 'Nuovo evento' %></h2>
+      <p><%= ev ? 'ID #'+ev.id+' · modifica dettagli, date, orari e visibilità.' : 'Crea un nuovo evento: titolo, date, sede e configurazione orari per i pack di prenotazione.' %></p>
+    </div>
+    <a class="btn btn-ghost" href="/admin/events">← Torna agli eventi</a>
+  </div>
+
+  <!-- SEZIONE 1: Identità -->
+  <section class="fs-section">
+    <div class="fs-section-head">
+      <div class="fs-section-ico" style="background:#fdf2c9;color:#7a5800">🎭</div>
+      <div>
+        <h3 class="fs-section-title">Identità dell'evento</h3>
+        <p class="fs-section-sub">Come appare sul sito pubblico e nei materiali condivisi.</p>
       </div>
-      <div class="field"><label class="switch"><input type="checkbox" name="active" value="1" <%= !ev || ev.active ? 'checked':'' %>><span>Attivo (visibile)</span></label></div>
     </div>
-    <div class="form-actions">
-      <button class="btn btn-primary"><%= ev ? 'Salva' : 'Crea' %></button>
-      <a class="btn btn-ghost" href="/admin/events">Annulla</a>
+    <div class="fs-grid">
+      <div class="field field-full">
+        <label class="field-lbl">Titolo *</label>
+        <input type="text" name="title" required value="<%= ev ? ev.title : '' %>" placeholder="es. PRO DANCE 2026 — Verano">
+        <div class="field-help">Visibile in homepage, in alto sulla pagina /pro-dance e nelle email.</div>
+      </div>
+      <div class="field field-full">
+        <label class="field-lbl">Sottotitolo</label>
+        <input type="text" name="subtitle" value="<%= ev ? ev.subtitle : '' %>" placeholder="es. Stage internazionale di danza · Edición Junio">
+        <div class="field-help">Frase corta sotto al titolo principale.</div>
+      </div>
+      <div class="field field-full">
+        <label class="field-lbl">Descrizione</label>
+        <textarea name="description" class="rich-editor"><%= ev ? ev.description : '' %></textarea>
+        <div class="field-help">Testo lungo della pagina evento. Supporta grassetto, elenchi, link, immagini e tabelle.</div>
+      </div>
     </div>
-  </form>
-</div>
+  </section>
+
+  <!-- SEZIONE 2: Date e sede -->
+  <section class="fs-section">
+    <div class="fs-section-head">
+      <div class="fs-section-ico" style="background:#e3f0ff;color:#0d5290">📅</div>
+      <div>
+        <h3 class="fs-section-title">Date e sede</h3>
+        <p class="fs-section-sub">Periodo in cui l'evento è disponibile e dove si svolge.</p>
+      </div>
+    </div>
+    <div class="fs-grid">
+      <div class="field">
+        <label class="field-lbl">Data inizio</label>
+        <input type="date" name="startDate" value="<%= ev ? dval(ev.startDate) : '' %>">
+        <div class="field-help">Primo giorno dello stage.</div>
+      </div>
+      <div class="field">
+        <label class="field-lbl">Data fine</label>
+        <input type="date" name="endDate" value="<%= ev ? dval(ev.endDate) : '' %>">
+        <div class="field-help">Ultimo giorno (per pack multi-day come Gold/Junior).</div>
+      </div>
+      <div class="field field-full">
+        <label class="field-lbl">Sede</label>
+        <input type="text" name="location" value="<%= ev ? ev.location : '' %>" placeholder="es. Academia New Dance Life, Santa Pola">
+        <div class="field-help">Nome studio + città. Compare nel checkout e nelle conferme.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SEZIONE 3: Configurazione checkout per pack -->
+  <section class="fs-section">
+    <div class="fs-section-head">
+      <div class="fs-section-ico" style="background:#fff3d6;color:#7a5800">⚙</div>
+      <div>
+        <h3 class="fs-section-title">Configurazione orari per pack</h3>
+        <p class="fs-section-sub">Cosa vede l'utente nel checkout di Pro Dance per ciascun pack.</p>
+      </div>
+    </div>
+
+    <!-- Pack Single -->
+    <div class="field field-full" style="margin-bottom:18px">
+      <label class="field-lbl">Pack <strong>Single</strong> — orari delle lezioni singole</label>
+      <div class="chips" id="slotsChips">
+        <% slots.forEach(function(s){ %>
+          <span class="chip">
+            <span class="chip-label"><%= s %></span>
+            <button type="button" class="chip-x" title="Rimuovi">×</button>
+          </span>
+        <% }) %>
+        <span class="chip-input">
+          <input type="text" id="slotInput" placeholder="es. 9:30">
+          <button type="button" class="btn btn-ghost btn-sm" id="slotAddBtn" style="padding:5px 10px">+ Aggiungi</button>
+        </span>
+      </div>
+      <input type="hidden" name="slotsJson" id="slotsJsonField" value='<%= JSON.stringify(slots) %>'>
+      <div class="field-help">Click su "+ Aggiungi" o premi Invio per inserire un nuovo orario. Le mattine ({{'<'}} 14:00) saranno automaticamente etichettate come <em>Mañana</em>, le altre come <em>Tarde</em>.</div>
+    </div>
+
+    <!-- Pack Red -->
+    <div class="fs-grid" style="margin-bottom:8px">
+      <div class="field">
+        <label class="field-lbl">Pack <strong>Red</strong> — Orario mañana</label>
+        <input type="text" name="morningHours" value="<%= ev ? (ev.morningHours || '9:30 - 12:30') : '9:30 - 12:30' %>" placeholder="9:30 - 12:30">
+        <div class="field-help">Mostrato quando l'utente sceglie "Mañana" nel pack Red.</div>
+      </div>
+      <div class="field">
+        <label class="field-lbl">Pack <strong>Red</strong> — Orario tarde</label>
+        <input type="text" name="afternoonHours" value="<%= ev ? (ev.afternoonHours || '15:30 - 18:30') : '15:30 - 18:30' %>" placeholder="15:30 - 18:30">
+        <div class="field-help">Mostrato quando l'utente sceglie "Tarde" nel pack Red.</div>
+      </div>
+    </div>
+
+    <div class="fs-help" style="margin-top:14px">
+      <strong>💡 Nota:</strong> i pack <strong>Gold</strong> e <strong>Junior</strong> usano l'intero range data inizio → data fine. Le singole lezioni del programma si gestiscono in <a href="/admin/lessons?event=<%= ev ? ev.id : '' %>">Programma lezioni</a>.
+    </div>
+  </section>
+
+  <!-- SEZIONE 4: Visibilità -->
+  <section class="fs-section">
+    <div class="fs-section-head">
+      <div class="fs-section-ico" style="background:#e7f3ec;color:#1b6b3e">👁</div>
+      <div>
+        <h3 class="fs-section-title">Visibilità e ordine</h3>
+        <p class="fs-section-sub">Come e quando l'evento è disponibile online.</p>
+      </div>
+    </div>
+    <div class="fs-grid">
+      <div class="field">
+        <div class="fs-switch-card">
+          <label class="switch" style="margin:0">
+            <input type="checkbox" name="active" value="1" <%= !ev || ev.active ? 'checked':'' %>>
+            <span><strong>Evento attivo</strong></span>
+          </label>
+          <span class="muted" style="font-size:12px">Quando OFF, l'evento non appare sul sito né nei form di prenotazione.</span>
+        </div>
+      </div>
+      <div class="field">
+        <label class="field-lbl">Ordine</label>
+        <input type="number" name="sort" value="<%= ev ? ev.sort : 0 %>">
+        <div class="field-help">Valore più basso → prima nella lista. Lascia 0 per usare data più recente.</div>
+      </div>
+    </div>
+  </section>
+
+  <div class="fs-actions">
+    <a class="btn btn-ghost" href="/admin/events">Annulla</a>
+    <button class="btn btn-primary" type="submit"><%= ev ? '💾 Salva modifiche' : '✨ Crea evento' %></button>
+  </div>
+</form>
+
+<script>
+(function(){
+  var chipsBox = document.getElementById('slotsChips');
+  var input = document.getElementById('slotInput');
+  var addBtn = document.getElementById('slotAddBtn');
+  var hidden = document.getElementById('slotsJsonField');
+
+  function readSlots(){
+    return Array.from(chipsBox.querySelectorAll('.chip .chip-label')).map(function(el){ return el.textContent.trim(); });
+  }
+  function syncHidden(){ hidden.value = JSON.stringify(readSlots()); }
+  function makeChip(value){
+    var span = document.createElement('span');
+    span.className = 'chip';
+    span.innerHTML = '<span class="chip-label"></span><button type="button" class="chip-x" title="Rimuovi">×</button>';
+    span.querySelector('.chip-label').textContent = value;
+    span.querySelector('.chip-x').addEventListener('click', function(){ span.remove(); syncHidden(); });
+    return span;
+  }
+  function addFromInput(){
+    var v = (input.value || '').trim();
+    if (!v) return;
+    if (readSlots().indexOf(v) >= 0) { input.value=''; return; }
+    var inputWrap = chipsBox.querySelector('.chip-input');
+    chipsBox.insertBefore(makeChip(v), inputWrap);
+    input.value = '';
+    syncHidden();
+    input.focus();
+  }
+  chipsBox.querySelectorAll('.chip-x').forEach(function(btn){
+    btn.addEventListener('click', function(){ btn.closest('.chip').remove(); syncHidden(); });
+  });
+  addBtn.addEventListener('click', addFromInput);
+  input.addEventListener('keydown', function(e){
+    if (e.key === 'Enter') { e.preventDefault(); addFromInput(); }
+    if (e.key === ',') { e.preventDefault(); addFromInput(); }
+  });
+  syncHidden();
+})();
+</script>
+
+<%- include('../partials/tinymce') %>
 <%- include('../partials/footer') %>

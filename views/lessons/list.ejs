@@ -1,0 +1,236 @@
+<%- include('../partials/header') %>
+
+<div class="card lessons-head">
+  <div class="card-head" style="margin-bottom:0">
+    <div>
+      <h2 style="margin:0">Programma lezioni</h2>
+      <p class="muted" style="margin:6px 0 0;font-size:13.5px">Ogni lezione del Programa Pro Dance: giorno, orario, titolo e professore. Trascina le righe per riordinare. Il sito pubblico e il checkout leggono da qui.</p>
+    </div>
+    <div class="head-tools">
+      <form method="get" action="/admin/lessons" style="display:inline-flex;align-items:center;gap:8px">
+        <label class="muted" style="font-size:13px">Evento</label>
+        <select name="event" onchange="this.form.submit()" class="lessons-evt">
+          <% events.forEach(function(ev){ %>
+            <option value="<%= ev.id %>" <%= ev.id===evId?'selected':'' %>><%= ev.title %></option>
+          <% }) %>
+        </select>
+      </form>
+    </div>
+  </div>
+</div>
+
+<% if (!Object.keys(byDay).length) { %>
+  <div class="card" style="text-align:center;padding:50px 20px">
+    <div style="font-size:42px;margin-bottom:8px">🎶</div>
+    <h3 style="margin:0 0 6px">Nessuna lezione</h3>
+    <p class="muted" style="margin:0 0 18px">Crea la prima lezione per questo evento usando il form qui sotto.</p>
+  </div>
+<% } %>
+
+<% Object.keys(byDay).sort(function(a,b){return parseInt(a,10)-parseInt(b,10)}).forEach(function(dKey){ %>
+  <div class="card lessons-day-card" data-day="<%= dKey %>">
+    <div class="lessons-day-head">
+      <div class="lessons-day-num">G<%= dKey %></div>
+      <div class="lessons-day-title">
+        <h3>Giorno <%= dKey %></h3>
+        <div class="muted" style="font-size:12.5px"><%= byDay[dKey].length %> lezioni</div>
+      </div>
+    </div>
+
+    <div class="lessons-list" data-day-list="<%= dKey %>">
+      <% byDay[dKey].forEach(function(l){ %>
+        <div class="lesson-row <%= l.isPause?'is-pause':'' %> <%= !l.active?'is-off':'' %>" data-id="<%= l.id %>" data-day="<%= dKey %>">
+          <div class="lesson-grip" title="Trascina per riordinare">
+            <svg width="14" height="20" viewBox="0 0 14 20" fill="currentColor"><circle cx="3" cy="3" r="1.5"/><circle cx="3" cy="10" r="1.5"/><circle cx="3" cy="17" r="1.5"/><circle cx="11" cy="3" r="1.5"/><circle cx="11" cy="10" r="1.5"/><circle cx="11" cy="17" r="1.5"/></svg>
+          </div>
+          <div class="lesson-time">
+            <input type="text" form="lf-<%= l.id %>" name="time" value="<%= l.time %>" required>
+          </div>
+          <div class="lesson-title">
+            <input type="text" form="lf-<%= l.id %>" name="title" value="<%= l.title %>" placeholder="Titolo lezione" required>
+          </div>
+          <div class="lesson-prof">
+            <select form="lf-<%= l.id %>" name="professorId">
+              <option value="">— Nessun professore —</option>
+              <% professors.forEach(function(p){ %>
+                <option value="<%= p.id %>" <%= l.professorId===p.id?'selected':'' %>><%= p.firstName %> <%= p.lastName %></option>
+              <% }) %>
+            </select>
+          </div>
+          <div class="lesson-slot">
+            <select form="lf-<%= l.id %>" name="isAfternoon">
+              <option value="" <%= !l.isAfternoon?'selected':'' %>>Mañana</option>
+              <option value="1" <%= l.isAfternoon?'selected':'' %>>Tarde</option>
+            </select>
+          </div>
+          <div class="lesson-flags">
+            <label class="lesson-chip" title="Pausa (es. Lunch time)">
+              <input form="lf-<%= l.id %>" type="checkbox" name="isPause" value="1" <%= l.isPause?'checked':'' %>>
+              <span>⏸ Pausa</span>
+            </label>
+            <label class="lesson-chip" title="Lezione attiva">
+              <input form="lf-<%= l.id %>" type="checkbox" name="active" value="1" <%= l.active?'checked':'' %>>
+              <span>● Attiva</span>
+            </label>
+          </div>
+          <div class="lesson-acts">
+            <button form="lf-<%= l.id %>" class="btn btn-primary btn-sm" title="Salva">💾</button>
+            <button form="lf-del-<%= l.id %>" class="btn btn-danger btn-sm" title="Elimina">×</button>
+            <form id="lf-<%= l.id %>" method="post" action="/admin/lessons/<%= l.id %>" style="display:none">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+              <input type="hidden" name="dayIndex" value="<%= l.dayIndex %>">
+              <input type="hidden" name="sort" value="<%= l.sort %>">
+            </form>
+            <form id="lf-del-<%= l.id %>" method="post" action="/admin/lessons/<%= l.id %>/delete" style="display:none" onsubmit="return confirm('Eliminare questa lezione?')">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            </form>
+          </div>
+        </div>
+      <% }) %>
+    </div>
+  </div>
+<% }) %>
+
+<div class="card lesson-new-card">
+  <div class="card-head" style="margin-bottom:14px"><h3 style="margin:0">+ Nuova lezione</h3></div>
+  <form method="post" action="/admin/lessons" class="form lesson-new-form">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <input type="hidden" name="eventId" value="<%= evId %>">
+    <div class="field"><label class="field-lbl">Giorno</label><input type="number" name="dayIndex" value="1" min="1" required></div>
+    <div class="field"><label class="field-lbl">Orario</label><input type="text" name="time" placeholder="9:30" required></div>
+    <div class="field" style="grid-column:span 2"><label class="field-lbl">Titolo lezione</label><input type="text" name="title" placeholder="Ballet" required></div>
+    <div class="field" style="grid-column:span 2">
+      <label class="field-lbl">Professore</label>
+      <select name="professorId">
+        <option value="">— Nessuno —</option>
+        <% professors.forEach(function(p){ %><option value="<%= p.id %>"><%= p.firstName %> <%= p.lastName %></option><% }) %>
+      </select>
+    </div>
+    <div class="field">
+      <label class="field-lbl">Fascia</label>
+      <select name="isAfternoon"><option value="">Mañana</option><option value="1">Tarde</option></select>
+    </div>
+    <div class="field" style="display:flex;align-items:center;padding-top:24px">
+      <label class="switch"><input type="checkbox" name="isPause" value="1"><span>È una pausa</span></label>
+    </div>
+    <div class="form-actions" style="grid-column:1 / -1;margin-top:6px">
+      <button class="btn btn-primary">+ Aggiungi lezione</button>
+    </div>
+  </form>
+</div>
+
+<div class="lesson-saver" id="lessonSaver" hidden>
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+  <span>Ordine salvato</span>
+</div>
+
+<style>
+  .lessons-head{padding-bottom:18px}
+  .lessons-evt{height:38px;padding:0 32px 0 12px;border:1px solid var(--line);border-radius:8px;background:#fff;font-size:13.5px;min-width:200px}
+
+  .lessons-day-card{padding:18px 18px 14px}
+  .lessons-day-head{display:flex;align-items:center;gap:14px;margin-bottom:14px;padding-bottom:12px;border-bottom:1px dashed #eef0f4}
+  .lessons-day-num{width:42px;height:42px;border-radius:10px;background:linear-gradient(135deg,#fdf2c9,#ffe39e);
+    display:flex;align-items:center;justify-content:center;font-weight:700;color:#7a5800;font-size:14px;letter-spacing:.05em}
+  .lessons-day-title h3{margin:0;font-size:16px}
+
+  .lessons-list{display:flex;flex-direction:column;gap:8px}
+
+  .lesson-row{display:grid;grid-template-columns:30px 95px 1.4fr 1.1fr 110px auto auto;gap:10px;align-items:center;
+    background:#fff;border:1px solid var(--line);border-radius:10px;padding:8px 10px;transition:border-color .2s, box-shadow .2s, transform .15s}
+  .lesson-row:hover{border-color:#d8c98c;box-shadow:0 3px 14px rgba(0,0,0,.04)}
+  .lesson-row.is-pause{background:linear-gradient(135deg,#fbf6e6 0%,#fff 50%);border-color:#e8d99a}
+  .lesson-row.is-off{opacity:.55}
+  .lesson-row.is-dragging{opacity:.6;transform:rotate(.5deg);box-shadow:0 12px 32px rgba(0,0,0,.12)}
+  .lesson-row.is-ghost{background:#fffbe8;border-style:dashed}
+
+  .lesson-grip{color:#b5bcc8;cursor:grab;display:flex;justify-content:center;padding:6px 0;touch-action:none}
+  .lesson-grip:hover{color:#7a5800}
+  .lesson-grip:active{cursor:grabbing}
+
+  .lesson-row input[type=text],.lesson-row select{
+    width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:7px;font-size:13.5px;background:#fff;color:var(--ink);font-family:inherit;
+  }
+  .lesson-row input[type=text]:focus,.lesson-row select:focus{outline:2px solid var(--brand);border-color:var(--brand)}
+  .lesson-time input{font-weight:600;text-align:center}
+  .lesson-title input{font-weight:600}
+
+  .lesson-flags{display:flex;flex-direction:column;gap:3px;align-items:flex-start}
+  .lesson-chip{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;color:var(--muted);cursor:pointer;user-select:none;padding:2px 4px;border-radius:5px}
+  .lesson-chip input{width:13px;height:13px;margin:0;accent-color:var(--brand)}
+  .lesson-chip input:checked + span{color:var(--brand-d);font-weight:600}
+
+  .lesson-acts{display:flex;gap:4px;align-items:center}
+  .lesson-acts button{padding:6px 10px;font-size:13px;min-height:32px}
+
+  .lesson-new-card{background:linear-gradient(135deg,#fbfaf3,#fff)}
+  .lesson-new-form{display:grid;grid-template-columns:repeat(4,1fr);gap:12px 16px;align-items:end}
+  .lesson-new-form .field{margin-bottom:0}
+
+  .lesson-saver{position:fixed;bottom:20px;right:24px;background:#1c1f26;color:#e0aa00;padding:10px 16px;border-radius:30px;
+    display:flex;align-items:center;gap:8px;font-size:13.5px;font-weight:600;box-shadow:0 8px 28px rgba(0,0,0,.2);z-index:50;
+    animation:lessonSaverIn .25s ease}
+  @keyframes lessonSaverIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+  @media(max-width:900px){
+    .lesson-row{grid-template-columns:24px 80px 1fr;grid-auto-rows:auto;gap:8px}
+    .lesson-prof,.lesson-slot,.lesson-flags,.lesson-acts{grid-column:1 / -1}
+    .lesson-grip{padding:0}
+    .lesson-new-form{grid-template-columns:1fr 1fr}
+  }
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
+<script>
+(function(){
+  var saver = document.getElementById('lessonSaver');
+  var saverTimer = null;
+  function showSaver(){
+    saver.hidden = false;
+    if (saverTimer) clearTimeout(saverTimer);
+    saverTimer = setTimeout(function(){ saver.hidden = true; }, 1400);
+  }
+
+  function readOrder(){
+    var rows = document.querySelectorAll('.lesson-row');
+    var items = [];
+    var perDay = {};
+    rows.forEach(function(row){
+      var listEl = row.parentElement;
+      var day = parseInt(listEl.getAttribute('data-day-list'), 10);
+      perDay[day] = perDay[day] || 0;
+      var sort = perDay[day]++;
+      items.push({ id: parseInt(row.getAttribute('data-id'), 10), dayIndex: day, sort: sort });
+      // Aggiorna hidden form fields per save individuali
+      var fSort = document.querySelector('#lf-' + row.getAttribute('data-id') + ' input[name=sort]');
+      var fDay  = document.querySelector('#lf-' + row.getAttribute('data-id') + ' input[name=dayIndex]');
+      if (fSort) fSort.value = String(sort);
+      if (fDay) fDay.value = String(day);
+      row.setAttribute('data-day', String(day));
+    });
+    return items;
+  }
+
+  function persist(){
+    var items = readOrder();
+    if (!items.length) return;
+    fetch('/admin/lessons/reorder', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-csrf-token': document.querySelector('input[name=_csrf]').value },
+      body: JSON.stringify({ items: items }),
+    }).then(function(r){ if (r.ok) showSaver(); });
+  }
+
+  document.querySelectorAll('[data-day-list]').forEach(function(list){
+    new Sortable(list, {
+      group: 'lessons',
+      handle: '.lesson-grip',
+      animation: 180,
+      ghostClass: 'is-ghost',
+      dragClass: 'is-dragging',
+      onEnd: persist,
+    });
+  });
+})();
+</script>
+<%- include('../partials/footer') %>

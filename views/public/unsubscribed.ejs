@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Cancelar suscripción — Irene Monticelli</title>
+<style>
+  body{margin:0;font-family:Arial,Helvetica,sans-serif;background:#f6f6f4;color:#1c1f26;
+    min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+  .box{background:#fff;max-width:520px;width:100%;padding:48px 40px;border-radius:10px;
+    text-align:center;box-shadow:0 8px 32px rgba(0,0,0,.06)}
+  .box h1{font-family:Georgia,'Times New Roman',serif;font-size:28px;font-weight:500;margin:0 0 16px;color:#1c1f26}
+  .box p{font-size:15px;line-height:1.6;color:#5a5e6a;margin:0 0 16px}
+  .box strong{color:#1c1f26}
+  .btn{display:inline-block;padding:13px 28px;background:#1c1f26;color:#e0aa00;
+    text-decoration:none;border-radius:6px;font-weight:600;letter-spacing:.04em;font-size:13px;
+    text-transform:uppercase;border:0;cursor:pointer;font-family:inherit}
+  .btn:hover{background:#0a0c10}
+  .btn-ghost{background:transparent;color:#7a8190;border:1px solid #ddd}
+  .btn-ghost:hover{background:#f7f8fa;color:#1c1f26}
+  .logo{font-family:Georgia,'Times New Roman',serif;font-size:22px;color:#1c1f26;margin-bottom:24px}
+  .yel{color:#e0aa00}
+  .icon{font-size:48px;margin-bottom:14px;line-height:1}
+</style>
+</head>
+<body>
+  <div class="box">
+    <div class="logo">Irene <span class="yel">Monticelli</span></div>
+
+    <% if (!ok) { %>
+      <div class="icon">✗</div>
+      <h1>Enlace no válido</h1>
+      <p>Este enlace de cancelación no es válido o ha expirado.</p>
+      <p>Si quieres dejar de recibir nuestras emails, escríbenos a <a href="mailto:info@irenemonticelli.com" style="color:#1c1f26">info@irenemonticelli.com</a> y te quitaremos de la lista manualmente.</p>
+      <p style="margin-top:24px"><a class="btn" href="/">Volver al sitio</a></p>
+    <% } else if (typeof justConfirmed !== 'undefined' && justConfirmed) { %>
+      <div class="icon" style="color:#1b6b3e">✓</div>
+      <h1>Cancelación confirmada</h1>
+      <p>Tu dirección <strong><%= email %></strong> ha sido eliminada de nuestra lista de envíos.</p>
+      <p>No volverás a recibir nuestras newsletters. Si cambias de opinión, escríbenos a <a href="mailto:info@irenemonticelli.com" style="color:#1c1f26">info@irenemonticelli.com</a>.</p>
+      <p style="margin-top:24px"><a class="btn" href="/">Volver al sitio</a></p>
+    <% } else if (alreadyOff) { %>
+      <div class="icon" style="color:#1b6b3e">✓</div>
+      <h1>Ya estás dado de baja</h1>
+      <p>La dirección <strong><%= email %></strong> ya está fuera de nuestra lista de envíos. No recibirás más newsletters.</p>
+      <p style="margin-top:24px"><a class="btn" href="/">Volver al sitio</a></p>
+    <% } else { %>
+      <div class="icon">📭</div>
+      <h1>¿Cancelar suscripción?</h1>
+      <p>Estás a punto de eliminar la dirección <strong><%= email %></strong> de nuestra lista de newsletter. No volverás a recibir nuestras emails.</p>
+      <form method="post" style="margin-top:24px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+        <button class="btn" type="submit">Sí, cancela la suscripción</button>
+        <a class="btn btn-ghost" href="/">No, vuelve al sitio</a>
+      </form>
+    <% } %>
+  </div>
+</body>
+</html>

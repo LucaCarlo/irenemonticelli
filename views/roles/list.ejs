@@ -4,9 +4,22 @@
     <h2>Ruoli</h2>
     <% if (can('roles.create')) { %><a class="btn btn-primary" href="/admin/roles/new">+ Nuovo ruolo</a><% } %>
   </div>
+  <%- include('../partials/dt-toolbar', {
+    params, total, totalUnfiltered,
+    entitySingular:'ruolo', entityPlural:'ruoli',
+    basePath:'/admin/roles',
+    searchPlaceholder:'Cerca per nome o descrizione…',
+  }) %>
+  <% if (!roles.length) { %><p class="muted" style="padding:20px 0">Nessun ruolo.</p><% } else { %>
   <div class="table-wrap">
   <table class="table">
-    <thead><tr><th>Nome</th><th>Descrizione</th><th>Permessi</th><th>Utenti</th><th></th></tr></thead>
+    <thead><tr>
+      <%- include('../partials/dt-th', { label:'Nome', sortKey:'name', params, basePath:'/admin/roles' }) %>
+      <th>Descrizione</th>
+      <th>Permessi</th>
+      <th>Utenti</th>
+      <th></th>
+    </tr></thead>
     <tbody>
     <% roles.forEach(function(r){ var perms; try { perms = JSON.parse(r.permissions||'[]'); } catch(e){ perms=[]; } %>
       <tr>
@@ -16,11 +29,11 @@
         <td><%= r._count.users %></td>
         <td class="row-actions">
           <% if (can('roles.edit') && !r.isSystem) { %>
-            <a class="btn btn-ghost btn-sm" href="/admin/roles/<%= r.id %>/edit">Modifica</a>
+            <a class="btn-ico btn-ico-edit" href="/admin/roles/<%= r.id %>/edit" title="Modifica"><%- include('../partials/ico', { name:'edit' }) %></a>
           <% } %>
           <% if (can('roles.delete') && !r.isSystem) { %>
             <form method="post" action="/admin/roles/<%= r.id %>/delete" onsubmit="return confirm('Eliminare questo ruolo?')">
-              <input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="btn btn-danger btn-sm">Elimina</button>
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>"><button type="submit" class="btn-ico btn-ico-danger" title="Elimina"><%- include('../partials/ico', { name:'trash' }) %></button>
             </form>
           <% } %>
         </td>
@@ -29,5 +42,7 @@
     </tbody>
   </table>
   </div>
+  <%- include('../partials/dt-pagination', { links, params, basePath:'/admin/roles' }) %>
+  <% } %>
 </div>
 <%- include('../partials/footer') %>

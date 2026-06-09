@@ -1,0 +1,81 @@
+<%- include('../partials/header') %>
+<div class="card">
+  <div class="card-head">
+    <h2>Extras / Suplementi</h2>
+    <a class="btn btn-primary" href="/admin/extras/new">+ Nuovo extra</a>
+  </div>
+  <%- include('../partials/dt-toolbar', {
+    params, total, totalUnfiltered,
+    entitySingular:'extra', entityPlural:'extras',
+    basePath:'/admin/extras',
+    searchPlaceholder:'Cerca per nome o descrizione…',
+    extraFilters:[
+      { name:'status', value: status, options:[{val:'',label:'Tutti gli stati'},{val:'active',label:'Attivo'},{val:'inactive',label:'Disattivato'}] },
+      { name:'mandatory', value: mandatory, options:[{val:'',label:'Tutti i tipi'},{val:'yes',label:'Obbligatorio'},{val:'no',label:'Opzionale'}] },
+    ],
+  }) %>
+  <% if (!extras.length) { %>
+    <p class="muted" style="padding:30px 0;text-align:center">Nessun extra.</p>
+  <% } else { %>
+  <div class="table-wrap">
+  <table class="table">
+    <thead>
+      <tr>
+        <%- include('../partials/dt-th', { label:'Nome', sortKey:'name', params, basePath:'/admin/extras' }) %>
+        <%- include('../partials/dt-th', { label:'Prezzo', sortKey:'price', params, basePath:'/admin/extras' }) %>
+        <%- include('../partials/dt-th', { label:'Tipo', sortKey:'mandatory', params, basePath:'/admin/extras' }) %>
+        <th>Si applica a</th>
+        <%- include('../partials/dt-th', { label:'Stato', sortKey:'active', params, basePath:'/admin/extras' }) %>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      <% extras.forEach(function(x){ %>
+        <tr class="<%= x.active?'':'is-off' %>">
+          <td>
+            <strong><%= x.name %></strong>
+            <% if (x.description) { %><div class="muted" style="font-size:12.5px"><%= x.description %></div><% } %>
+          </td>
+          <td><strong><%= x.price %>€</strong></td>
+          <td>
+            <% if (x.mandatory) { %>
+              <span class="badge badge-warn">Obbligatorio</span>
+            <% } else { %>
+              <span class="badge">Opzionale</span>
+            <% } %>
+          </td>
+          <td>
+            <% if (!x.planId && !x.eventId) { %>
+              <span class="muted">Tutti i pack</span>
+            <% } else { %>
+              <% if (x.plan) { %><div>Pack: <strong><%= x.plan.name %></strong></div><% } %>
+              <% if (x.event) { %><div>Evento: <strong><%= x.event.title %></strong></div><% } %>
+            <% } %>
+          </td>
+          <td>
+            <% if (x.active) { %><span class="badge badge-ok">attivo</span><% } else { %><span class="badge badge-off">disattivato</span><% } %>
+          </td>
+          <td class="row-actions">
+            <a class="btn-ico btn-ico-edit" href="/admin/extras/<%= x.id %>/edit" title="Modifica"><%- include('../partials/ico', { name:'edit' }) %></a>
+            <form method="post" action="/admin/extras/<%= x.id %>/delete" onsubmit="return confirm('Eliminare questo extra?')">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+              <button type="submit" class="btn-ico btn-ico-danger" title="Elimina"><%- include('../partials/ico', { name:'trash' }) %></button>
+            </form>
+          </td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
+  </div>
+  <%- include('../partials/dt-pagination', { links, params, basePath:'/admin/extras' }) %>
+  <% } %>
+</div>
+
+<style>
+  .badge{display:inline-block;padding:3px 10px;border-radius:99px;font-size:11px;letter-spacing:.05em;text-transform:uppercase;font-weight:700;background:#eef0f4;color:#5a5e6a}
+  .badge-ok{background:#d6f3df;color:#1b6b3e}
+  .badge-off{background:#ffe1dc;color:#8a2a1c}
+  .badge-warn{background:#fff3d6;color:#7a5800}
+  tr.is-off{opacity:.55}
+</style>
+<%- include('../partials/footer') %>

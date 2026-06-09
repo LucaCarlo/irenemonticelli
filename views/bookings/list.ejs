@@ -7,38 +7,62 @@
 <div class="card">
   <div class="card-head">
     <h2>Prenotazioni</h2>
-    <a class="btn btn-primary" href="/admin/bookings/new">+ Nuova prenotazione</a>
+    <div class="head-tools" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <div class="view-switcher" style="display:inline-flex;border:1px solid #dde0e4;border-radius:8px;overflow:hidden">
+        <a class="btn btn-sm" href="/admin/bookings" style="border:0;border-radius:0;background:#1c1f26;color:#e0aa00;padding:8px 14px">Vista lista</a>
+        <a class="btn btn-sm btn-ghost" href="/admin/bookings/calendar" style="border:0;border-radius:0;border-left:1px solid #dde0e4;padding:8px 14px">Vista calendario</a>
+      </div>
+      <a class="btn btn-primary" href="/admin/bookings/new">+ Nuova prenotazione</a>
+    </div>
   </div>
-  <div class="tabs">
-    <a class="tab <%= status==='' ? 'active':'' %>" href="/admin/bookings">Tutte</a>
-    <% STATUSES.forEach(function(s){ %>
-      <a class="tab <%= status===s ? 'active':'' %>" href="/admin/bookings?status=<%= s %>"><%= labels[s] %> (<%= cnt(s) %>)</a>
-    <% }) %>
-  </div>
-  <% if (!bookings.length) { %><p class="muted">Nessuna prenotazione.</p><% } else { %>
+  <%- include('../partials/dt-toolbar', {
+    params, total, totalUnfiltered,
+    entitySingular:'prenotazione', entityPlural:'prenotazioni',
+    basePath:'/admin/bookings',
+    searchPlaceholder:'Cerca per nome, email, telefono…',
+    extraFilters:[
+      { name:'status', value: status, options:[{val:'',label:'Tutti gli stati'}].concat(STATUSES.map(function(s){return {val:s,label:labels[s]};})) },
+      { name:'paymentStatus', value: paymentStatus, options:[{val:'',label:'Tutti i pagamenti'},{val:'unpaid',label:'Non pagato'},{val:'paid',label:'Pagato'},{val:'failed',label:'Fallito'},{val:'refunded',label:'Rimborsato'}] },
+    ],
+  }) %>
+  <% if (!bookings.length) { %><p class="muted" style="padding:20px 0">Nessuna prenotazione.</p><% } else { %>
   <div class="table-wrap">
   <table class="table">
-    <thead><tr><th>Cliente</th><th>Contatti</th><th>Piano / Evento</th><th>Data / Orario</th><th>Importo</th><th>Stato</th><th></th></tr></thead>
+    <thead><tr>
+      <th>#</th>
+      <%- include('../partials/dt-th', { label:'Prenotata il', sortKey:'createdAt', params, basePath:'/admin/bookings' }) %>
+      <%- include('../partials/dt-th', { label:'Cliente', sortKey:'customerName', params, basePath:'/admin/bookings' }) %>
+      <th>Contatti</th>
+      <th>Piano / Evento</th>
+      <th>Dettaglio</th>
+      <%- include('../partials/dt-th', { label:'Importo', sortKey:'amount', params, basePath:'/admin/bookings' }) %>
+      <%- include('../partials/dt-th', { label:'Stato', sortKey:'status', params, basePath:'/admin/bookings' }) %>
+      <th></th>
+    </tr></thead>
     <tbody>
     <% bookings.forEach(function(b){ %>
+      <% var d = new Date(b.createdAt); var dt = d.toLocaleDateString('it-IT',{day:'2-digit',month:'short',year:'numeric'}); var tm = d.toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'}); %>
       <tr>
-        <td><%= b.customerName %><div class="muted" style="font-size:12px"><%= new Date(b.createdAt).toLocaleString('it-IT') %></div></td>
+        <td class="muted" style="font-size:12px;font-family:monospace">#<%= b.id %></td>
+        <td style="white-space:nowrap"><strong><%= dt %></strong><div class="muted" style="font-size:12px"><%= tm %></div></td>
+        <td><%= b.customerName %></td>
         <td style="font-size:12.5px"><%= b.customerEmail %><br><%= b.phone %></td>
         <td><%= b.plan ? b.plan.name : '' %><%= b.event ? b.event.title : '' %><%= (!b.plan && !b.event) ? '—' : '' %></td>
         <td><%= b.dateLabel %><% if (b.slot) { %><br><span class="muted"><%= b.slot %></span><% } %></td>
-        <td><%= b.amount ? b.amount + ' &euro;' : '—' %></td>
+        <td><%= b.amount ? b.amount + ' €' : '—' %></td>
         <td><span class="badge <%= badge[b.status] %>"><%= labels[b.status]||b.status %></span></td>
         <td class="row-actions">
-          <a class="btn btn-ghost btn-sm" href="/admin/bookings/<%= b.id %>/edit">Apri</a>
-          <% if (b.status!=='confirmed') { %><form method="post" action="/admin/bookings/<%= b.id %>/status"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><input type="hidden" name="status" value="confirmed"><button class="btn btn-ghost btn-sm">Conferma</button></form><% } %>
-          <% if (b.status!=='cancelled') { %><form method="post" action="/admin/bookings/<%= b.id %>/status"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><input type="hidden" name="status" value="cancelled"><button class="btn btn-ghost btn-sm">Annulla</button></form><% } %>
-          <form method="post" action="/admin/bookings/<%= b.id %>/delete" onsubmit="return confirm('Eliminare questa prenotazione?')"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="btn btn-danger btn-sm">Elimina</button></form>
+          <a class="btn-ico btn-ico-open" href="/admin/bookings/<%= b.id %>/edit" title="Apri"><%- include('../partials/ico', { name:'open' }) %></a>
+          <% if (b.status!=='confirmed') { %><form method="post" action="/admin/bookings/<%= b.id %>/status"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><input type="hidden" name="status" value="confirmed"><button type="submit" class="btn-ico btn-ico-confirm" title="Conferma"><%- include('../partials/ico', { name:'check' }) %></button></form><% } %>
+          <% if (b.status!=='cancelled') { %><form method="post" action="/admin/bookings/<%= b.id %>/status"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><input type="hidden" name="status" value="cancelled"><button type="submit" class="btn-ico btn-ico-cancel" title="Annulla"><%- include('../partials/ico', { name:'x' }) %></button></form><% } %>
+          <form method="post" action="/admin/bookings/<%= b.id %>/delete" onsubmit="return confirm('Eliminare questa prenotazione?')"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button type="submit" class="btn-ico btn-ico-danger" title="Elimina"><%- include('../partials/ico', { name:'trash' }) %></button></form>
         </td>
       </tr>
     <% }) %>
     </tbody>
   </table>
   </div>
+  <%- include('../partials/dt-pagination', { links, params, basePath:'/admin/bookings' }) %>
   <% } %>
 </div>
 <%- include('../partials/footer') %>

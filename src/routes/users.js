@@ -7,11 +7,39 @@ const { requirePermission } = require('../middleware/rbac');
 const router = express.Router();
 
 router.get('/', requirePermission('users.view'), async (req, res) => {
-  const users = await prisma.user.findMany({
-    include: { role: true },
-    orderBy: { createdAt: 'asc' },
+  const dt = require('../lib/datatable');
+  const params = dt.parseParams(req, {
+    defaultSort: 'createdAt',
+    allowedSorts: ['name', 'email', 'lastLoginAt', 'createdAt', 'role.name'],
   });
-  res.render('users/list', { title: 'Utenti admin', users });
+  const roleId = parseInt(req.query.roleId, 10) || 0;
+  const status = String(req.query.status || '').trim();
+  params._extra = { roleId: roleId || '', status };
+
+  const where = {};
+  if (params.q) {
+    where.OR = [
+      { name: { contains: params.q, mode: 'insensitive' } },
+      { email: { contains: params.q, mode: 'insensitive' } },
+    ];
+  }
+  if (roleId) where.roleId = roleId;
+  if (status === 'active') where.isActive = true;
+  if (status === 'inactive') where.isActive = false;
+
+  let orderBy = {};
+  if (params.sort === 'role.name') orderBy = { role: { name: params.dir } };
+  else orderBy[params.sort] = params.dir;
+
+  const [totalUnfiltered, total, users, roles] = await Promise.all([
+    prisma.user.count(),
+    prisma.user.count({ where }),
+    prisma.user.findMany({ where, include: { role: true }, orderBy, skip: params.skip, take: params.take }),
+    prisma.role.findMany({ orderBy: { name: 'asc' } }),
+  ]);
+  const totalPages = Math.max(1, Math.ceil(total / params.perPage));
+  const links = dt.pageLinks(params.page, totalPages);
+  res.render('users/list', { title: 'Amministratori', users, params, total, totalUnfiltered, totalPages, links, roles, roleId, status });
 });
 
 router.get('/new', requirePermission('users.create'), async (req, res) => {
@@ -38,7 +66,7 @@ router.post('/', requirePermission('users.create'), async (req, res) => {
       passwordHash,
       roleId: parseInt(roleId, 10),
       isActive: req.body.isActive ? true : false,
-      mustChangePassword: true,
+      mustChangePassword: false,
     },
   });
   req.flash('success', `Utente creato. Password temporanea: ${tempPassword}`);
@@ -72,8 +100,8 @@ router.post('/:id/reset-password', requirePermission('users.edit'), async (req, 
   const id = parseInt(req.params.id, 10);
   const tempPassword = crypto.randomBytes(6).toString('base64').replace(/[^a-zA-Z0-9]/g, '') + 'A1!';
   const passwordHash = await bcrypt.hash(tempPassword, 12);
-  await prisma.user.update({ where: { id }, data: { passwordHash, mustChangePassword: true } });
-  req.flash('success', `Password reimpostata. Nuova password temporanea: ${tempPassword}`);
+  await prisma.user.update({ where: { id }, data: { passwordHash, mustChangePassword: false } });
+  req.flash('success', `Password reimpostata. Nuova password: ${tempPassword}`);
   res.redirect('/admin/users');
 });
 

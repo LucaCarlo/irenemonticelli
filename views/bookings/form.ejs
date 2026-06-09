@@ -1,37 +1,127 @@
 <%- include('../partials/header') %>
-<div class="card form-card wide">
-  <h2><%= booking ? 'Modifica prenotazione' : 'Nuova prenotazione' %></h2>
-  <form method="post" action="<%= booking ? '/admin/bookings/'+booking.id : '/admin/bookings' %>" class="form">
-    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-    <div class="form-grid">
-      <div class="field"><label class="field-lbl">Nome cliente</label><input type="text" name="customerName" required value="<%= booking ? booking.customerName : '' %>"></div>
-      <div class="field"><label class="field-lbl">Email</label><input type="email" name="customerEmail" required value="<%= booking ? booking.customerEmail : '' %>"></div>
-      <div class="field"><label class="field-lbl">Telefono</label><input type="text" name="phone" value="<%= booking ? booking.phone : '' %>"></div>
-      <div class="field"><label class="field-lbl">Piano</label>
-        <select name="planId"><option value="">—</option>
-        <% plans.forEach(function(p){ %><option value="<%= p.id %>" <%= booking && booking.planId===p.id ? 'selected':'' %>><%= p.name %></option><% }) %>
+<form method="post" action="<%= booking ? '/admin/bookings/'+booking.id : '/admin/bookings' %>" class="form fs-page" id="bookingForm">
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+  <div class="fs-page-head">
+    <div>
+      <h2><%= booking ? 'Prenotazione #'+booking.id : 'Nuova prenotazione' %></h2>
+      <% if (booking) { %>
+        <p>
+          Prenotata il <strong style="color:#1c1f26"><%= new Date(booking.createdAt).toLocaleString('it-IT',{day:'2-digit',month:'long',year:'numeric',hour:'2-digit',minute:'2-digit'}) %></strong>
+          <% if (booking.updatedAt && new Date(booking.updatedAt).getTime() !== new Date(booking.createdAt).getTime()) { %>
+            · Ultima modifica: <%= new Date(booking.updatedAt).toLocaleString('it-IT') %>
+          <% } %>
+        </p>
+      <% } else { %>
+        <p>Crea manualmente una prenotazione (utile per registrare bonifici o casi speciali).</p>
+      <% } %>
+    </div>
+    <a class="btn btn-ghost" href="/admin/bookings">← Torna alle prenotazioni</a>
+  </div>
+
+  <!-- SEZIONE 1: Cliente -->
+  <section class="fs-section">
+    <div class="fs-section-head">
+      <div class="fs-section-ico" style="background:#fdf2c9;color:#7a5800">👤</div>
+      <div>
+        <h3 class="fs-section-title">Cliente</h3>
+        <p class="fs-section-sub">Dati anagrafici del pagante.</p>
+      </div>
+    </div>
+    <div class="fs-grid">
+      <div class="field">
+        <label class="field-lbl">Nome cliente *</label>
+        <input type="text" name="customerName" required value="<%= booking ? booking.customerName : '' %>">
+      </div>
+      <div class="field">
+        <label class="field-lbl">Email *</label>
+        <input type="email" name="customerEmail" required value="<%= booking ? booking.customerEmail : '' %>">
+      </div>
+      <div class="field field-full">
+        <label class="field-lbl">Telefono</label>
+        <input type="text" name="phone" value="<%= booking ? booking.phone : '' %>" placeholder="+34 …">
+      </div>
+    </div>
+  </section>
+
+  <!-- SEZIONE 2: Pacchetto + evento + data -->
+  <section class="fs-section">
+    <div class="fs-section-head">
+      <div class="fs-section-ico" style="background:#e3f0ff;color:#0d5290">🎟</div>
+      <div>
+        <h3 class="fs-section-title">Pacchetto, evento e data</h3>
+        <p class="fs-section-sub">Cosa ha prenotato e quando.</p>
+      </div>
+    </div>
+    <div class="fs-grid">
+      <div class="field">
+        <label class="field-lbl">Pacchetto</label>
+        <select name="planId">
+          <option value="">—</option>
+          <% plans.forEach(function(p){ %><option value="<%= p.id %>" <%= booking && booking.planId===p.id ? 'selected':'' %>><%= p.name %></option><% }) %>
         </select>
       </div>
-      <div class="field"><label class="field-lbl">Evento</label>
-        <select name="eventId"><option value="">—</option>
-        <% events.forEach(function(e){ %><option value="<%= e.id %>" <%= booking && booking.eventId===e.id ? 'selected':'' %>><%= e.title %></option><% }) %>
+      <div class="field">
+        <label class="field-lbl">Evento</label>
+        <select name="eventId">
+          <option value="">—</option>
+          <% events.forEach(function(e){ %><option value="<%= e.id %>" <%= booking && booking.eventId===e.id ? 'selected':'' %>><%= e.title %></option><% }) %>
         </select>
       </div>
-      <div class="field"><label class="field-lbl">Stato</label>
+      <div class="field">
+        <label class="field-lbl">Data (etichetta)</label>
+        <input type="text" name="dateLabel" value="<%= booking ? booking.dateLabel : '' %>" placeholder="es. 29 Julio 2026">
+        <div class="field-help">Testo libero mostrato al cliente.</div>
+      </div>
+      <div class="field">
+        <label class="field-lbl">Orario / fascia</label>
+        <input type="text" name="slot" value="<%= booking ? booking.slot : '' %>" placeholder="es. 9:30 oppure Mañana">
+      </div>
+    </div>
+  </section>
+
+  <!-- SEZIONE 3: Pagamento -->
+  <section class="fs-section">
+    <div class="fs-section-head">
+      <div class="fs-section-ico" style="background:#e7f3ec;color:#1b6b3e">💳</div>
+      <div>
+        <h3 class="fs-section-title">Pagamento</h3>
+        <p class="fs-section-sub">Stato, importo e metodo.</p>
+      </div>
+    </div>
+    <div class="fs-grid">
+      <div class="field">
+        <label class="field-lbl">Stato prenotazione</label>
         <select name="status">
-        <% STATUSES.forEach(function(s){ %><option value="<%= s %>" <%= booking && booking.status===s ? 'selected':'' %>><%= s %></option><% }) %>
+          <% STATUSES.forEach(function(s){ %><option value="<%= s %>" <%= booking && booking.status===s ? 'selected':'' %>><%= s %></option><% }) %>
         </select>
       </div>
-      <div class="field"><label class="field-lbl">Data (etichetta)</label><input type="text" name="dateLabel" value="<%= booking ? booking.dateLabel : '' %>" placeholder="es. 29 Julio 2026"></div>
-      <div class="field"><label class="field-lbl">Orario</label><input type="text" name="slot" value="<%= booking ? booking.slot : '' %>" placeholder="es. 9:30 / Mañana"></div>
-      <div class="field"><label class="field-lbl">Metodo pagamento</label><input type="text" name="method" value="<%= booking ? booking.method : '' %>"></div>
-      <div class="field"><label class="field-lbl">Importo</label><input type="number" step="0.01" name="amount" value="<%= booking ? booking.amount : 0 %>"></div>
-      <div class="field field-full"><label class="field-lbl">Note</label><textarea name="notes" rows="2"><%= booking ? booking.notes : '' %></textarea></div>
+      <div class="field">
+        <label class="field-lbl">Importo (€)</label>
+        <input type="number" step="0.01" name="amount" value="<%= booking ? booking.amount : 0 %>">
+      </div>
+      <div class="field field-full">
+        <label class="field-lbl">Metodo di pagamento</label>
+        <input type="text" name="method" value="<%= booking ? booking.method : '' %>" placeholder="es. Stripe, Bonifico, …">
+      </div>
     </div>
-    <div class="form-actions">
-      <button class="btn btn-primary"><%= booking ? 'Salva' : 'Crea' %></button>
-      <a class="btn btn-ghost" href="/admin/bookings">Annulla</a>
+  </section>
+
+  <!-- SEZIONE 4: Note -->
+  <section class="fs-section">
+    <div class="fs-section-head">
+      <div class="fs-section-ico" style="background:#fff3d6;color:#7a5800">📝</div>
+      <div>
+        <h3 class="fs-section-title">Note interne</h3>
+        <p class="fs-section-sub">Promemoria, riferimenti, contatti — visibili solo agli admin.</p>
+      </div>
     </div>
-  </form>
-</div>
+    <textarea name="notes" rows="4" placeholder="Aggiungi note interne…"><%= booking ? booking.notes : '' %></textarea>
+  </section>
+
+  <div class="fs-actions">
+    <a class="btn btn-ghost" href="/admin/bookings">Annulla</a>
+    <button class="btn btn-primary" type="submit"><%= booking ? '💾 Salva modifiche' : '✨ Crea prenotazione' %></button>
+  </div>
+</form>
 <%- include('../partials/footer') %>

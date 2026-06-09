@@ -4,10 +4,23 @@
     <h2>Professori</h2>
     <a class="btn btn-primary" href="/admin/professors/new">+ Nuovo professore</a>
   </div>
-  <% if (!profs.length) { %><p class="muted">Nessun professore. Creane uno.</p><% } else { %>
+  <%- include('../partials/dt-toolbar', {
+    params, total, totalUnfiltered,
+    entitySingular:'professore', entityPlural:'professori',
+    basePath:'/admin/professors',
+    searchPlaceholder:'Cerca per nome, cognome, tipo di danza…',
+    extraFilters:[{ name:'status', value: status, options:[{val:'',label:'Tutti gli stati'},{val:'active',label:'Attivo'},{val:'inactive',label:'Nascosto'}] }],
+  }) %>
+  <% if (!profs.length) { %><p class="muted" style="padding:20px 0">Nessun professore.</p><% } else { %>
   <div class="table-wrap">
   <table class="table">
-    <thead><tr><th></th><th>Nome</th><th>Tipo di danza</th><th>Stato</th><th></th></tr></thead>
+    <thead><tr>
+      <th></th>
+      <%- include('../partials/dt-th', { label:'Nome', sortKey:'firstName', params, basePath:'/admin/professors' }) %>
+      <%- include('../partials/dt-th', { label:'Tipo di danza', sortKey:'danceType', params, basePath:'/admin/professors' }) %>
+      <%- include('../partials/dt-th', { label:'Stato', sortKey:'active', params, basePath:'/admin/professors' }) %>
+      <th></th>
+    </tr></thead>
     <tbody>
     <% profs.forEach(function(p){ %>
       <tr>
@@ -19,15 +32,16 @@
         <td><%= p.danceType || '—' %></td>
         <td><% if (p.active) { %><span class="badge badge-ok">attivo</span><% } else { %><span class="badge badge-off">nascosto</span><% } %></td>
         <td class="row-actions">
-          <a class="btn btn-ghost btn-sm" href="/admin/professors/<%= p.id %>/edit">Modifica</a>
-          <form method="post" action="/admin/professors/<%= p.id %>/toggle"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="btn btn-ghost btn-sm"><%= p.active ? 'Nascondi' : 'Attiva' %></button></form>
-          <form method="post" action="/admin/professors/<%= p.id %>/delete" onsubmit="return confirm('Eliminare questo professore?')"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="btn btn-danger btn-sm">Elimina</button></form>
+          <a class="btn-ico btn-ico-edit" href="/admin/professors/<%= p.id %>/edit" title="Modifica"><%- include('../partials/ico', { name:'edit' }) %></a>
+          <form method="post" action="/admin/professors/<%= p.id %>/toggle"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button type="submit" class="btn-ico <%= p.active?'btn-ico-hide':'btn-ico-show' %>" title="<%= p.active?'Nascondi (ora visibile)':'Attiva (ora nascosto)' %>"><%- include('../partials/ico', { name: p.active?'eye':'eye-off' }) %></button></form>
+          <form method="post" action="/admin/professors/<%= p.id %>/delete" onsubmit="return confirm('Eliminare questo professore?')"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button type="submit" class="btn-ico btn-ico-danger" title="Elimina"><%- include('../partials/ico', { name:'trash' }) %></button></form>
         </td>
       </tr>
     <% }) %>
     </tbody>
   </table>
   </div>
+  <%- include('../partials/dt-pagination', { links, params, basePath:'/admin/professors' }) %>
   <% } %>
 </div>
 <%- include('../partials/footer') %>

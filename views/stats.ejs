@@ -1,16 +1,168 @@
 <%- include('partials/header') %>
-<div class="cards">
-  <div class="card stat"><div class="stat-num"><%= data.users %></div><div class="stat-lbl">Utenti totali</div></div>
-  <div class="card stat"><div class="stat-num"><%= data.activeUsers %></div><div class="stat-lbl">Utenti attivi</div></div>
-  <div class="card stat"><div class="stat-num"><%= data.roles %></div><div class="stat-lbl">Ruoli</div></div>
-  <div class="card stat"><div class="stat-num"><%= data.media %></div><div class="stat-lbl">Media</div></div>
-  <div class="card stat"><div class="stat-num"><%= data.images %></div><div class="stat-lbl">Immagini</div></div>
-  <div class="card stat"><div class="stat-num"><%= fmtBytes(data.storageBytes) %></div><div class="stat-lbl">Spazio occupato</div></div>
-</div>
+
 <div class="card">
-  <h2>Riepilogo</h2>
-  <p class="muted">Statistiche di base del sito. Le metriche di traffico (Analytics) si collegano dalle
-  <a href="/admin/settings?tab=analytics">Impostazioni &rsaquo; Analytics</a>.
-  Metriche avanzate (eventi, prenotazioni, conversioni) arriveranno con i rispettivi moduli.</p>
+  <div class="card-head">
+    <h2>Statistiche sito</h2>
+    <div class="head-tools">
+      <a class="btn btn-ghost btn-sm <%= days===7?'is-on':'' %>" href="?range=7">7 giorni</a>
+      <a class="btn btn-ghost btn-sm <%= days===30?'is-on':'' %>" href="?range=30">30 giorni</a>
+      <a class="btn btn-ghost btn-sm <%= days===90?'is-on':'' %>" href="?range=90">90 giorni</a>
+      <a class="btn btn-ghost btn-sm <%= days===180?'is-on':'' %>" href="?range=180">180 giorni</a>
+    </div>
+  </div>
+
+  <div class="kpi-grid">
+    <div class="kpi"><div class="kpi-lbl">Pageview</div><div class="kpi-val"><%= data.totalPageviews.toLocaleString('it-IT') %></div></div>
+    <div class="kpi"><div class="kpi-lbl">Visitatori unici</div><div class="kpi-val"><%= data.totalVisitors.toLocaleString('it-IT') %></div></div>
+    <div class="kpi"><div class="kpi-lbl">Sessioni</div><div class="kpi-val"><%= data.totalSessions.toLocaleString('it-IT') %></div></div>
+    <div class="kpi"><div class="kpi-lbl">Bounce rate</div><div class="kpi-val"><%= data.bounceRate %>%</div></div>
+    <div class="kpi"><div class="kpi-lbl">Durata media</div><div class="kpi-val"><%= Math.floor(data.avgDurationSec/60) %>m <%= data.avgDurationSec%60 %>s</div></div>
+    <div class="kpi"><div class="kpi-lbl">Prenotazioni</div><div class="kpi-val"><%= data.bookingsConfirmed %>/<%= data.bookingsTotal %></div></div>
+    <div class="kpi"><div class="kpi-lbl">Conversion rate</div><div class="kpi-val"><%= data.conversionRate %>%</div></div>
+    <div class="kpi"><div class="kpi-lbl">Messaggi contatto</div><div class="kpi-val"><%= data.contactMessages %></div></div>
+  </div>
 </div>
+
+<div class="card">
+  <h3>Andamento giornaliero</h3>
+  <div style="height:280px"><canvas id="chartSeries"></canvas></div>
+</div>
+
+<div class="card">
+  <h3>Funnel di conversione</h3>
+  <p class="muted">Percorso dell'utente dalla landing alla prenotazione confermata.</p>
+  <div class="funnel">
+    <% var max = Math.max(1, data.funnel[0].count); %>
+    <% data.funnel.forEach(function(s,i){ var pct = Math.round(s.count/max*100); var fromPrev = i===0?100:Math.round(s.count/Math.max(1,data.funnel[i-1].count)*100); %>
+      <div class="funnel-row">
+        <div class="funnel-lbl"><%= s.label %></div>
+        <div class="funnel-bar-wrap"><div class="funnel-bar" style="width:<%= pct %>%"></div></div>
+        <div class="funnel-val"><strong><%= s.count.toLocaleString('it-IT') %></strong>
+          <% if (i>0) { %><span class="muted">(<%= fromPrev %>%)</span><% } %>
+        </div>
+      </div>
+    <% }) %>
+  </div>
+</div>
+
+<div class="dt-grid">
+  <div class="card">
+    <h3>Pagine più visitate</h3>
+    <% if (!data.topPages.length) { %><p class="muted">Nessun dato.</p><% } else { %>
+    <table class="dt"><thead><tr><th>Percorso</th><th>Pageview</th></tr></thead><tbody>
+      <% data.topPages.forEach(function(p){ %><tr><td><code><%= p[0] %></code></td><td><%= p[1] %></td></tr><% }) %>
+    </tbody></table>
+    <% } %>
+  </div>
+
+  <div class="card">
+    <h3>Top paesi</h3>
+    <% if (!data.topCountries.length) { %><p class="muted">Nessun dato.</p><% } else { %>
+    <div style="height:240px"><canvas id="chartCountries"></canvas></div>
+    <% } %>
+  </div>
+
+  <div class="card">
+    <h3>Top città</h3>
+    <% if (!data.topCities.length) { %><p class="muted">Nessun dato.</p><% } else { %>
+    <table class="dt"><thead><tr><th>Città</th><th>Pageview</th></tr></thead><tbody>
+      <% data.topCities.forEach(function(c){ %><tr><td><%= c[0] %></td><td><%= c[1] %></td></tr><% }) %>
+    </tbody></table>
+    <% } %>
+  </div>
+
+  <div class="card">
+    <h3>Dispositivi</h3>
+    <% if (!data.topDevices.length) { %><p class="muted">Nessun dato.</p><% } else { %>
+    <div style="height:240px"><canvas id="chartDevices"></canvas></div>
+    <% } %>
+  </div>
+
+  <div class="card">
+    <h3>Browser</h3>
+    <% if (!data.topBrowsers.length) { %><p class="muted">Nessun dato.</p><% } else { %>
+    <div style="height:240px"><canvas id="chartBrowsers"></canvas></div>
+    <% } %>
+  </div>
+
+  <div class="card">
+    <h3>Sistema operativo</h3>
+    <% if (!data.topOS.length) { %><p class="muted">Nessun dato.</p><% } else { %>
+    <table class="dt"><thead><tr><th>OS</th><th>Pageview</th></tr></thead><tbody>
+      <% data.topOS.forEach(function(o){ %><tr><td><%= o[0] %></td><td><%= o[1] %></td></tr><% }) %>
+    </tbody></table>
+    <% } %>
+  </div>
+
+  <div class="card">
+    <h3>Da dove arrivano</h3>
+    <% if (!data.topReferrers.length) { %><p class="muted">La maggior parte arriva direttamente al sito.</p><% } else { %>
+    <table class="dt"><thead><tr><th>Sorgente</th><th>Pageview</th></tr></thead><tbody>
+      <% data.topReferrers.forEach(function(r){ %><tr><td><%= r[0] %></td><td><%= r[1] %></td></tr><% }) %>
+    </tbody></table>
+    <% } %>
+  </div>
+
+  <div class="card">
+    <h3>Storage media</h3>
+    <p class="kpi-val" style="font-size:34px;margin:0"><%= (data.storageBytes/(1024*1024)).toFixed(1) %> MB</p>
+    <p class="muted">Spazio totale occupato dai file della libreria media.</p>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" defer></script>
+<script>
+  window.STATS_DATA = {
+    series: <%- JSON.stringify(data.series) %>,
+    topCountries: <%- JSON.stringify(data.topCountries) %>,
+    topDevices: <%- JSON.stringify(data.topDevices) %>,
+    topBrowsers: <%- JSON.stringify(data.topBrowsers) %>,
+  };
+  function whenChartReady(cb){ if (window.Chart) cb(); else setTimeout(function(){ whenChartReady(cb); }, 60); }
+  whenChartReady(function(){
+    var d = window.STATS_DATA;
+    var palette = ['#e0aa00','#1c1f26','#c8970a','#7a5800','#9aa1b2','#5a5e6a','#f0c04b','#3a3f4a'];
+    new Chart(document.getElementById('chartSeries'), {
+      type:'line',
+      data:{ labels: d.series.map(function(s){return s.date.slice(5);}),
+        datasets:[
+          { label:'Pageview', data: d.series.map(function(s){return s.pv;}), borderColor:'#e0aa00', backgroundColor:'rgba(224,170,0,.15)', tension:.35, fill:true },
+          { label:'Sessioni', data: d.series.map(function(s){return s.sessions;}), borderColor:'#1c1f26', tension:.35 },
+          { label:'Visitatori', data: d.series.map(function(s){return s.visitors;}), borderColor:'#9aa1b2', tension:.35 },
+        ]},
+      options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{position:'bottom'}}, scales:{x:{ticks:{maxRotation:0,autoSkip:true,maxTicksLimit:14}}} }
+    });
+    if (d.topCountries.length) new Chart(document.getElementById('chartCountries'), {
+      type:'bar',
+      data:{ labels:d.topCountries.map(function(c){return c[0];}), datasets:[{label:'Pageview',data:d.topCountries.map(function(c){return c[1];}),backgroundColor:'#e0aa00'}] },
+      options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, indexAxis:'y' }
+    });
+    if (d.topDevices.length) new Chart(document.getElementById('chartDevices'), {
+      type:'doughnut',
+      data:{ labels:d.topDevices.map(function(x){return x[0];}), datasets:[{data:d.topDevices.map(function(x){return x[1];}),backgroundColor:palette}] },
+      options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{position:'right'}} }
+    });
+    if (d.topBrowsers.length) new Chart(document.getElementById('chartBrowsers'), {
+      type:'bar',
+      data:{ labels:d.topBrowsers.map(function(x){return x[0];}), datasets:[{label:'Pageview',data:d.topBrowsers.map(function(x){return x[1];}),backgroundColor:'#1c1f26'}] },
+      options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}} }
+    });
+  });
+</script>
+
+<style>
+  .kpi-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px}
+  .kpi{background:#fff;border:1px solid #eef0f4;border-radius:10px;padding:16px}
+  .kpi-lbl{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:#7a8190;margin-bottom:6px}
+  .kpi-val{font-family:'Fraunces',Georgia,serif;font-size:28px;font-weight:600;color:#1c1f26}
+  .dt-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:18px;margin-top:18px}
+  .is-on{background:#1c1f26;color:#fff}
+  .funnel{display:flex;flex-direction:column;gap:14px;margin-top:14px}
+  .funnel-row{display:grid;grid-template-columns:240px 1fr 180px;gap:18px;align-items:center}
+  .funnel-lbl{font-weight:500;color:#1c1f26}
+  .funnel-bar-wrap{height:30px;background:#f1ede3;border-radius:6px;overflow:hidden}
+  .funnel-bar{height:100%;background:linear-gradient(90deg,#e0aa00,#c8970a);border-radius:6px;transition:width .6s ease}
+  .funnel-val{text-align:right;font-size:15px}
+  @media(max-width:680px){ .funnel-row{grid-template-columns:1fr;text-align:left} .funnel-val{text-align:left} }
+</style>
 <%- include('partials/footer') %>

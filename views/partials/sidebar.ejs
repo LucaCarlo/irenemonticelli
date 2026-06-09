@@ -27,7 +27,12 @@
       <% if (can('professors.manage')) { %>
         <a class="sb-link <%= isActive('/admin/professors') ? 'active' : '' %>" href="/admin/professors"><%- include('icon',{name:'users'}) %><span>Professori</span></a>
       <% } %>
-      <span class="sb-link disabled"><%- include('icon',{name:'pages'}) %><span>Pagine</span><em class="soon">presto</em></span>
+      <% if (can('lessons.manage')) { %>
+        <a class="sb-link <%= isActive('/admin/lessons') ? 'active' : '' %>" href="/admin/lessons"><%- include('icon',{name:'calendar'}) %><span>Programma lezioni</span></a>
+      <% } %>
+      <% if (can('pages.manage')) { %>
+        <a class="sb-link <%= isActive('/admin/pages') ? 'active' : '' %>" href="/admin/pages"><%- include('icon',{name:'pages'}) %><span>Pagine</span></a>
+      <% } %>
       <% if (can('media.view')) { %>
         <a class="sb-link <%= isActive('/admin/media') ? 'active' : '' %>" href="/admin/media"><%- include('icon',{name:'media'}) %><span>Media</span></a>
       <% } %>
@@ -38,24 +43,39 @@
       <% if (can('plans.manage')) { %>
         <a class="sb-link <%= isActive('/admin/plans') ? 'active' : '' %>" href="/admin/plans"><%- include('icon',{name:'plans'}) %><span>Piani / Pacchetti</span></a>
       <% } %>
+      <% if (can('extras.manage')) { %>
+        <a class="sb-link <%= isActive('/admin/extras') ? 'active' : '' %>" href="/admin/extras"><%- include('icon',{name:'plans'}) %><span>Extras / Suplementi</span></a>
+      <% } %>
       <% if (can('bookings.manage')) { %>
-        <a class="sb-link <%= (path === '/admin/bookings' || path.indexOf('/admin/bookings/')===0 && path.indexOf('calendar')<0) ? 'active' : '' %>" href="/admin/bookings"><%- include('icon',{name:'bookings'}) %><span>Prenotazioni</span></a>
-        <a class="sb-link <%= isActive('/admin/bookings/calendar') ? 'active' : '' %>" href="/admin/bookings/calendar"><%- include('icon',{name:'calendar'}) %><span>Calendario</span></a>
+        <a class="sb-link <%= path.indexOf('/admin/bookings')===0 ? 'active' : '' %>" href="/admin/bookings"><%- include('icon',{name:'bookings'}) %><span>Prenotazioni</span></a>
       <% } else { %>
-        <span class="sb-link disabled"><%- include('icon',{name:'calendar'}) %><span>Calendario</span><em class="soon">presto</em></span>
+        <span class="sb-link disabled"><%- include('icon',{name:'bookings'}) %><span>Prenotazioni</span><em class="soon">presto</em></span>
       <% } %>
     </div>
 
     <div class="sb-group">
       <div class="sb-group-title">Comunicazione</div>
-      <span class="sb-link disabled"><%- include('icon',{name:'newsletter'}) %><span>Newsletter</span><em class="soon">presto</em></span>
-      <span class="sb-link disabled"><%- include('icon',{name:'messages'}) %><span>Messaggi contatto</span><em class="soon">presto</em></span>
+      <% if (can('messages.view')) { %>
+        <a class="sb-link <%= isActive('/admin/messages') ? 'active' : '' %>" href="/admin/messages"><%- include('icon',{name:'messages'}) %><span>Messaggi contatto</span></a>
+      <% } %>
+      <% if (can('messages.view') || can('bookings.manage')) { %>
+        <a class="sb-link <%= isActive('/admin/contacts') ? 'active' : '' %>" href="/admin/contacts"><%- include('icon',{name:'users'}) %><span>Utenti</span></a>
+      <% } %>
+      <% if (can('newsletter.manage')) { %>
+        <a class="sb-link <%= isActive('/admin/newsletter') ? 'active' : '' %>" href="/admin/newsletter"><%- include('icon',{name:'newsletter'}) %><span>Newsletter</span></a>
+      <% } %>
+      <% if (can('referrals.view')) { %>
+        <a class="sb-link <%= path === '/admin/referrals' || (path.indexOf('/admin/referrals/') === 0 && path.indexOf('/admin/referrals/commissions') !== 0) ? 'active' : '' %>" href="/admin/referrals"><%- include('icon',{name:'users'}) %><span>Referral</span></a>
+      <% } %>
+      <% if (can('referrals.commissions.manage')) { %>
+        <a class="sb-link <%= isActive('/admin/referrals/commissions') ? 'active' : '' %>" href="/admin/referrals/commissions"><%- include('icon',{name:'plans'}) %><span>Commissioni</span></a>
+      <% } %>
     </div>
 
     <div class="sb-group">
       <div class="sb-group-title">Amministrazione</div>
       <% if (can('users.view')) { %>
-        <a class="sb-link <%= isActive('/admin/users') ? 'active' : '' %>" href="/admin/users"><%- include('icon',{name:'users'}) %><span>Utenti admin</span></a>
+        <a class="sb-link <%= isActive('/admin/users') ? 'active' : '' %>" href="/admin/users"><%- include('icon',{name:'users'}) %><span>Amministratori</span></a>
       <% } %>
       <% if (can('roles.view')) { %>
         <a class="sb-link <%= isActive('/admin/roles') ? 'active' : '' %>" href="/admin/roles"><%- include('icon',{name:'roles'}) %><span>Ruoli</span></a>
@@ -73,7 +93,9 @@
       <% if (can('backup.manage')) { %>
         <a class="sb-link <%= isActive('/admin/settings/backup') ? 'active' : '' %>" href="/admin/settings/backup"><%- include('icon',{name:'backup'}) %><span>Backup</span></a>
       <% } %>
-      <span class="sb-link disabled"><%- include('icon',{name:'logs'}) %><span>Log attivita</span><em class="soon">presto</em></span>
+      <% if (can('audit.view')) { %>
+        <a class="sb-link <%= isActive('/admin/audit') ? 'active' : '' %>" href="/admin/audit"><%- include('icon',{name:'logs'}) %><span>Log attività</span></a>
+      <% } %>
     </div>
   </nav>
 

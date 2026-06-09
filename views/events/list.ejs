@@ -4,13 +4,26 @@
     <h2>Eventi</h2>
     <a class="btn btn-primary" href="/admin/events/new">+ Nuovo evento</a>
   </div>
-  <% if (!events.length) { %><p class="muted">Nessun evento.</p><% } else { %>
+  <%- include('../partials/dt-toolbar', {
+    params, total, totalUnfiltered,
+    entitySingular: 'evento', entityPlural: 'eventi',
+    basePath: '/admin/events',
+    searchPlaceholder: 'Cerca per titolo, sottotitolo, sede…',
+    extraFilters: [{ name:'status', value: status, options:[{val:'',label:'Tutti gli stati'},{val:'active',label:'Attivo'},{val:'inactive',label:'Nascosto'}] }],
+  }) %>
+  <% if (!events.length) { %><p class="muted" style="padding:20px 0">Nessun evento.</p><% } else { %>
   <div class="table-wrap">
   <table class="table">
-    <thead><tr><th>Titolo</th><th>Date</th><th>Sede</th><th>Prenotazioni</th><th>Stato</th><th></th></tr></thead>
+    <thead><tr>
+      <%- include('../partials/dt-th', { label:'Titolo', sortKey:'title', params, basePath:'/admin/events' }) %>
+      <%- include('../partials/dt-th', { label:'Date', sortKey:'startDate', params, basePath:'/admin/events' }) %>
+      <%- include('../partials/dt-th', { label:'Sede', sortKey:'location', params, basePath:'/admin/events' }) %>
+      <th>Prenotazioni</th>
+      <%- include('../partials/dt-th', { label:'Stato', sortKey:'active', params, basePath:'/admin/events' }) %>
+      <th></th>
+    </tr></thead>
     <tbody>
-    <% events.forEach(function(e){
-       var fmt=function(d){ return d ? new Date(d).toLocaleDateString('it-IT') : ''; }; %>
+    <% events.forEach(function(e){ var fmt=function(d){return d?new Date(d).toLocaleDateString('it-IT'):'';}; %>
       <tr>
         <td><%= e.title %><div class="muted" style="font-size:12px"><%= e.subtitle %></div></td>
         <td><%= fmt(e.startDate) %><%= e.endDate ? ' — ' + fmt(e.endDate) : '' %></td>
@@ -18,15 +31,16 @@
         <td><%= e._count.bookings %></td>
         <td><% if (e.active) { %><span class="badge badge-ok">attivo</span><% } else { %><span class="badge badge-off">nascosto</span><% } %></td>
         <td class="row-actions">
-          <a class="btn btn-ghost btn-sm" href="/admin/events/<%= e.id %>/edit">Modifica</a>
-          <form method="post" action="/admin/events/<%= e.id %>/toggle"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="btn btn-ghost btn-sm"><%= e.active ? 'Nascondi' : 'Attiva' %></button></form>
-          <form method="post" action="/admin/events/<%= e.id %>/delete" onsubmit="return confirm('Eliminare questo evento?')"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="btn btn-danger btn-sm">Elimina</button></form>
+          <a class="btn-ico btn-ico-edit" href="/admin/events/<%= e.id %>/edit" title="Modifica"><%- include('../partials/ico', { name:'edit' }) %></a>
+          <form method="post" action="/admin/events/<%= e.id %>/toggle"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button type="submit" class="btn-ico <%= e.active?'btn-ico-hide':'btn-ico-show' %>" title="<%= e.active?'Nascondi (ora visibile)':'Attiva (ora nascosto)' %>"><%- include('../partials/ico', { name: e.active?'eye':'eye-off' }) %></button></form>
+          <form method="post" action="/admin/events/<%= e.id %>/delete" onsubmit="return confirm('Eliminare questo evento?')"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button type="submit" class="btn-ico btn-ico-danger" title="Elimina"><%- include('../partials/ico', { name:'trash' }) %></button></form>
         </td>
       </tr>
     <% }) %>
     </tbody>
   </table>
   </div>
+  <%- include('../partials/dt-pagination', { links, params, basePath:'/admin/events' }) %>
   <% } %>
 </div>
 <%- include('../partials/footer') %>

@@ -1,0 +1,45 @@
+<%
+  // Usage: include('../partials/dt-toolbar', { params, total, basePath, extraFilters, searchPlaceholder })
+  var _params = params;
+  var _basePath = basePath || '';
+  var _filters = (typeof extraFilters !== 'undefined' && extraFilters) ? extraFilters : [];
+  var _placeholder = (typeof searchPlaceholder !== 'undefined' && searchPlaceholder) ? searchPlaceholder : 'Cerca per nome, email, telefono…';
+  var hasAnyFilter = !!_params.q;
+  _filters.forEach(function(f){ if (f.value) hasAnyFilter = true; });
+%>
+<form method="get" action="<%= _basePath %>" class="dt-toolbar">
+  <div class="dt-search">
+    <input type="text" name="q" value="<%= _params.q %>" placeholder="<%= _placeholder %>">
+  </div>
+  <% _filters.forEach(function(f){ %>
+    <select class="dt-filter" name="<%= f.name %>" onchange="this.form.submit()">
+      <% (f.options || []).forEach(function(o){ %>
+        <option value="<%= o.val %>" <%= String(f.value || '') === String(o.val) ? 'selected' : '' %>><%= o.label %></option>
+      <% }) %>
+    </select>
+  <% }) %>
+  <input type="hidden" name="sort" value="<%= _params.sort %>">
+  <input type="hidden" name="dir" value="<%= _params.dir %>">
+  <select class="dt-filter" name="perPage" onchange="this.form.submit()" style="min-width:140px">
+    <% _params.perPageOptions.forEach(function(n){ %>
+      <option value="<%= n %>" <%= _params.perPage === n ? 'selected' : '' %>>Per pagina · <%= n %></option>
+    <% }) %>
+  </select>
+  <button type="submit" class="dt-btn">Filtra</button>
+  <% if (hasAnyFilter) { %>
+    <a class="dt-btn dt-btn-ghost" href="<%= _basePath %>">Pulisci</a>
+  <% } %>
+</form>
+<%
+  var _entitySg = (typeof entitySingular !== 'undefined' && entitySingular) ? entitySingular : 'record';
+  var _entityPl = (typeof entityPlural !== 'undefined' && entityPlural) ? entityPlural : 'record';
+  var _entityLabel = total === 1 ? _entitySg : _entityPl;
+  var _totalAll = (typeof totalUnfiltered !== 'undefined' && totalUnfiltered != null) ? totalUnfiltered : total;
+%>
+<div class="dt-meta">
+  <% if (_totalAll !== total) { %>
+    <strong><%= total %></strong> <%= _entityLabel %> su <strong><%= _totalAll %></strong><% if (_params.q) { %> per <em>"<%= _params.q %>"</em><% } %>
+  <% } else { %>
+    <strong><%= total %></strong> <%= _entityLabel %><% if (_params.q) { %> per <em>"<%= _params.q %>"</em><% } %>
+  <% } %>
+</div>

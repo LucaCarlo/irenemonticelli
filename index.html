@@ -1653,7 +1653,7 @@
   }
   
   /* Fix doppia scrollbar nelle pagine secondarie: 
-     body/html non devono mai avere overflow:hidden quando si è in pro-dance/contatti.
+     body/html non devono mai avere overflow:hidden quando si è in pro-dance/contacto.
      Anche il preloader, se attivo, non deve bloccare lo scroll in queste pagine. */
   body.on-prodance, body.on-contatti,
   html:has(body.on-prodance), html:has(body.on-contatti){
@@ -2841,6 +2841,22 @@
     .nav-links a[data-h]::before{display:none}
     .nav-links .cta{font-family:var(--sans);font-size:14px;font-weight:500;margin-left:0;margin-top:14px}
     .nav-toggle{display:block;z-index:101;position:relative}
+    /* MOBILE FIX: burger sempre visibile, anche prima dell'animazione preloader.
+       Sennò sulla homepage l'utente non lo vede e crede che il menu sia rotto. */
+    header.site .nav-toggle{opacity:1 !important;transition:none}
+    /* Sopra il video del background il burger ha colore bianco; quando si scrolla
+       sotto la home (header non più "over-video") torna nero. */
+    /* Garantisco che il pannello del menu stia SOPRA al video e al contenuto */
+    .nav-links{z-index:200 !important}
+    .nav-toggle{z-index:201 !important}
+    /* MOBILE FIX: il pannello mobile del menu è bianco, quindi i link devono SEMPRE
+       essere scuri (anche sopra al video del background, dove fuori dal pannello
+       l'header è .over-video e i link sarebbero bianchi → bianco su bianco invisibili). */
+    header.site .nav-links a[data-h],
+    header.site.over-video .nav-links a[data-h]{color:var(--ink) !important}
+    header.site .nav-links a[data-h]:hover,
+    header.site.over-video .nav-links a[data-h]:hover{color:var(--yellow) !important}
+    header.site.over-video .nav-links .cta{color:var(--ink) !important;border-color:var(--ink) !important}
   }
 
   /* VIDEO STAGE — sfondo fisso a tutta viewport, dietro a tutto */
@@ -3599,12 +3615,31 @@
     <div class="nav-links" id="navLinks">
       <a href="/quien-soy" data-h>Quién soy</a>
       <a href="/pro-dance" data-h data-nav="pro-dance">Pro Dance</a>
-      <a href="/contatti" data-h data-nav="contatti">Contacto</a>
+      <a href="/contacto" data-h data-nav="contatti">Contacto</a>
+      <a href="/area-referral" class="nav-referral" data-h>Área Referidos</a>
     </div>
   </nav>
 </header>
 
 <!-- Inline logo SVG (defs) -->
+<style>
+  .nav-referral{display:inline-flex !important;align-items:center;gap:6px;
+    background:var(--yellow);color:#1c1f26 !important;
+    padding:8px 16px !important;border-radius:99px !important;
+    font-size:12.5px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;
+    margin-left:10px;transition:.22s ease;border:1.5px solid var(--yellow);
+    text-decoration:none !important}
+  .nav-referral::before{content:"★";font-size:11px;line-height:1;color:#1c1f26}
+  .nav-referral:hover{background:#fff !important;color:#1c1f26 !important;
+    border-color:#fff;transform:translateY(-1px);box-shadow:0 8px 22px -10px rgba(245,197,24,.5);text-decoration:none !important}
+  header.site.over-video .nav-links a.nav-referral{
+    color:#1c1f26 !important;background:var(--yellow) !important;border-color:var(--yellow)}
+  header.site.over-video .nav-links a.nav-referral:hover{
+    background:#fff !important;color:#1c1f26 !important;border-color:#fff}
+  @media (max-width:880px){
+    .nav-referral{margin-left:0 !important;margin-top:10px !important;font-size:13.5px !important;padding:11px 22px !important;align-self:flex-start}
+  }
+</style>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
   <defs>
     <symbol id="logo-paths" viewBox="0 0 1000 140" preserveAspectRatio="xMinYMid meet">
@@ -3791,7 +3826,7 @@
     <div class="quote-body reveal">
       <blockquote>¿Te apetece <i class="it">conocernos</i>? Reserva una clase, hazme una pregunta, o simplemente <i class="it">ven a bailar</i>.</blockquote>
       </div>
-    <a href="/contatti" data-nav="contatti" class="quote-cta reveal">Contáctame</a>
+    <a href="/contacto" data-nav="contatti" class="quote-cta reveal">Contáctame</a>
   </div>
 </section>
 
@@ -3817,8 +3852,8 @@
     <div class="foot-col">
       <h4>Contacto</h4>
       <ul>
-        <li><a href="/contatti" data-nav="contatti">Escríbenos</a></li>
-        <li><a href="/contatti" data-nav="contatti">Reservar clase</a></li>
+        <li><a href="/contacto" data-nav="contatti">Escríbenos</a></li>
+        <li><a href="/contacto" data-nav="contatti">Reservar clase</a></li>
         <li><a href="tel:+34672047938">+34 672047938</a></li>
       </ul>
     </div>
@@ -3833,7 +3868,7 @@
   </div>
   <div class="foot-bottom">
     <span class="foot-credit">
-      © 2026 <a href="https://vay.it/" target="_blank" rel="noopener">VAY Srl</a> — Servizi ICT per PMI — P.IVA 02050680442
+      <span class="foot-credit-dynamic">© 2026 <a href="https://vay.it/" target="_blank" rel="noopener">VAY Srl</a> — Servizi ICT per PMI — P.IVA 02050680442</span>
       <span class="foot-built">| Built by <a href="https://vay.it/" target="_blank" rel="noopener" class="foot-vay-logo" aria-label="VAY Srl"><svg id="vay-logo-1" data-name="vay-logo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 503.22 63.08">
   <defs>
     <style>
@@ -3861,8 +3896,8 @@
 </svg></a></span>
     </span>
     <span class="foot-legal">
-      <a href="https://vay.it/privacy" target="_blank" rel="noopener">Privacy Policy</a>
-      <a href="https://vay.it/cookie" target="_blank" rel="noopener">Cookie Policy</a>
+      <a href="/privacidad">Privacy Policy</a>
+      <a href="/cookies">Cookie Policy</a>
     </span>
   </div>
 </footer>
@@ -4985,6 +5020,93 @@
 </script>
 
 
-<script id="rv-navfix">document.addEventListener("click",function(e){var t=e.target.closest(".nav-toggle");if(!t)return;var n=t.closest("nav")||t.parentNode;var l=n&&n.querySelector(".nav-links");if(!l)return;e.preventDefault();t.classList.toggle("open");l.classList.toggle("open");});document.addEventListener("click",function(e){if(e.target.closest(".nav-links a")){var o=document.querySelector(".nav-links.open");if(o){o.classList.remove("open");var b=document.querySelector(".nav-toggle.open");if(b)b.classList.remove("open");}}});</script>
+<script id="rv-navfix">
+/* Burger menu defensive fix (mobile homepage):
+   - Sblocca il preloader (pointer-events:none) dopo 1.5s così non blocca i tap
+   - Allega handler diretto al burger con supporto touch
+   - Funziona anche se l'IIFE principale fallisce o si attacca tardi */
+(function(){
+  function unblockPreloader(){
+    var p = document.getElementById('preloader');
+    if (p) { p.style.pointerEvents = 'none'; }
+  }
+  setTimeout(unblockPreloader, 1500);
+  setTimeout(unblockPreloader, 3000);
+
+  function bindBurger(){
+    var t = document.getElementById('navToggle');
+    var l = document.getElementById('navLinks');
+    if (!t || !l || t.__bound) return;
+    t.__bound = true;
+    t.style.pointerEvents = 'auto';
+    t.style.cursor = 'pointer';
+    t.style.touchAction = 'manipulation';
+    function toggle(e){
+      e.preventDefault(); e.stopPropagation();
+      var willOpen = !l.classList.contains('open');
+      t.classList.toggle('open', willOpen);
+      l.classList.toggle('open', willOpen);
+    }
+    t.addEventListener('click', toggle, false);
+    t.addEventListener('touchend', toggle, false);
+    // chiudi cliccando un link
+    l.querySelectorAll('a').forEach(function(a){
+      a.addEventListener('click', function(){
+        t.classList.remove('open'); l.classList.remove('open');
+      });
+    });
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bindBurger);
+  else bindBurger();
+  setTimeout(bindBurger, 1000);
+  setTimeout(bindBurger, 3000);
+
+  /* Fallback event delegation a livello document (se nessuno dei due bind funziona) */
+  document.addEventListener('click', function(e){
+    var t = e.target.closest('.nav-toggle'); if (!t) return;
+    if (t.__bound) return;
+    var n = t.closest('nav') || t.parentNode;
+    var l = n && n.querySelector('.nav-links'); if (!l) return;
+    e.preventDefault();
+    t.classList.toggle('open'); l.classList.toggle('open');
+  });
+  document.addEventListener('touchend', function(e){
+    var t = e.target.closest('.nav-toggle'); if (!t) return;
+    if (t.__bound) return;
+    var n = t.closest('nav') || t.parentNode;
+    var l = n && n.querySelector('.nav-links'); if (!l) return;
+    e.preventDefault();
+    t.classList.toggle('open'); l.classList.toggle('open');
+  });
+})();
+</script>
+<script src="/tracker.js" defer></script>
+<script>
+(function(){ // homepage video: sostituisce con quello impostato in admin (Pagine)
+  try {
+    fetch('/api/home-video.json').then(function(r){return r.json();}).then(function(j){
+      if (!j || j.default || !j.url) return;
+      var v = document.getElementById('videoBg');
+      if (!v) return;
+      // Cambia src + ricarica
+      while (v.firstChild) v.removeChild(v.firstChild);
+      v.src = j.url;
+      v.load();
+    }).catch(function(){});
+  } catch(e){}
+})();
+</script>
+<script>
+(function(){ // footer dinamico: sostituisce .foot-credit-dynamic con html da /api/site-footer.json
+  try {
+    fetch('/api/site-footer.json').then(function(r){return r.json();}).then(function(j){
+      if (!j || !j.creditHtml) return;
+      document.querySelectorAll('.foot-credit-dynamic').forEach(function(el){
+        el.innerHTML = j.creditHtml;
+      });
+    }).catch(function(){});
+  } catch(e){}
+})();
+</script>
 </body>
 </html>

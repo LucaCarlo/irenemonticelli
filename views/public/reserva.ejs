@@ -5,44 +5,70 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title><%= plan.name %> — Reserva — Irene Monticelli</title>
 <link rel="icon" href="/favicon.ico">
-<!-- Stile esatto del sito (_77) -->
 <link rel="stylesheet" href="/reserva77.css">
 <style>
-  body{margin:0;background:#f6f6f4;padding-top:72px}
-  /* Header del sito: FISSO in alto (non scorre) — logo a sinistra, voci a destra */
-  .rv-site-head{position:fixed;top:0;left:0;right:0;z-index:50;background:#fff;border-bottom:1px solid rgba(0,0,0,.07)}
-  .rv-site-head .nav{display:flex;align-items:center;justify-content:space-between;max-width:1280px;margin:0 auto;padding:16px 5vw}
-  .rv-site-head .logo{display:block;width:170px;max-width:42vw;color:#1c1f26}
-  .rv-site-head .logo svg{display:block;width:100%;height:auto}
-  .rv-site-head .logo .cls-1{fill:#e0aa00}
-  .rv-site-head .nav-links{display:flex;gap:30px;align-items:center}
-  .rv-site-head .nav-links a{color:#1c1f26;text-decoration:none;font-size:14px;font-weight:600;letter-spacing:.01em}
-  .rv-site-head .nav-links a:hover{color:#c8970a}
-  .rv-burger{display:none;background:none;border:0;cursor:pointer;flex-direction:column;gap:5px;padding:8px}
-  .rv-burger span{display:block;width:24px;height:2px;background:#1c1f26}
-  @media(max-width:780px){
-    .rv-burger{display:flex}
-    .rv-site-head .nav-links{position:absolute;top:100%;left:0;right:0;background:#fff;flex-direction:column;gap:0;padding:8px 0;
-      border-bottom:1px solid rgba(0,0,0,.08);box-shadow:0 16px 30px -16px rgba(0,0,0,.25);display:none}
-    .rv-site-head .nav-links.open{display:flex}
-    .rv-site-head .nav-links a{padding:14px 6vw;width:100%}
+  body{margin:0;background:#f6f6f4;padding-top:0}
+  /* === Override reserva77.css: il preloader del sito qui non c'è, quindi
+       nav-links/nav-toggle devono partire OPACITY 1 (sennò il burger è invisibile).
+       NB: NON tocco "transform" perché su mobile il pannello deve restare
+       translateX(100%) di default (off-screen), altrimenti il menu è già aperto. === */
+  header.site .nav-links,
+  header.site .nav-toggle{opacity:1 !important}
+  /* Su desktop forzo translateY(0) per evitare il -8px di animazione assente */
+  @media (min-width:881px){
+    header.site .nav-links{transform:translateY(0) !important}
+  }
+  /* === HEADER unificato (stesso pattern del sito pubblico) === */
+  header.site{position:sticky;top:0;left:0;right:0;z-index:50;background:rgba(255,255,255,.92);
+    backdrop-filter:saturate(140%) blur(14px);-webkit-backdrop-filter:saturate(140%) blur(14px);
+    border-bottom:1px solid rgba(0,0,0,.07)}
+  header.site .nav{display:flex;align-items:center;justify-content:space-between;max-width:1320px;margin:0 auto;padding:14px 5vw;gap:24px}
+  header.site .logo{display:block;height:34px;color:#1c1f26;flex-shrink:0;transition:opacity .25s}
+  header.site .logo:hover{opacity:.7}
+  header.site .logo svg{height:100%;width:auto;display:block;fill:currentColor}
+  header.site .logo .cls-1{fill:#ffba30}
+  header.site .nav-links{display:flex;align-items:center;gap:8px;font-size:13.5px;font-weight:500;letter-spacing:.08em;text-transform:uppercase}
+  header.site .nav-links a[data-h]{position:relative;padding:9px 14px;color:#1c1f26;transition:color .25s}
+  header.site .nav-links a[data-h]:hover{color:#c8970a;text-decoration:none}
+  .nav-referral{display:inline-flex !important;align-items:center;gap:6px;
+    background:#F5C518;color:#1c1f26 !important;padding:8px 16px !important;border-radius:99px !important;
+    font-size:12.5px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;
+    margin-left:10px;transition:.22s ease;border:1.5px solid #F5C518;text-decoration:none !important}
+  .nav-referral::before{content:"★";font-size:11px;line-height:1;color:#1c1f26}
+  .nav-referral:hover{background:#fff !important;color:#1c1f26 !important;border-color:#fff;transform:translateY(-1px);box-shadow:0 8px 22px -10px rgba(245,197,24,.5);text-decoration:none !important}
+  .nav-toggle{display:none;background:transparent;border:0;padding:8px;cursor:pointer;flex-shrink:0;color:#1c1f26;width:36px;height:36px}
+  .nav-toggle span{display:block;width:22px;height:2px;background:currentColor;margin:5px auto;transition:transform .35s,opacity .35s}
+  .nav-toggle.open span:nth-child(1){transform:translateY(7px) rotate(45deg)}
+  .nav-toggle.open span:nth-child(2){opacity:0}
+  .nav-toggle.open span:nth-child(3){transform:translateY(-7px) rotate(-45deg)}
+  @media (max-width:880px){
+    header.site .nav-links{position:fixed;top:0;right:0;height:100vh;width:min(380px,82vw);
+      background:rgba(255,255,255,.98);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+      flex-direction:column;align-items:flex-start;justify-content:center;
+      padding:80px 6vw;gap:18px;font-size:18px;font-weight:300;
+      transform:translateX(100%);transition:transform .5s cubic-bezier(.7,0,.2,1);z-index:99}
+    header.site .nav-links.open{transform:translateX(0)}
+    .nav-toggle{display:block;z-index:101;position:relative}
+    .nav-referral{margin-left:0 !important;margin-top:10px !important;font-size:13.5px !important;padding:11px 22px !important;align-self:flex-start}
   }
   .pk-booking{padding:34px 0 70px}
   .rv-formula{display:flex;gap:10px;flex-wrap:wrap}
-  .rv-lesson{border:1px solid rgba(0,0,0,.1);border-radius:14px;padding:14px 16px;margin:12px 0}
+  /* Override: nessun padding interno + niente border (l'ha già scx-clase) */
+  .rv-lesson{border:0;border-radius:0;padding:0;margin:0}
   .rv-lesson > b{display:block;margin-bottom:8px}
+  /* L'header scx-clase deve estendere all bordo del card */
+  .pk-booking-wrap .scx-clase{padding:0 !important}
+  .pk-booking-wrap .scx-clase-header{margin:0 !important;width:100% !important;box-sizing:border-box}
   .rv-consent{display:flex;gap:12px;align-items:flex-start;margin:14px 0;font-size:14px;line-height:1.5}
   .rv-consent input{width:20px;height:20px;margin-top:1px;flex-shrink:0}
   .rv-hide{display:none !important}
   .rv-err{background:#fdecec;border:1px solid #f3c9c9;color:#b53636;padding:12px 16px;border-radius:12px;margin:0 6vw 18px;font-size:14px}
   .pk-pay-row-panel p{margin:.4em 0}
-  /* Layout campi uniforme su tutti i pacchetti — stile input NATIVO del sito
-     (bordo dorato e fino al focus): non sovrascrivo aspetto/bordo degli input */
   .pk-form .pk-row{display:grid;grid-template-columns:1fr 1fr;gap:22px;align-items:start}
-  .pk-form .pk-row.pk-row-1{grid-template-columns:1fr}
+  .pk-form .pk-row.pk-row-1{grid-template-columns:1fr !important}
+  .pk-form .pk-row.pk-row-3{grid-template-columns:1fr 1fr 1fr !important}
   .pk-form .pk-field{min-width:0}
-  @media(max-width:680px){.pk-form .pk-row{grid-template-columns:1fr;gap:0}}
-  /* Campi = stile elegante del sito: underline, focus dorato e fino */
+  @media(max-width:680px){.pk-form .pk-row,.pk-form .pk-row.pk-row-3{grid-template-columns:1fr !important;gap:0}}
   .pk-form .pk-field input,.pk-form .pk-field select{
     font-family:inherit;font-weight:300;font-size:17px;color:#2a2a2a;background:transparent;
     border:0;border-bottom:1px solid rgba(42,42,42,.22);border-radius:0;
@@ -52,60 +78,469 @@
   .pk-form .pk-field input:focus,.pk-form .pk-field select:focus{
     border-bottom-color:#e0aa00;border-bottom-width:1.5px;padding-bottom:15.5px}
   .pk-form .pk-field input[type=date]{color:#2a2a2a}
-  /* Niente messaggi d'errore inline (validazione lato server) */
   .pk-form .pk-error{display:none !important}
-  /* ===== Checkout: struttura del _77 (1fr 1fr, gap:0, divisore al centro) ===== */
-  body{overflow-x:hidden}
-  .pk-booking,.pk-booking-wrap{padding:0 !important;max-width:none !important;width:100% !important;
-    margin:0 !important;box-sizing:border-box;border:0 !important}
-  .pk-checkout-grid{display:grid !important;
-    grid-template-columns:1fr 1fr !important;
-    gap:0 !important;align-items:start !important;
-    width:100% !important;max-width:none !important;margin:0 !important;padding:0 !important;
-    box-sizing:border-box;min-height:calc(100vh - 72px)}
-  /* SINISTRA: scrolla. Form vicino al divisore centrale. */
-  .pk-checkout-main{min-width:0;background:#fff;
-    border-right:1px solid rgba(42,42,42,.12) !important;
-    padding:40px 30px 80px 8% !important}
-  .pk-checkout-main .pk-form{max-width:560px !important;margin:0 0 0 auto !important;width:100% !important}
-  .pk-checkout-main,.pk-checkout-main .pk-form{padding-top:0 !important;margin-top:0 !important}
-  .pk-checkout-main{padding-top:40px !important}
-  .pk-checkout-main .pk-form>.pk-block:first-child{padding-top:0 !important;margin-top:0 !important}
-  .pk-checkout-main .pk-block-pack{padding-top:0 !important}
-  .pk-checkout-main .pk-pack-title{margin:0 !important;padding:0 !important;line-height:1.05}
-  /* DESTRA: sticky (resta ferma). Riepilogo vicino al divisore. */
-  .pk-summary-sticky{position:sticky !important;top:88px !important;align-self:start;
-    min-width:0;width:100% !important;max-width:none !important;
-    padding:40px 8% 80px 30px !important;margin:0 !important;
-    max-height:calc(100vh - 88px);overflow:auto}
-  .pk-summary-card{box-sizing:border-box;width:100% !important;max-width:420px !important;
-    margin:0 auto 0 0 !important;padding:30px 28px 26px !important}
+  body.page-pack .pk-booking::after{content:'';position:fixed;top:0;bottom:0;
+    left:50%;right:0;background:#fafaf8;z-index:0;pointer-events:none}
+  body.page-pack .pk-booking::before{content:'';position:fixed;top:0;bottom:0;
+    left:50%;width:1px;margin-left:-.5px;background:rgba(0,0,0,.13);z-index:3;pointer-events:none}
+  body.page-pack .pk-booking{background:#fff !important;padding:0 !important;margin:0 !important;
+    max-width:none !important;width:100% !important;border:0 !important;position:relative;z-index:1}
+  body.page-pack .pk-booking-wrap{max-width:1280px !important;margin:0 auto !important;
+    padding:0 !important;width:100% !important;border:0 !important;
+    box-sizing:border-box;background:transparent !important;position:relative;z-index:2}
+  body.page-pack .pk-checkout-grid{display:block !important;
+    width:100% !important;max-width:none !important;
+    margin:0 !important;padding:0 !important;border:0 !important;
+    position:relative !important;min-height:calc(100vh - 72px)}
+  body.page-pack .pk-checkout-main{width:50% !important;min-width:0 !important;
+    background:#fff !important;border:0 !important;
+    padding:24px 40px 90px 5vw !important;
+    min-height:calc(100vh - 72px) !important;height:auto !important;
+    display:block !important;box-sizing:border-box;float:none;position:relative;z-index:2}
+  body.page-pack .pk-checkout-main .pk-form{display:block !important;
+    max-width:none !important;width:100% !important;
+    margin:0 !important;padding:0 !important;box-sizing:border-box}
+  body.page-pack .pk-checkout-main .pk-form>.pk-block:first-child{padding-top:0 !important;margin-top:0 !important}
+  body.page-pack .pk-checkout-main .pk-block-pack{padding-top:0 !important;text-align:left !important}
+  body.page-pack .pk-checkout-main .pk-pack-title{margin:0 0 12px !important;padding:0 !important;line-height:1.05;text-align:left !important}
+  body.page-pack .pk-checkout-main .pk-pack-desc{margin:0 0 18px !important;max-width:none !important;text-align:left !important}
+  body.page-pack .pk-checkout-main .pk-change-pack{display:inline-block !important;text-align:left !important}
+  body.page-pack .pk-summary-sticky{position:fixed !important;
+    top:0 !important;
+    right:max(0px, calc(50vw - 640px)) !important;
+    width:min(50vw, 640px) !important;
+    height:100vh !important;
+    overflow-y:auto !important;
+    background:transparent !important;
+    padding:96px 5vw 48px 40px !important;
+    margin:0 !important;
+    display:block !important;box-sizing:border-box;
+    z-index:2 !important}
+  body.page-pack .pk-summary-card{display:block !important;box-sizing:border-box;
+    width:100% !important;max-width:none !important;
+    margin:0 !important;padding:0 !important;background:transparent !important;border:0 !important}
+  body.page-pack .pk-summary-title{margin:0 0 22px !important;padding:0 !important}
   .pk-summary-card .pk-summary-title{margin:0 0 18px !important;padding:0 !important;line-height:1.15;white-space:normal}
   .pk-summary-row,.pk-summary-card .pk-summary-row{display:flex !important;justify-content:space-between;
     align-items:baseline;gap:16px;padding:9px 0}
   .pk-summary-label,.pk-summary-card .pk-summary-label{white-space:nowrap}
   .pk-summary-value,.pk-summary-card .pk-summary-value{text-align:right}
+  .pk-summary-trigger{display:none}
+
   @media(max-width:980px){
-    .pk-checkout-grid{grid-template-columns:1fr !important;min-height:0}
-    .pk-checkout-main{padding:30px 6% 40px !important;border-right:0 !important}
-    .pk-summary-sticky{position:static !important;top:auto !important;
-      padding:0 6% 60px !important;max-height:none;overflow:visible}
-    .pk-summary-card{max-width:none !important;margin:0 !important}
+    body.page-pack .pk-booking::before,
+    body.page-pack .pk-booking::after{display:none !important}
+    body.page-pack .pk-checkout-grid{display:block !important;min-height:0 !important}
+    body.page-pack .pk-checkout-main{width:100% !important;
+      padding:24px 5vw 92px !important;border-right:0 !important;
+      border-bottom:0 !important;min-height:0 !important}
+    body.page-pack .pk-checkout-main .pk-form{max-width:none !important}
+
+    body.page-pack .pk-summary-sticky{position:fixed !important;
+      top:auto !important;right:0 !important;bottom:0 !important;left:0 !important;
+      width:100% !important;max-width:none !important;
+      height:auto !important;max-height:88vh !important;
+      overflow:hidden !important;
+      background:#fafaf8 !important;
+      border-top:1px solid rgba(0,0,0,.12) !important;
+      box-shadow:0 -10px 30px rgba(0,0,0,.10) !important;
+      padding:0 !important;margin:0 !important;
+      transform:translateY(calc(100% - 72px)) !important;
+      transition:transform .45s cubic-bezier(.7,0,.2,1) !important;
+      z-index:20 !important;
+      border-radius:14px 14px 0 0 !important;
+      display:flex !important;flex-direction:column !important}
+    body.page-pack .pk-summary-sticky.is-open{transform:translateY(0) !important;
+      max-height:88vh !important;overflow-y:auto !important}
+
+    body.page-pack .pk-summary-sticky .pk-summary-trigger{
+      display:flex !important;align-items:center;justify-content:space-between;
+      width:100%;background:transparent;border:0;cursor:pointer;
+      padding:18px 5vw;height:72px;flex-shrink:0;
+      font:inherit;color:inherit;text-align:left}
+    .pk-trigger-meta{display:flex;flex-direction:column;gap:1px}
+    .pk-trigger-lbl{font-size:11.5px;letter-spacing:.18em;text-transform:uppercase;color:#7a8190;font-weight:600}
+    .pk-trigger-amt{font-size:15px;font-weight:500;color:#1c1f26}
+    .pk-trigger-amt strong{font-weight:700;margin-left:6px}
+    .pk-trigger-arrow{font-size:14px;color:#1c1f26;transition:transform .35s ease;display:inline-block}
+    body.page-pack .pk-summary-sticky.is-open .pk-trigger-arrow{transform:rotate(180deg)}
+
+    body.page-pack .pk-summary-card{
+      padding:6px 5vw 30px !important;max-width:none !important;
+      background:transparent !important;border:0 !important}
+    body.page-pack .pk-summary-title{display:none !important}
   }
+  body.page-pack .pk-sub-label-birth{
+    font-size:13px !important;
+    font-weight:600 !important;
+    letter-spacing:.08em !important;
+    color:#1c1f26 !important;
+    margin:0 0 8px !important;
+    display:block !important;
+  }
+  body.page-pack .pk-field-birth input[type=date]{display:block !important;width:100%;box-sizing:border-box}
+
+  .pk-bk-off[hidden]{display:none !important}
+  .pk-bk-off{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;padding:24px}
+  .pk-bk-off-backdrop{position:absolute;inset:0;background:rgba(20,18,14,.55);backdrop-filter:blur(4px);
+    -webkit-backdrop-filter:blur(4px);animation:bk-fade .25s ease-out}
+  .pk-bk-off-box{position:relative;background:#fff;border-radius:14px;max-width:520px;width:100%;
+    padding:36px 36px 28px;box-shadow:0 30px 80px rgba(0,0,0,.25);text-align:center;
+    animation:bk-pop .35s cubic-bezier(.16,1,.3,1)}
+  .pk-bk-off-close{position:absolute;top:12px;right:14px;background:none;border:0;
+    font-size:28px;line-height:1;color:#9aa1b2;cursor:pointer;padding:6px 12px}
+  .pk-bk-off-close:hover{color:#1c1f26}
+  .pk-bk-off-icon{display:flex;justify-content:center;color:#c8970a;margin-bottom:14px}
+  .pk-bk-off-box h3{font-family:var(--sans,Inter,Arial);font-weight:400;letter-spacing:-.01em;
+    font-size:22px;line-height:1.25;margin:0 0 14px;color:#1c1f26}
+  .pk-bk-off-box p{font-size:14.5px;line-height:1.6;color:#5a5e6a;margin:0 0 14px}
+  .pk-bk-off-box p:last-of-type{margin-bottom:18px}
+  .pk-bk-off-actions{display:flex;flex-direction:column;gap:10px;margin:18px 0 16px}
+  .pk-bk-off-cta{display:inline-block;padding:12px 22px;border:1.5px solid #1c1f26;
+    border-radius:99px;text-decoration:none;color:#1c1f26;font-size:13px;font-weight:600;
+    letter-spacing:.06em;transition:background .35s ease,color .35s ease,transform .35s ease}
+  .pk-bk-off-cta:hover{background:#1c1f26;color:#e0aa00;transform:translateY(-2px)}
+  .pk-bk-off-cta.primary{background:#e0aa00;border-color:#e0aa00;color:#1c1f26}
+  .pk-bk-off-cta.primary:hover{background:#c8970a;border-color:#c8970a;color:#fff}
+  .pk-bk-off-cta.ghost{border-color:rgba(0,0,0,.15);font-weight:500;letter-spacing:.02em;text-transform:none}
+  .pk-bk-off-foot{font-size:12.5px;color:#9aa1b2;margin:8px 0 0 !important}
+  @keyframes bk-fade{from{opacity:0}to{opacity:1}}
+  @keyframes bk-pop{from{opacity:0;transform:translateY(20px) scale(.96)}to{opacity:1;transform:translateY(0) scale(1)}}
+
+  .pk-refund-policy{display:flex;gap:12px;align-items:flex-start;margin-top:24px;
+    padding:14px 16px;background:#fdf8e8;border:1px solid #ead9a8;border-radius:8px;
+    color:#7a5800;font-size:13px;line-height:1.55}
+  .pk-refund-policy svg{flex-shrink:0;color:#c8970a;margin-top:1px}
+  .pk-refund-policy strong{display:block;font-size:12px;letter-spacing:.08em;text-transform:uppercase;
+    color:#7a5800;margin-bottom:4px;font-weight:600}
+  .pk-refund-policy p{margin:0;color:#5e4400}
+  .pk-refund-policy a{color:#7a5800;text-decoration:underline}
+  .pk-refund-policy a:hover{color:#000}
+
+  .pk-embed-wrap{padding:0;margin:0}
+  .pk-embed-back{display:inline-flex;align-items:center;gap:6px;background:none;border:0;
+    cursor:pointer;color:#7a8190;font-size:13.5px;padding:0;margin:0 0 18px;letter-spacing:.04em}
+  .pk-embed-back:hover{color:#1c1f26}
+  .pk-embed-title{font-family:var(--sans,Inter,Arial);font-weight:300;letter-spacing:-.02em;
+    font-size:clamp(28px,2.4vw,36px);margin:0 0 18px;line-height:1.1;color:#1c1f26}
+  #embed-payment{min-height:520px}
+  .pk-embed-loading{color:#7a8190;padding:40px 0}
+  .pk-embed-error{background:#fff3f0;border:1px solid #e7c1b8;color:#8a2a1c;
+    padding:14px 18px;border-radius:8px;margin-bottom:18px}
+
+  /* ===== F3: counter partecipanti + accordion partecipanti + tutori ===== */
+  .rv-counter{display:inline-flex;align-items:center;gap:0;border:1px solid rgba(42,42,42,.15);
+    border-radius:10px;background:#fff;width:fit-content;overflow:hidden;margin:8px 0 0}
+  .rv-counter button{background:transparent;border:0;cursor:pointer;
+    width:44px;height:44px;font-size:20px;font-weight:400;color:#1c1f26;line-height:1;
+    transition:background .25s ease,color .25s ease;display:flex;align-items:center;justify-content:center}
+  .rv-counter button:hover:not(:disabled){background:#fdf8e8;color:#c8970a}
+  .rv-counter button:disabled{opacity:.3;cursor:not-allowed}
+  .rv-counter .rv-counter-val{min-width:54px;text-align:center;font-size:17px;font-weight:600;color:#1c1f26;
+    padding:0 6px;border-left:1px solid rgba(42,42,42,.1);border-right:1px solid rgba(42,42,42,.1);
+    height:44px;display:flex;align-items:center;justify-content:center}
+  .rv-counter-hint{margin-top:8px;font-size:12.5px;color:#7a8190;line-height:1.45}
+
+  /* Accordion partecipante */
+  .rv-part{border:1px solid rgba(42,42,42,.12);border-radius:12px;background:#fff;margin-bottom:12px;
+    overflow:hidden;transition:border-color .25s ease,box-shadow .25s ease}
+  .rv-part:hover{border-color:rgba(224,170,0,.4)}
+  .rv-part-head{display:flex;align-items:center;gap:12px;padding:14px 16px;cursor:pointer;
+    user-select:none;background:#fafaf8;border-bottom:1px solid transparent;transition:background .2s ease}
+  .rv-part-head:hover{background:#f7f6f2}
+  /* Header partecipante grigio chiaro come design (era giallo prima) */
+  .rv-part.is-open .rv-part-head,.rv-part .rv-part-head,.scx-participant-card .scx-participant-header{background:#fafbfc !important;border-bottom:1px solid #dde0e4 !important;color:#2a2a2a !important}
+  .rv-part-num{flex-shrink:0;display:flex;align-items:center;justify-content:center;
+    width:30px;height:30px;border-radius:50%;background:#1c1f26;color:#e0aa00;
+    font-size:13px;font-weight:700}
+  .rv-part-title{flex:1;font-size:14.5px;font-weight:600;color:#1c1f26;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .rv-part-status{font-size:11.5px;color:#7a8190;font-weight:500}
+  .rv-part-badge{font-size:9.5px;padding:2px 7px;border-radius:99px;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+  .rv-part-badge-minor{background:#fff3d6;color:#7a5800}
+  .rv-part-badge-adult{background:#e3f0ff;color:#0d5290}
+  .rv-part-badge-ok{background:#d6f3df;color:#1b6b3e}
+  .rv-part-badge-incomplete{background:#ffe1dc;color:#8a2a1c}
+  .rv-part-arrow{font-size:14px;color:#1c1f26;transition:transform .25s ease;flex-shrink:0}
+  .rv-part.is-open .rv-part-arrow{transform:rotate(180deg)}
+  /* Visibilità accordion gestita da scx-participant-body.is-collapsed */
+  .rv-part-body{padding:14px 16px}
+  .rv-part-section{margin-top:10px}
+  .rv-part-section h4{margin:0 0 8px;font-size:12px;font-weight:600;letter-spacing:.12em;
+    text-transform:uppercase;color:#7a8190}
+
+  /* Tutor: blocco selettore per ogni minore */
+  .rv-tutor-pick{margin-top:10px;padding:12px 14px;background:#fffaee;border:1px solid #ead9a8;border-radius:10px}
+  .rv-tutor-pick-label{font-size:12.5px;font-weight:600;color:#7a5800;margin-bottom:8px;letter-spacing:.04em}
+  .rv-tutor-pick-opts{display:flex;flex-direction:column;gap:6px}
+  .rv-tutor-pick-opt{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:6px;
+    cursor:pointer;font-size:13.5px;color:#1c1f26;transition:background .2s ease}
+  .rv-tutor-pick-opt:hover{background:#fdf8e8}
+  .rv-tutor-pick-opt input[type=radio]{width:16px;height:16px;accent-color:#c8970a;flex-shrink:0}
+  .rv-tutor-pick-opt.is-new{border-top:1px dashed rgba(0,0,0,.1);margin-top:4px;padding-top:10px}
+
+  /* Sezione tutori */
+  .rv-tutors-empty{font-size:13.5px;color:#7a8190;font-style:italic;padding:14px 0}
+  .rv-tutor-block{border:1px solid rgba(42,42,42,.12);border-radius:12px;background:#fff;margin-bottom:12px;
+    padding:14px 18px}
+  .rv-tutor-block-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;
+    flex-wrap:wrap;gap:10px}
+  .rv-tutor-block-title{font-size:14.5px;font-weight:600;color:#1c1f26}
+  .rv-tutor-block-used{font-size:11.5px;color:#7a8190;font-weight:500}
+  .rv-tutor-block-del{background:transparent;border:0;color:#9aa1b2;cursor:pointer;font-size:18px;
+    line-height:1;padding:4px 8px;border-radius:50%;transition:background .2s ease,color .2s ease}
+  .rv-tutor-block-del:hover{background:#ffe1dc;color:#8a2a1c}
+  .rv-tutor-block-del:disabled{opacity:.3;cursor:not-allowed}
+
+  .rv-add-btn{background:#fff;border:1.5px dashed rgba(42,42,42,.25);border-radius:10px;
+    color:#1c1f26;font-family:inherit;font-size:13.5px;font-weight:500;letter-spacing:.04em;
+    padding:12px 18px;cursor:pointer;width:100%;
+    transition:border-color .25s ease,background .25s ease,color .25s ease}
+  .rv-add-btn:hover{border-color:#c8970a;background:#fdf8e8;color:#7a5800}
+
+  /* Summary update for participants */
+  .pk-summary-row-detail{font-size:13.5px;color:#5a5e6a}
+  .pk-summary-multiplier{opacity:.65;margin-left:4px;font-size:.88em}
+
+  /* Billing toggle (datos para factura, opcional) */
+  .rv-billing-toggle{display:flex;align-items:center;gap:10px;padding:12px 14px;background:#fafbfc;
+    border:1px solid #eef0f4;border-radius:10px;cursor:pointer;user-select:none;margin-top:14px;
+    transition:background .2s ease,border-color .2s ease}
+  .rv-billing-toggle:hover{background:#fdf8e8;border-color:#ead9a8}
+  .rv-billing-toggle input[type=checkbox]{width:18px;height:18px;accent-color:#c8970a;flex-shrink:0;cursor:pointer}
+  .rv-billing-toggle-label{flex:1;font-size:14px;color:#1c1f26}
+  .rv-billing-toggle-label small{display:block;font-size:12px;color:#7a8190;margin-top:2px;font-weight:400}
+  .rv-billing-fields{margin-top:14px;padding:18px;background:#fafbfc;border:1px solid #eef0f4;
+    border-radius:10px;display:none}
+  .rv-billing-fields.is-open{display:block}
+
+  /* ════════════════════════════════════════════════════════════════════
+     SCX-* DESIGN PORT — checkout style identico al file design
+     ════════════════════════════════════════════════════════════════════ */
+  .pk-booking-wrap .pk-block-title{margin-bottom:14px !important;font-family:"Manrope",system-ui,sans-serif !important;font-size:20px !important;font-weight:700 !important;color:#2a2a2a !important;text-transform:none !important;letter-spacing:-.005em !important;line-height:1.2 !important}
+  .pk-booking-wrap .pk-block + .pk-block{padding-top:28px !important}
+  .pk-booking-wrap .pk-block{padding-bottom:0 !important;border-bottom:0 !important}
+  .pk-booking-wrap .pk-block:first-child{padding-top:0 !important}
+
+  /* Formula chips (1 / 3 / 6 clases) */
+  /* Paquete chips */
+  .scx-pack-chips{display:flex;flex-wrap:nowrap;gap:12px;width:100%;margin-top:6px}
+  .scx-pchip{flex:1;height:66px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:0;background:#fff;border:1px solid rgba(42,42,42,.15);border-radius:10px;font-family:"Manrope",system-ui,sans-serif;font-size:14px;font-weight:600;color:#2a2a2a;cursor:pointer;text-decoration:none;transition:border-color .2s,background .2s,transform .2s;box-sizing:border-box}
+  .scx-pchip:hover:not(.is-selected){border-color:#F5C518;transform:translateY(-1px)}
+  .scx-pchip.is-selected{background:#F5C518;border-color:#F5C518;color:#2a2a2a}
+  .scx-pchip-name{font-size:15px;font-weight:700;line-height:1}
+  .scx-pchip-price{font-size:13px;font-weight:400;line-height:1;color:#5a5a5a}
+  .scx-pack-desc-text{font-family:"Manrope",system-ui,sans-serif;font-size:15.5px;line-height:1.7;font-weight:400;color:#5a5a5a;margin:18px 0 0}
+  .scx-formula{display:flex;flex-wrap:nowrap;gap:12px;width:100%;margin-top:6px}
+  .scx-fchip{flex:1;height:66px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:0;background:#fff;border:1px solid rgba(42,42,42,.15);border-radius:10px;font-family:"Manrope",system-ui,sans-serif;font-size:14px;font-weight:600;color:#2a2a2a;cursor:pointer;transition:border-color .2s,background .2s,transform .2s;box-sizing:border-box}
+  .scx-fchip:hover:not(.is-selected){border-color:#F5C518;transform:translateY(-1px)}
+  .scx-fchip.is-selected{background:#F5C518;border-color:#F5C518;color:#2a2a2a}
+  .scx-fchip-name{font-size:15px;font-weight:700;line-height:1}
+  .scx-fchip-price{font-size:13px;font-weight:400;line-height:1;color:#5a5a5a}
+
+  /* Counter partecipanti */
+  .pk-booking-wrap .scx-personas{height:58px;display:inline-grid;grid-template-columns:58px 60px 58px;align-items:stretch;gap:0;padding:0;border:1px solid rgba(42,42,42,.12);border-radius:8px;overflow:hidden;background:#fff;margin-top:6px}
+  .pk-booking-wrap .scx-personas button{width:58px;height:58px;border:0;border-radius:0;background:#fff;color:#2a2a2a;font-family:"Manrope",system-ui,sans-serif;font-size:18px;font-weight:600;cursor:pointer}
+  .pk-booking-wrap .scx-personas button:hover:not(:disabled){background:#fef4c0;color:#2a2a2a}
+  .pk-booking-wrap .scx-personas button + .scx-pers-display,
+  .pk-booking-wrap .scx-personas .scx-pers-display + button{border-left:1px solid rgba(42,42,42,.1)}
+  .pk-booking-wrap .scx-personas button:disabled{color:rgba(42,42,42,.35);cursor:not-allowed;background:#fafaf8}
+  .pk-booking-wrap .scx-personas .scx-pers-display{min-width:60px;height:58px;display:flex;align-items:center;justify-content:center;font-family:"Manrope",system-ui,sans-serif;font-size:16px;font-weight:600;color:#2a2a2a}
+  .scx-participants-note{font-family:"Manrope",system-ui,sans-serif;font-size:15.5px;line-height:1.7;font-weight:400;color:#5a5a5a;margin:0 0 16px}
+  .scx-participants-subtitle{font-family:"Manrope",system-ui,sans-serif;font-size:15.5px;line-height:1.7;font-weight:400;color:#5a5a5a;margin:0 0 16px}
+
+  /* Partecipanti accordion */
+  .scx-participant-data{display:flex;flex-direction:column;gap:12px}
+  .scx-participant-card{background:#fff;border:1px solid #dde0e4;border-radius:12px;overflow:hidden}
+  .scx-participant-header{display:flex;align-items:center;gap:10px;background:#fafbfc;border-bottom:1px solid #dde0e4;padding:14px 18px;cursor:pointer;user-select:none}
+  .scx-participant-title{font-family:var(--sans,Inter,Manrope,sans-serif);font-size:11px;font-weight:700;color:#2a2a2a;text-transform:uppercase;letter-spacing:.16em;flex:1;margin:0}
+  .scx-participant-toggle{background:none;border:none;cursor:pointer;padding:4px;line-height:1;flex:none;width:24px;height:24px;display:flex;align-items:center;justify-content:center;color:#888;transition:transform .2s}
+  .scx-participant-card.is-collapsed .scx-participant-toggle{transform:rotate(180deg)}
+  .scx-participant-body{padding:14px 16px;display:flex;flex-direction:column;gap:10px}
+  .scx-participant-body.is-collapsed{display:none}
+  .scx-participant-card.is-collapsed .scx-participant-header{border-bottom:none}
+  .scx-participant-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .scx-pg-input{height:52px;width:100%;padding:0 16px;font-family:"Manrope",system-ui,sans-serif;font-size:15px;color:#2a2a2a;border:1px solid rgba(42,42,42,.18);border-radius:8px;background:#fff;box-sizing:border-box;outline:none;display:block}
+  .scx-pg-input:focus{border-color:#F5C518;outline:none}
+  .scx-pg-full{grid-column:1/-1}
+  .scx-pg-row3{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr 80px;gap:12px}
+  .scx-pg-row3 .scx-pg-input{width:100%}
+  .scx-participant-card.scx-is-minor .scx-minor-hide{display:none !important}
+  .scx-minor-tutor-note{grid-column:1/-1;padding:12px 14px;background:#fffaee;border:1px solid #ead9a8;border-radius:8px;font-family:"Manrope",system-ui,sans-serif;font-size:13.5px;line-height:1.5;color:#5a5e6a}
+  .scx-minor-tutor-note strong{color:#2a2a2a;font-weight:700}
+  @media(max-width:640px){.scx-participant-grid{grid-template-columns:1fr}.scx-pg-row3{grid-template-columns:1fr}}
+
+  /* Extras yellow card */
+  .scx-extra{display:flex;align-items:center;gap:14px;background:#fdf7e3;border:1px solid rgba(245,197,24,.55);border-radius:12px;padding:16px 18px;margin-bottom:10px}
+  .scx-extra-check{flex:none;width:22px;height:22px;border-radius:6px;background:#F5C518;color:#2a2a2a;display:grid;place-items:center}
+  .scx-extra-check svg{width:13px;height:13px}
+  .scx-extra-body{display:flex;flex-direction:column;gap:3px;flex:1;min-width:0}
+  .scx-extra-name{font-family:"Manrope",system-ui,sans-serif;font-size:15px;font-weight:600;color:#2a2a2a;display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+  .scx-extra-tag{font-family:"Manrope",system-ui,sans-serif;font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;background:#F5C518;color:#2a2a2a;padding:2px 8px;border-radius:5px}
+  .scx-extra-desc{font-family:"Manrope",system-ui,sans-serif;font-size:14px;line-height:1.55;color:#5a5a5a}
+  .scx-extra-price{font-family:"Manrope",system-ui,sans-serif;font-size:15px;font-weight:700;color:#2a2a2a;flex:none;text-align:right}
+  .scx-extras-subtitle{font-family:"Manrope",system-ui,sans-serif;font-size:15.5px;line-height:1.7;font-weight:400;color:#5a5a5a;margin:0 0 16px}
+
+  /* Pagante inputs unifyed */
+  .pk-booking-wrap .pk-field input,
+  .pk-booking-wrap .pk-field select{
+    height:52px !important;padding:0 16px !important;
+    font-family:"Manrope",system-ui,sans-serif !important;
+    font-size:15px !important;font-weight:400 !important;color:#2a2a2a !important;
+    border:1px solid rgba(42,42,42,.18) !important;border-radius:8px !important;
+    background:#fff !important;box-sizing:border-box !important
+  }
+  .pk-booking-wrap .pk-field input::placeholder{color:rgba(42,42,42,.38);font-size:15px;font-weight:400}
+  .pk-booking-wrap .pk-field input:focus,
+  .pk-booking-wrap .pk-field select:focus{border-color:#F5C518 !important;outline:none !important;padding-bottom:0 !important}
+  /* date input — type=date ha behavior speciale */
+  .pk-booking-wrap .pk-field input[type=date]{appearance:textfield}
+
+  /* Consents (4 spuntine pagante + minorConsent dinamico) */
+  .scx-consents{display:flex;flex-direction:column;gap:14px;margin-top:14px}
+  .scx-consent{display:grid;grid-template-columns:22px 1fr;gap:12px;align-items:start;font-family:"Manrope",system-ui,sans-serif;font-size:14px;line-height:1.55;font-weight:400;color:#2a2a2a;cursor:pointer;margin:0}
+  .scx-consent input{position:absolute;opacity:0;pointer-events:none}
+  .scx-consent-box{width:22px;height:22px;border:1px solid rgba(42,42,42,.45);border-radius:6px;background:#fff;box-sizing:border-box;margin-top:0;position:relative;flex:none}
+  .scx-consent input:checked + .scx-consent-box{
+    background:#F5C518 url("data:image/svg+xml,<svg viewBox='0 0 12 12' fill='none' xmlns='http://www.w3.org/2000/svg'><path d='M2.4 6.3 5 8.7 9.6 3.4' stroke='%232a2a2a' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'/></svg>") center/14px 14px no-repeat;
+    border-color:#F5C518
+  }
+  .scx-consent strong{font-weight:700;color:#2a2a2a}
+
+  /* Factura toggle card */
+  .scx-factura-card{margin-top:18px;padding:14px 16px;background:#fafbfc;border:1px solid #dde0e4;border-radius:12px}
+  .scx-factura-label{display:grid !important;grid-template-columns:22px 1fr;gap:12px;align-items:flex-start;cursor:pointer;margin:0}
+  .scx-factura-text{display:flex;flex-direction:column;gap:3px}
+  .scx-factura-text strong{font-family:"Manrope",system-ui,sans-serif;font-size:14px;font-weight:700;color:#2a2a2a;line-height:1.4}
+  .scx-factura-desc{font-family:"Manrope",system-ui,sans-serif;font-size:14px;font-weight:400;color:#5a5a5a;line-height:1.55}
+  .scx-factura-form{display:none;margin-top:14px;padding:18px;background:#fafbfc;border:1px solid #dde0e4;border-radius:12px;flex-direction:column;gap:10px}
+  .scx-factura-form.is-open{display:flex}
+  .scx-factura-form input{width:100%;height:52px;padding:0 14px;font-family:"Manrope",system-ui,sans-serif;font-size:15px;font-weight:400;color:#2a2a2a;border:1px solid rgba(42,42,42,.18);border-radius:8px;background:#fff;box-sizing:border-box;outline:none}
+  .scx-factura-form input:focus{border-color:#F5C518}
+  .scx-factura-row{display:grid;grid-template-columns:1fr 1fr 80px;gap:10px}
+  .scx-factura-country input{text-align:center;font-weight:600}
+
+  /* Summary right column — design fedele: titoli più grandi + righe più strette */
+  .ck-sumcard .ck-sum-k,.pk-summary-label{font-size:13px;letter-spacing:.06em;font-weight:700;text-transform:uppercase;color:#5a5a5a;font-family:"Manrope",system-ui,sans-serif}
+  .ck-sumcard .ck-sum-v,.pk-summary-value{font-size:17px;font-weight:600;color:#2a2a2a;font-family:"Manrope",system-ui,sans-serif;text-align:right}
+  .ck-sumcard .pk-summary-title,.ck-sumcard .ck-sum-title{font-size:24px !important;font-weight:700 !important;letter-spacing:-.01em !important;text-transform:none !important;margin:0 0 18px !important;color:#2a2a2a;font-family:"Manrope",system-ui,sans-serif}
+  .ck-sumcard .ck-sum-total-lbl,.ck-sumcard .pk-summary-total-label{font-size:22px;font-weight:700;color:#2a2a2a}
+  .ck-sumcard .ck-sum-total-amt,.ck-sumcard .pk-summary-total-amount{font-size:30px;font-weight:700;color:#2a2a2a;font-family:"Manrope",system-ui,sans-serif}
+  .ck-sumcard .pk-summary-rows,.ck-sumcard .ck-sum-rows{display:flex;flex-direction:column;gap:0}
+  .ck-sumcard .pk-summary-row,.ck-sumcard .ck-sum-row{padding:2px 0 !important;display:flex !important;justify-content:space-between !important;align-items:baseline !important;gap:12px;line-height:1.35}
+  .ck-sumcard .pk-summary-total,.ck-sumcard .ck-sum-total{margin-top:14px !important;padding-top:14px !important;border-top:1px solid rgba(42,42,42,.12);display:flex;justify-content:space-between;align-items:baseline}
+
+  /* Stripe Elements (individual card fields) styled like design */
+  .scx-card-fields{display:flex;flex-direction:column;gap:10px;padding:14px 0 0}
+  .scx-card-row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .scx-card-full{grid-column:1/-1}
+  /* IMPORTANTE: niente display:flex sull'iframe Stripe — usa padding per centrare */
+  .scx-card-field .scx-stripe-el{height:52px;width:100%;padding:17px 16px;font-family:"Manrope",system-ui,sans-serif;font-size:15px;color:#2a2a2a;border:1px solid rgba(42,42,42,.18);border-radius:8px;background:#fff;box-sizing:border-box;outline:none}
+  .scx-card-field input.scx-pg-input{height:52px;width:100%;padding:0 16px;font-family:"Manrope",system-ui,sans-serif;font-size:15px;color:#2a2a2a;border:1px solid rgba(42,42,42,.18);border-radius:8px;background:#fff;box-sizing:border-box;outline:none}
+  .scx-card-field .StripeElement--focus,.scx-card-field input.scx-pg-input:focus{border-color:#F5C518 !important}
+  .scx-card-field .StripeElement--invalid{border-color:#e7c1b8}
+  .scx-pay-message{margin-top:10px;padding:10px 14px;font-family:"Manrope",system-ui,sans-serif;font-size:13.5px;border-radius:8px;background:#fff3f0;border:1px solid #e7c1b8;color:#8a2a1c}
+
+  /* Lessons (Single date+slot grid) — sostituisce rv-lesson + pk-date/pk-slot */
+  .pk-booking-wrap .scx-clase{background:#fff;border:1px solid #dde0e4;border-radius:12px;overflow:hidden;margin-bottom:14px}
+  .pk-booking-wrap .scx-clase-header{background:#fafbfc;border-bottom:1px solid #dde0e4;padding:14px 18px}
+  .pk-booking-wrap .scx-clase-title{display:block;font-family:var(--sans,Inter,Manrope,sans-serif);font-size:11px;font-weight:700;color:#2a2a2a;text-transform:uppercase;letter-spacing:.16em;margin:0}
+  .pk-booking-wrap .scx-clase-body{padding:14px 16px}
+  .pk-booking-wrap .scx-clase-label{font-family:"Manrope",system-ui,sans-serif;font-size:11px;font-weight:700;text-transform:uppercase;color:#5a5a5a;letter-spacing:.16em;margin:14px 0 8px}
+  .pk-booking-wrap .scx-clase-label:first-child{margin-top:0}
+  /* FECHA: 3 bottoni wide rectangle flex:1 con label "29 Julio 2026" */
+  .pk-booking-wrap .scx-dyn-dates{display:flex;flex-wrap:nowrap;gap:10px;width:100%}
+  .pk-booking-wrap .scx-date{flex:1;height:66px;padding:0 8px;border-radius:10px;display:flex;align-items:center;justify-content:center;box-sizing:border-box;font-family:"Manrope",system-ui,sans-serif;font-size:15px;font-weight:600;background:#fff;border:1px solid rgba(42,42,42,.1);cursor:pointer;color:#2a2a2a;transition:border-color .22s,background .22s,transform .22s;text-align:center;line-height:1.2}
+  .pk-booking-wrap .scx-date:hover:not(.is-selected){border-color:#F5C518;transform:translateY(-1px)}
+  .pk-booking-wrap .scx-date.is-selected{background:#F5C518 !important;border-color:#F5C518 !important;color:#2a2a2a !important}
+  .pk-booking-wrap .scx-date .pk-date-inline{font-family:"Manrope",system-ui,sans-serif;font-size:14px;font-weight:600;color:#2a2a2a;letter-spacing:0;text-transform:none;white-space:nowrap;line-height:1.25;text-align:center}
+
+  /* HORARIO: bottoni quadrati 60x60 distribuiti */
+  .pk-booking-wrap .scx-dyn-slots{display:flex;flex-wrap:wrap;gap:8px}
+  .pk-booking-wrap .scx-slot{width:66px;height:60px;padding:0;border-radius:10px;display:flex;align-items:center;justify-content:center;box-sizing:border-box;font-family:"Manrope",system-ui,sans-serif;font-size:14px;font-weight:600;font-variant-numeric:tabular-nums;background:#fff;border:1px solid rgba(42,42,42,.1);cursor:pointer;color:#2a2a2a;transition:border-color .22s,background .22s,transform .22s}
+  .pk-booking-wrap .scx-slot:hover:not(:disabled):not(.is-selected){border-color:#F5C518;transform:translateY(-1px)}
+  .pk-booking-wrap .scx-slot.is-selected{background:#F5C518 !important;border-color:#F5C518 !important;color:#2a2a2a !important}
+  .pk-booking-wrap .scx-slot:disabled{opacity:.35;cursor:not-allowed;pointer-events:none;text-decoration:line-through;transform:none}
+
+  /* LECCIÓN display */
+  .pk-booking-wrap .scx-lecion-display{font-family:"Manrope",sans-serif;font-size:15px;font-weight:500;color:#2a2a2a;line-height:1.5}
+
+  /* RED AM/PM per giorno (design fedele) */
+  .pk-booking-wrap .scx-red-window{border:1px solid #dde0e4;border-radius:12px;overflow:hidden;background:#fff}
+  .pk-booking-wrap .scx-red-day{border:0;background:#fff}
+  .pk-booking-wrap .scx-red-day + .scx-red-day{border-top:1px solid #dde0e4}
+  .pk-booking-wrap .scx-red-day-header{background:#fafbfc;border-bottom:1px solid #dde0e4;padding:13px 16px;font-family:"Manrope",system-ui,sans-serif;font-size:11px;font-weight:700;color:#2a2a2a;text-transform:uppercase;letter-spacing:.16em}
+  .pk-booking-wrap .scx-red-day-body{padding:14px 16px;display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .pk-booking-wrap .scx-ampm-btn{height:66px;border:1px solid rgba(42,42,42,.15);border-radius:10px;background:#fff;cursor:pointer;font-family:"Manrope",system-ui,sans-serif;font-size:15px;font-weight:600;color:#2a2a2a;transition:border-color .22s,background .22s;display:flex;align-items:center;justify-content:center;padding:0}
+  .pk-booking-wrap .scx-ampm-btn:hover:not(.is-selected){border-color:#F5C518}
+  .pk-booking-wrap .scx-ampm-btn.is-selected{background:#F5C518;border-color:#F5C518;color:#2a2a2a}
+  .pk-booking-wrap .scx-red-day .scx-clase-label{margin:14px 16px 6px !important;font-family:"Manrope",system-ui,sans-serif;font-size:11px;font-weight:700;color:#5a5a5a;text-transform:uppercase;letter-spacing:.16em}
+  .pk-booking-wrap .scx-red-day .scx-lecion-display{padding:0 16px 14px !important;font-family:"Manrope",sans-serif;font-size:15px;font-weight:500;color:#2a2a2a;line-height:1.5}
+
+  /* Payment wrap unified (Stripe Payment Element) */
+  .scx-pay-wrap{border:1px solid #dde0e4;border-radius:12px;padding:18px;background:#fff;min-height:96px}
+  .scx-pay-element{min-height:60px}
+  .scx-pay-element-placeholder{font-family:"Manrope",system-ui,sans-serif;font-size:14px;color:#888;text-align:center;padding:20px 0;font-style:italic}
+  .scx-pay-note{font-family:"Manrope",system-ui,sans-serif;font-size:12.5px;color:#5a5a5a;text-align:center;margin:14px 0 0;letter-spacing:.02em}
+
+  /* Refund box design */
+  .scx-refund-box{margin-top:18px;padding:16px 18px;background:#fafbfc;border:1px solid #dde0e4;border-radius:12px}
+  .scx-refund-title{font-family:"Manrope",system-ui,sans-serif;font-size:14px;font-weight:700;color:#2a2a2a;margin:0 0 6px;letter-spacing:0;text-transform:none}
+  .scx-refund-text{font-family:"Manrope",system-ui,sans-serif;font-size:14.5px;line-height:1.6;color:#5a5a5a;margin:0}
+  .scx-refund-text strong{color:#2a2a2a;font-weight:600}
+  .scx-refund-link{color:#2a2a2a;text-decoration:underline}
+  .scx-refund-link:hover{color:#000}
+</style>
+<script src="https://js.stripe.com/v3/" defer></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/flatpickr.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/flatpickr.min.js"></script>
+<style id="scx-flatpickr-css">
+.flatpickr-calendar{background:#fff !important;border:1px solid #dde0e4 !important;border-radius:16px !important;box-shadow:0 6px 24px -6px rgba(0,0,0,.10) !important;font-family:"Manrope",system-ui,sans-serif !important;font-size:14px !important;width:288px !important;padding:10px 12px 4px !important;overflow:visible !important;z-index:10000 !important}
+.flatpickr-calendar.arrowTop:before,.flatpickr-calendar.arrowTop:after,.flatpickr-calendar.arrowBottom:before,.flatpickr-calendar.arrowBottom:after{display:none !important}
+.flatpickr-months{padding:0 !important;height:0 !important;overflow:hidden !important}
+.flatpickr-month,.flatpickr-current-month,.flatpickr-prev-month,.flatpickr-next-month{display:none !important}
+.flatpickr-weekday{font-size:11px !important;font-weight:700 !important;color:#5a5a5a !important;text-transform:uppercase !important;letter-spacing:.06em !important}
+.flatpickr-day{border-radius:6px !important;height:28px !important;line-height:28px !important;font-size:13px !important;color:#2a2a2a !important;font-weight:500 !important;border:1px solid transparent !important}
+.flatpickr-day:hover:not(.flatpickr-disabled){background:#fdf7e3 !important;border-color:#F5C518 !important}
+.flatpickr-day.selected,.flatpickr-day.selected:hover{background:#F5C518 !important;border-color:#F5C518 !important;color:#2a2a2a !important;font-weight:700 !important}
+.flatpickr-day.today{border-color:rgba(42,42,42,.3) !important}
+.flatpickr-day.flatpickr-disabled,.flatpickr-day.nextMonthDay,.flatpickr-day.prevMonthDay{color:rgba(42,42,42,.2) !important}
+.flatpickr-day.nextMonthDay,.flatpickr-day.prevMonthDay{visibility:hidden !important;pointer-events:none !important}
+.flatpickr-rContainer,.flatpickr-days,.dayContainer{width:100% !important;overflow:hidden !important}
+.scx-date-wrap{position:relative;display:block;width:100%}
+.scx-date-wrap.scx-pg-full{grid-column:1/-1}
+.scx-date-wrap input.scx-pg-input{width:100% !important;padding-right:42px !important;cursor:text !important;box-sizing:border-box !important}
+.scx-cal-btn{position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;padding:3px;color:#888;display:flex;align-items:center;line-height:1;transition:color .15s;z-index:2}
+.scx-cal-btn:hover{color:#F5C518}
+.scx-fp-header{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:16px 0 6px}
+.scx-fp-sel{position:relative;display:inline-flex;align-items:center}
+.scx-fp-btn{display:inline-flex;align-items:center;gap:6px;background:#fafbfc;border:1px solid #dde0e4;border-radius:8px;padding:5px 10px;font-family:"Manrope",sans-serif;font-size:14px;font-weight:600;color:#2a2a2a;cursor:pointer;outline:none;white-space:nowrap;transition:border-color .15s}
+.scx-fp-btn:hover{border-color:#F5C518}
+.scx-fp-btn svg{flex-shrink:0;transition:transform .15s}
+.scx-fp-btn.open svg{transform:rotate(180deg)}
+.scx-fp-drop{position:absolute;top:calc(100% + 6px);left:0;background:#fff;border:1px solid #dde0e4;border-radius:12px;z-index:99999;min-width:130px;overflow-y:auto;padding:6px 0;display:none;list-style:none;margin:0}
+.scx-fp-drop.months-drop{max-height:none;overflow-y:visible}
+.scx-fp-drop.years-drop{max-height:260px;overflow-y:auto}
+.scx-fp-drop.visible{display:block}
+.scx-fp-drop li{list-style:none;padding:8px 14px;font-family:"Manrope",sans-serif;font-size:14px;font-weight:400;color:#2a2a2a;cursor:pointer;transition:background .12s}
+.scx-fp-drop li:hover{background:#fdf7e3}
+.scx-fp-drop li.active{font-weight:700;color:#2a2a2a;background:#fdf7e3}
+.scx-cal-close{position:absolute;top:10px;right:10px;background:none;border:none;cursor:pointer;padding:4px;color:#888;display:flex;align-items:center;border-radius:4px;transition:color .15s}
+.scx-cal-close:hover{color:#2a2a2a}
 </style>
 </head>
-<body class="on-pack" data-pack-color="<%= plan.slug.replace('pack-','') %>">
+<body class="on-pack page-pack" data-pack-color="<%= plan.slug.replace('pack-','') %>">
 <% if (typeof logoDefs !== 'undefined' && logoDefs) { %><%- logoDefs %><% } %>
-<header class="rv-site-head">
+<header class="site">
   <nav class="nav">
-    <a href="/" class="logo" aria-label="Irene Monticelli — Home">
+    <a href="/" class="logo" aria-label="Irene Monticelli — Inicio">
       <svg viewBox="0 0 1000 140" preserveAspectRatio="xMinYMid meet" aria-hidden="true"><use href="#logo-paths"/></svg>
     </a>
-    <button class="rv-burger" id="rvBurger" aria-label="Menú"><span></span><span></span><span></span></button>
-    <div class="nav-links" id="rvNav">
-      <a href="/quien-soy">Quién soy</a>
-      <a href="/pro-dance">Pro Dance</a>
-      <a href="/contatti">Contacto</a>
+    <button class="nav-toggle" id="navToggle" aria-label="Menú"><span></span><span></span><span></span></button>
+    <div class="nav-links" id="navLinks">
+      <a href="/quien-soy" data-h>Quién soy</a>
+      <a href="/pro-dance" data-h>Pro Dance</a>
+      <a href="/contacto" data-h>Contacto</a>
+      <a href="/area-referral" class="nav-referral" data-h>Área Referidos</a>
     </div>
   </nav>
 </header>
@@ -117,44 +552,56 @@
     <div class="pk-checkout-grid">
       <!-- COLONNA SINISTRA -->
       <div class="pk-checkout-main">
-        <form class="pk-form" id="rvForm" method="post" action="/reserva/<%= plan.slug %>" novalidate
+        <form class="pk-form" id="rvForm" novalidate
               data-mode="<%= plan.bookingMode %>"
               data-pricing='<%- JSON.stringify(pricing) %>'
               data-days='<%- JSON.stringify(days) %>'
               data-slots='<%- JSON.stringify(slots) %>'
+              data-lessons='<%- JSON.stringify(lessons || {}).replace(/'/g, "&#39;") %>'
+              data-extras='<%- JSON.stringify((extras||[]).map(function(x){return {id:x.id,name:x.name,description:x.description,price:x.price,mandatory:x.mandatory};})).replace(/'/g, "&#39;") %>'
+              data-discount-threshold="<%= plan.discountThreshold || 0 %>"
+              data-discount-percent="<%= plan.discountPercent || 0 %>"
               data-curprice="<%= currentPrice %>">
 
           <!-- 1. Pack -->
           <section class="pk-block pk-block-pack">
-            <h1 class="pk-pack-title"><%= plan.name %></h1>
-            <p class="pk-pack-desc"><%= plan.description %></p>
-            <% if (others && others.length) { %>
-            <details class="pk-change-pack">
-              <summary>
-                <span>Cambiar de paquete</span>
-                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
-              </summary>
-              <div class="pk-change-list">
-                <% others.forEach(function(o){ %>
-                  <a class="pk-change-option" href="/reserva/<%= o.slug %>">
-                    <span class="pk-change-name"><%= o.name %></span>
-                    <span class="pk-change-price"><%= o.price %>€</span>
+            <h2 class="pk-block-title">Paquete</h2>
+            <% /* Costruisco array completo: pack corrente + others, ordinati per sort */
+               var allPacks = [{slug: plan.slug, name: plan.name, price: currentPrice, currency: plan.currency || 'EUR', current: true}]
+                 .concat((others||[]).map(function(o){ return {slug:o.slug, name:o.name, price:o.price, currency:o.currency||'EUR', current:false}; }));
+               /* Ordine canonico: single, red, gold, junior */
+               var packOrder = {'pack-single':1,'pack-red':2,'pack-gold':3,'pack-junior':4};
+               allPacks.sort(function(a,b){ return (packOrder[a.slug]||99) - (packOrder[b.slug]||99); });
+            %>
+            <div class="scx-pack-chips" role="radiogroup" aria-label="Paquete">
+              <% allPacks.forEach(function(p){ %>
+                <% if (p.current) { %>
+                  <button type="button" class="scx-pchip is-selected" data-scx-pack="<%= p.slug %>" aria-checked="true">
+                    <span class="scx-pchip-name"><%= p.name %></span>
+                    <span class="scx-pchip-price"><%= p.price %><%= p.currency==='EUR'?'€':p.currency %></span>
+                  </button>
+                <% } else { %>
+                  <a class="scx-pchip" href="/reserva/<%= p.slug %>" data-scx-pack="<%= p.slug %>" aria-checked="false">
+                    <span class="scx-pchip-name"><%= p.name %></span>
+                    <span class="scx-pchip-price"><%= p.price %><%= p.currency==='EUR'?'€':p.currency %></span>
                   </a>
-                <% }) %>
-              </div>
-            </details>
+                <% } %>
+              <% }) %>
+            </div>
+            <% if (plan.description) { %>
+              <p class="scx-pack-desc-text"><%= plan.description %></p>
             <% } %>
           </section>
 
-          <!-- 2. Selezione (dipende dalla modalità) -->
+          <!-- 2. Selezione formula (per Single: # classi) -->
           <% if (plan.bookingMode === 'single_lessons') { %>
           <section class="pk-block">
             <h2 class="pk-block-title">Fórmula</h2>
-            <div class="pk-sub-label">Elige cuántas clases</div>
-            <div class="rv-formula" id="rvFormula" role="radiogroup">
+            <div class="scx-formula" id="rvFormula" role="radiogroup">
               <% (pricing.options||[]).forEach(function(o,i){ %>
-                <button type="button" class="pk-slot rv-opt" data-count="<%= o.count %>" data-price="<%= o.price %>" aria-checked="<%= i===0?'true':'false' %>">
-                  <%= o.count %> clase<%= o.count>1?'s':'' %> · <%= o.price %>€
+                <button type="button" class="scx-fchip rv-opt<%= i===0?' is-selected':'' %>" data-count="<%= o.count %>" data-price="<%= o.price %>" aria-checked="<%= i===0?'true':'false' %>">
+                  <span class="scx-fchip-name"><%= o.count %> clase<%= o.count>1?'s':'' %></span>
+                  <span class="scx-fchip-price"><%= o.price %>€</span>
                 </button>
               <% }) %>
             </div>
@@ -167,16 +614,25 @@
           <% } else if (plan.bookingMode === 'red') { %>
           <section class="pk-block">
             <h2 class="pk-block-title">Para cada día: mañana o tarde</h2>
+            <% var morningH = (event && event.morningHours) || '9:30 - 12:30';
+               var afternoonH = (event && event.afternoonHours) || '15:30 - 18:30'; %>
+            <div class="scx-red-window">
+            <% var spMonths = ['ENERO','FEBRERO','MARZO','ABRIL','MAYO','JUNIO','JULIO','AGOSTO','SEPTIEMBRE','OCTUBRE','NOVIEMBRE','DICIEMBRE']; %>
             <% days.forEach(function(d){ %>
-              <div class="pk-block" style="border:0;padding:0;margin:14px 0">
-                <div class="pk-sub-label"><%= d.dow %> <%= d.num %> <%= d.mon %></div>
-                <div class="pk-slots-row rv-ampm" data-day="<%= d.iso %>" role="radiogroup">
-                  <button type="button" class="pk-slot" data-val="AM" aria-checked="false">Mañana</button>
-                  <button type="button" class="pk-slot" data-val="PM" aria-checked="false">Tarde</button>
+              <% var dt = new Date(d.iso+'T00:00:00');
+                 var dayLabel = d.num + ' ' + spMonths[dt.getMonth()] + ' ' + dt.getFullYear(); %>
+              <div class="scx-red-day">
+                <div class="scx-red-day-header"><%= dayLabel %></div>
+                <div class="scx-red-day-body rv-ampm" data-day="<%= d.iso %>" role="radiogroup">
+                  <button type="button" class="scx-ampm-btn pk-slot" data-val="AM" aria-checked="false"><%= morningH %></button>
+                  <button type="button" class="scx-ampm-btn pk-slot" data-val="PM" aria-checked="false"><%= afternoonH %></button>
                 </div>
+                <div class="scx-clase-label" style="margin:14px 16px 6px">LECCIÓN</div>
+                <div class="scx-lecion-display" data-red-lecion="<%= d.iso %>" style="padding:0 16px 14px">-</div>
                 <input type="hidden" name="day_<%= d.iso %>" value="">
               </div>
             <% }) %>
+            </div>
           </section>
           <% } else if (plan.bookingMode === 'junior') { %>
           <section class="pk-block">
@@ -190,84 +646,215 @@
           </section>
           <% } %>
 
-          <!-- 3. Datos -->
-          <section class="pk-block">
-            <h2 class="pk-block-title">Tus datos</h2>
-            <div class="pk-row">
-              <div class="pk-field"><input type="text" name="firstName" required autocomplete="given-name" placeholder="Nombre"><span class="pk-error" data-error>Campo obligatorio</span></div>
-              <div class="pk-field"><input type="text" name="lastName" required autocomplete="family-name" placeholder="Apellidos"><span class="pk-error" data-error>Campo obligatorio</span></div>
-            </div>
-            <div class="pk-row">
-              <div class="pk-field"><input type="email" name="email" required autocomplete="email" placeholder="Email"><span class="pk-error" data-error>Email no válido</span></div>
-              <div class="pk-field"><input type="tel" name="phone" required autocomplete="tel" placeholder="Teléfono"><span class="pk-error" data-error>Teléfono obligatorio</span></div>
-            </div>
-            <div class="pk-row pk-row-1">
-              <div class="pk-field">
-                <label class="pk-sub-label" for="rvBd">Fecha de nacimiento</label>
-                <input type="date" id="rvBd" name="birthDate" required>
-                <span class="pk-error" data-error>Fecha obligatoria</span>
-              </div>
-            </div>
-
-            <div class="rv-consent rv-hide" id="rvParentBox">
-              <input type="checkbox" name="parentalConsent" id="rvPc">
-              <label for="rvPc">Soy el padre/madre/tutor legal y <strong>autorizo la participación del menor</strong> (obligatorio para menores de 18 años).</label>
-            </div>
-            <div class="rv-consent">
-              <input type="checkbox" name="imageConsent" id="rvIc" required>
-              <label for="rvIc">Autorizo a <strong>Pro Dance Experience</strong> la toma de imágenes (foto/video) para difusión del evento en Instagram y página web.</label>
-            </div>
-            <div class="rv-consent">
-              <input type="checkbox" name="dataConsent" id="rvDc" required>
-              <label for="rvDc">Declaro que los datos proporcionados son correctos y acepto las <strong>condiciones de participación</strong>.</label>
-            </div>
-            <div class="rv-consent">
-              <input type="checkbox" name="healthConsent" id="rvHc" required>
-              <label for="rvHc">Declaro tener un <strong>nivel adecuado del estado de salud física</strong> para participar en la actividad.</label>
+          <!-- 3. Numero partecipanti -->
+          <section class="pk-block scx-participants-block">
+            <h2 class="pk-block-title">Participantes</h2>
+            <p class="scx-participants-note">Mismo paquete para todos los participantes. Hasta 20 personas por reserva.</p>
+            <div class="scx-personas" id="rvPartCounter" role="group" aria-label="Número de participantes">
+              <button type="button" data-act="dec" aria-label="Restar participante">−</button>
+              <span class="scx-pers-display" id="rvPartCount">1</span>
+              <button type="button" data-act="inc" aria-label="Sumar participante">+</button>
             </div>
           </section>
 
-          <!-- 4. Método de pago (visivo come _77; il pago reale è seguro vía Stripe) -->
+          <!-- 5. Partecipanti (accordion dinamico) -->
+          <section class="pk-block">
+            <h2 class="pk-block-title">Datos de los participantes</h2>
+            <p class="pk-pack-desc" style="font-size:13.5px;color:#7a8190;margin:0 0 14px">
+              Para cada participante, rellena los datos. Para menores de 18 años se pedirá el tutor abajo.
+            </p>
+            <div id="rvParticipants"></div>
+          </section>
+
+
+          <!-- 7. Extras -->
+          <% if (extras && extras.length) { %>
+          <section class="pk-block pk-block-extras">
+            <h2 class="pk-block-title">Extras</h2>
+            <p class="scx-extras-subtitle">Los obligatorios se aplican por cada participante. Los opcionales también se multiplican por el número de participantes.</p>
+            <div class="rv-extras-list">
+              <% extras.forEach(function(x){ %>
+                <label class="rv-extra scx-extra <%= x.mandatory?'is-mandatory':'' %>" data-extra-id="<%= x.id %>" data-extra-price="<%= x.price %>">
+                  <input type="checkbox" name="extras" value="<%= x.id %>" <%= x.mandatory?'checked disabled':'' %> style="position:absolute;opacity:0;pointer-events:none">
+                  <span class="scx-extra-check" aria-hidden="true"><svg viewBox="0 0 12 12" fill="none"><path d="M2.4 6.3 5 8.7 9.6 3.4" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+                  <span class="scx-extra-body">
+                    <span class="scx-extra-name"><%= x.name %></span>
+                    <% if (x.description) { %><span class="scx-extra-desc"><%= x.description %></span><% } %>
+                  </span>
+                  <span class="scx-extra-price">+<%= x.price %>€</span>
+                </label>
+              <% }) %>
+            </div>
+            <% if (extras.some(function(x){return x.mandatory;})) { %>
+              <% extras.filter(function(x){return x.mandatory}).forEach(function(x){ %>
+                <input type="hidden" name="extras" value="<%= x.id %>">
+              <% }) %>
+            <% } %>
+            <style>
+              .rv-extras-list{display:flex;flex-direction:column;gap:10px;margin-top:6px}
+              .rv-extra{display:flex;gap:14px;align-items:center;padding:14px 16px;
+                border:1px solid rgba(42,42,42,.12);border-radius:8px;cursor:pointer;
+                transition:border-color .25s ease,background .25s ease}
+              .rv-extra:hover{border-color:rgba(224,170,0,.5);background:#fffdf5}
+              .rv-extra input[type=checkbox]{flex-shrink:0;width:18px;height:18px;cursor:pointer;accent-color:#e0aa00}
+              .rv-extra input[type=checkbox]:checked + .rv-extra-body .rv-extra-name{font-weight:600}
+              .rv-extra.is-mandatory{background:#fdf8e8;border-color:#ead9a8;cursor:default}
+              .rv-extra.is-mandatory:hover{background:#fdf8e8}
+              .rv-extra-body{flex:1;display:flex;flex-direction:column;gap:2px}
+              .rv-extra-name{font-size:14.5px;color:#1c1f26}
+              .rv-extra-desc{font-size:12.5px;color:#7a8190;line-height:1.45}
+              .rv-extra-price{font-size:15px;font-weight:600;color:#1c1f26;white-space:nowrap;text-align:right}
+              .rv-extra-badge{display:inline-block;background:#e0aa00;color:#1c1408;font-size:9.5px;
+                letter-spacing:.12em;text-transform:uppercase;font-weight:700;padding:2px 7px;
+                border-radius:99px;margin-left:6px;vertical-align:middle}
+            </style>
+          </section>
+          <% } %>
+
+          <!-- Código de descuento (referral) -->
+          <section class="pk-block pk-block-refcode">
+            <h2 class="pk-block-title">¿Tienes un código de descuento?</h2>
+            <p class="pk-pack-desc" style="font-size:13.5px;color:#7a8190;margin:0 0 12px">Introduce un código de afiliado/promocional (opcional).</p>
+            <div class="rv-refcode-row">
+              <input type="text" name="referralCode" id="rvRefCodeInput" placeholder="Ej. MARIA20" autocomplete="off" spellcheck="false">
+              <button type="button" class="rv-refcode-btn" id="rvRefCodeApply">Aplicar</button>
+            </div>
+            <div class="rv-refcode-status" id="rvRefCodeStatus" hidden></div>
+            <style>
+              .pk-block-refcode{background:linear-gradient(135deg,#fffbe8 0%,#fff 60%);border:0;padding:18px 20px;border-radius:14px;margin-bottom:18px}
+              .rv-refcode-row{display:flex;gap:10px;align-items:stretch}
+              .rv-refcode-row input{flex:1;height:48px;padding:0 16px;border:1.5px solid rgba(42,42,42,.15);border-radius:10px;background:#fff;font-family:"Manrope",system-ui,sans-serif;font-size:15px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:#2a2a2a;outline:none;transition:border-color .2s}
+              .rv-refcode-row input:focus{border-color:#F5C518;box-shadow:0 0 0 3px rgba(245,197,24,.18)}
+              .rv-refcode-row input::placeholder{font-weight:400;letter-spacing:.04em;color:#aaa}
+              .rv-refcode-btn{padding:0 22px;background:#1c1f26;color:#fff;border:0;border-radius:10px;font-family:inherit;font-size:13.5px;font-weight:600;letter-spacing:.04em;cursor:pointer;transition:.2s;text-transform:uppercase}
+              .rv-refcode-btn:hover{background:#000;transform:translateY(-1px)}
+              .rv-refcode-btn.is-applied{background:#1b6b3e;cursor:default}
+              .rv-refcode-status{margin-top:10px;padding:10px 14px;border-radius:8px;font-size:13.5px;font-weight:500;display:flex;align-items:center;gap:8px}
+              .rv-refcode-status.ok{background:#e7f3ec;color:#1b6b3e;border:1px solid #aedabe}
+              .rv-refcode-status.err{background:#fef0ec;color:#a8351c;border:1px solid #f3c5b9}
+            </style>
+          </section>
+
+          <!-- 4. Datos del pagante -->
+          <section class="pk-block">
+            <h2 class="pk-block-title">Datos del pagante</h2>
+            <p class="pk-pack-desc" style="font-size:13.5px;color:#7a8190;margin:0 0 14px">Quién paga la reserva y recibe la confirmación y la factura.</p>
+            <div class="pk-row">
+              <div class="pk-field"><input type="text" name="payerFirstName" autocomplete="given-name" placeholder="Nombre" required></div>
+              <div class="pk-field"><input type="text" name="payerLastName" autocomplete="family-name" placeholder="Apellidos" required></div>
+            </div>
+            <div class="pk-row">
+              <div class="pk-field"><input type="email" name="payerEmail" autocomplete="email" placeholder="Email" required></div>
+              <div class="pk-field"><input type="tel" name="payerPhone" autocomplete="tel" placeholder="Teléfono" required></div>
+            </div>
+            <div class="pk-row pk-row-1" style="display:grid;grid-template-columns:1fr;gap:22px">
+              <div class="pk-field" style="display:flex;flex-direction:column;gap:8px">
+                <label class="scx-pg-label" for="rvPayerBd" style="font-family:'Manrope',system-ui,sans-serif;font-size:11px;font-weight:700;color:#5a5a5a;text-transform:uppercase;letter-spacing:.16em;margin:0">Fecha de nacimiento</label>
+                <input type="date" id="rvPayerBd" name="payerBirthDate" data-payer-birth class="scx-pg-input" required autocomplete="bday" placeholder="dd/mm/aaaa">
+              </div>
+            </div>
+
+            <!-- Datos para factura (opcional) — design scx-factura-card -->
+            <div class="scx-factura-card">
+              <label class="scx-consent scx-factura-label" for="rvBillToggle">
+                <input type="checkbox" id="rvBillToggle">
+                <span class="scx-consent-box" aria-hidden="true"></span>
+                <span class="scx-factura-text">
+                  <strong>Necesito factura</strong>
+                  <span class="scx-factura-desc">Si lo activas, te pediremos los datos de facturación (dirección + NIF). Si no, recibirás solo el ticket de Stripe.</span>
+                </span>
+              </label>
+            </div>
+            <div class="scx-factura-form rv-billing-fields" id="rvBillFields">
+              <input type="text" name="billingAddress" placeholder="Dirección (calle, número, piso)" autocomplete="street-address">
+              <div class="scx-factura-row">
+                <input type="text" name="billingCity" placeholder="Ciudad" autocomplete="address-level2">
+                <input type="text" inputmode="numeric" pattern="[0-9]{5}" maxlength="5" name="billingZip" placeholder="Código postal" autocomplete="postal-code">
+                <div class="scx-factura-country"><input type="text" name="billingCountry" placeholder="ES" value="ES" autocomplete="country"></div>
+              </div>
+              <input type="text" name="billingNif" placeholder="NIF / CIF / DNI">
+            </div>
+
+            <div class="scx-consents">
+              <label class="rv-consent scx-consent" for="rvIc">
+                <input type="checkbox" name="imageConsent" id="rvIc" required>
+                <span class="scx-consent-box" aria-hidden="true"></span>
+                <span>Autorizo a <strong>Pro Dance Experience</strong> la toma de imágenes (foto/video) para difusión del evento en Instagram y página web.</span>
+              </label>
+              <label class="rv-consent scx-consent" for="rvDc">
+                <input type="checkbox" name="dataConsent" id="rvDc" required>
+                <span class="scx-consent-box" aria-hidden="true"></span>
+                <span>Declaro que los datos proporcionados son correctos y acepto las <strong>condiciones de participación</strong>.</span>
+              </label>
+              <label class="rv-consent scx-consent" for="rvHc">
+                <input type="checkbox" name="healthConsent" id="rvHc" required>
+                <span class="scx-consent-box" aria-hidden="true"></span>
+                <span>Declaro que todos los participantes tienen un <strong>nivel adecuado del estado de salud física</strong> para participar en la actividad.</span>
+              </label>
+              <!-- Consent minorenni: appare quando c'è almeno un partecipante minorenne -->
+              <label class="rv-consent scx-consent rv-hide" id="rvMinorConsent" for="rvMc">
+                <input type="checkbox" name="minorConsent" id="rvMc">
+                <span class="scx-consent-box" aria-hidden="true"></span>
+                <span>Como pagante <strong>autorizo la participación de los menores</strong> indicados arriba y asumo la responsabilidad como tutor legal durante toda la actividad.</span>
+              </label>
+            </div>
+          </section>
+
+          <!-- 8. Método de pago — Stripe Payment Element (auto-include tutti i metodi attivi sul tuo account Stripe) -->
           <section class="pk-block">
             <h2 class="pk-block-title">Método de pago</h2>
-            <div class="pk-pay-stack" role="tablist">
-              <div class="pk-pay-row is-active" data-method-row="card">
-                <button type="button" class="pk-pay-row-head" data-method="card" role="tab" aria-selected="true">
-                  <span class="pk-pay-radio"><span class="pk-pay-radio-dot"></span></span>
-                  <span class="pk-pay-row-label">Tarjeta</span>
-                  <span class="pk-pay-row-badges">
-                    <span class="pk-pay-badge pk-badge-visa">VISA</span>
-                    <span class="pk-pay-badge pk-badge-mc">MC</span>
-                    <span class="pk-pay-badge pk-badge-amex">AMEX</span>
-                    <span class="pk-pay-badge pk-badge-more">+5</span>
-                  </span>
-                </button>
-                <div class="pk-pay-row-panel"><p class="pk-pay-info">Pago seguro con tarjeta. Serás redirigido a la pasarela cifrada de Stripe para completar el pago.</p></div>
-              </div>
-              <div class="pk-pay-row" data-method-row="other">
-                <button type="button" class="pk-pay-row-head" data-method="other" role="tab" aria-selected="false">
-                  <span class="pk-pay-radio"><span class="pk-pay-radio-dot"></span></span>
-                  <span class="pk-pay-row-label">Otros métodos</span>
-                </button>
-                <div class="pk-pay-row-panel"><p class="pk-pay-info">En la pasarela de pago podrás elegir otros métodos disponibles.</p></div>
-              </div>
+            <div class="scx-pay-wrap">
+              <div id="scx-pay-element" class="scx-pay-element"><div class="scx-pay-element-placeholder">Cargando métodos de pago seguros…</div></div>
+              <div id="scx-pay-message" class="scx-pay-message" role="alert" hidden></div>
+              <p class="scx-pay-note">Pago seguro · cifrado SSL · procesado por Stripe</p>
             </div>
           </section>
 
           <div class="pk-confirm-left">
             <button type="submit" class="pk-confirm-final is-disabled" id="rvSubmitL">Confirmar y pagar</button>
           </div>
+
+          <div class="scx-refund-box" role="note">
+            <p class="scx-refund-title">Política de reembolso</p>
+            <p class="scx-refund-text">Dispones de <strong><%= refundDays %> días</strong> desde la fecha de tu reserva para solicitar el reembolso íntegro escribiendo a <a href="mailto:info@irenemonticelli.com" class="scx-refund-link">info@irenemonticelli.com</a>. Pasado este plazo no se aceptan devoluciones.</p>
+          </div>
         </form>
+
+        <div class="pk-embed-wrap" id="rvEmbedded" hidden>
+          <button class="pk-embed-back" type="button" id="rvEmbedBack" aria-label="Volver">← Volver al formulario</button>
+          <h2 class="pk-embed-title">Pago seguro</h2>
+          <div id="rvEmbedError" class="pk-embed-error" hidden></div>
+          <div class="pk-embed-loading" id="rvEmbedLoading">Cargando el pago seguro...</div>
+          <div id="embed-payment"></div>
+        </div>
       </div>
 
-      <!-- COLONNA DESTRA: summary sticky -->
-      <aside class="pk-summary-sticky">
-        <div class="pk-summary-card">
-          <h3 class="pk-summary-title">Resumen de tu reserva</h3>
-          <div class="pk-summary-rows">
-            <div class="pk-summary-row"><span class="pk-summary-label">Paquete</span><span class="pk-summary-value"><%= plan.name %></span></div>
-            <div class="pk-summary-row"><span class="pk-summary-label">Evento</span><span class="pk-summary-value"><%= event ? event.title : '' %></span></div>
-            <div class="pk-summary-row"><span class="pk-summary-label">Detalle</span><span class="pk-summary-value pk-summary-empty" id="rvSumDetail">—</span></div>
+      <!-- COLONNA DESTRA: summary -->
+      <aside class="pk-summary-sticky" id="rvSummary">
+        <button class="pk-summary-trigger" id="rvSumTrigger" type="button" aria-expanded="false">
+          <span class="pk-trigger-meta">
+            <span class="pk-trigger-lbl">Resumen</span>
+            <span class="pk-trigger-amt">Total <strong id="rvTotalMobile"><%= currentPrice %>€</strong></span>
+          </span>
+          <span class="pk-trigger-arrow" aria-hidden="true">▲</span>
+        </button>
+        <div class="pk-summary-card ck-sumcard">
+          <h3 class="pk-summary-title ck-sum-title">Resumen de tu reserva</h3>
+          <div class="pk-summary-rows ck-sum-rows">
+            <div class="pk-summary-row ck-sum-row"><span class="pk-summary-label ck-sum-k">Paquete</span><span class="pk-summary-value ck-sum-v" data-sum-pack><%= plan.name %></span></div>
+            <% if (plan.bookingMode === 'single_lessons') { %>
+            <div class="pk-summary-row ck-sum-row" id="scx-sum-formula-row"><span class="pk-summary-label ck-sum-k">Fórmula</span><span class="pk-summary-value ck-sum-v" data-sum-detalle>1 clase</span></div>
+            <% } %>
+            <div class="pk-summary-row ck-sum-row"><span class="pk-summary-label ck-sum-k">Fecha y horario</span><span class="pk-summary-value ck-sum-v pk-summary-empty" id="rvSumDetail" data-sum-fechahorario>—</span></div>
+            <div class="pk-summary-row ck-sum-row"><span class="pk-summary-label ck-sum-k">Participantes</span><span class="pk-summary-value ck-sum-v" id="rvSumParts" data-sum-pers>1</span></div>
+            <div class="pk-summary-row ck-sum-row"><span class="pk-summary-label ck-sum-k">Precio por participante</span><span class="pk-summary-value ck-sum-v" data-sum-unit><%= currentPrice %>€</span></div>
+            <% if (extras && extras.some(function(x){return x.mandatory;})) { %>
+            <div class="pk-summary-row ck-sum-row"><span class="pk-summary-label ck-sum-k">Seguro obligatorio</span><span class="pk-summary-value ck-sum-v" data-sum-seguro>+20€</span></div>
+            <% } %>
+            <div class="pk-summary-row ck-sum-row rv-sum-refcode" id="rvSumRefcodeRow" hidden style="color:#1b6b3e">
+              <span class="pk-summary-label ck-sum-k">Código <span id="rvSumRefcodeName" style="font-weight:700"></span></span>
+              <span class="pk-summary-value ck-sum-v" id="rvSumRefcodeAmt">−0€</span>
+            </div>
           </div>
           <div class="pk-summary-total">
             <span class="pk-summary-total-label">Total</span>
@@ -284,130 +871,997 @@
   </div>
 </section>
 
+<!-- Modale "Prenotazioni disabilitate" -->
+<div class="pk-bk-off" id="rvBookingsOff" hidden role="dialog" aria-modal="true" aria-labelledby="rvBkOffTitle">
+  <div class="pk-bk-off-backdrop" id="rvBkOffBackdrop"></div>
+  <div class="pk-bk-off-box">
+    <button type="button" class="pk-bk-off-close" id="rvBkOffClose" aria-label="Cerrar">×</button>
+    <div class="pk-bk-off-icon" aria-hidden="true">
+      <svg viewBox="0 0 24 24" width="44" height="44" fill="none" stroke="currentColor" stroke-width="1.5">
+        <circle cx="12" cy="12" r="10"/><path d="M12 8v5M12 16h.01"/>
+      </svg>
+    </div>
+    <h3 id="rvBkOffTitle">Reservas no disponibles por el momento</h3>
+    <p>Las reservas online están <strong>temporalmente desactivadas</strong>. Estamos ultimando los preparativos para abrirlas pronto.</p>
+    <p>Para reservar tu plaza ahora o para cualquier información puedes contactarnos directamente:</p>
+    <div class="pk-bk-off-actions">
+      <a class="pk-bk-off-cta primary" href="/contacto">Escríbenos por el formulario →</a>
+      <% if (contactPhone) { %>
+        <a class="pk-bk-off-cta" href="tel:<%= contactPhone.replace(/\s+/g,'') %>">Llamar al <%= contactPhone %></a>
+      <% } %>
+      <% if (contactEmail) { %>
+        <a class="pk-bk-off-cta ghost" href="mailto:<%= contactEmail %>"><%= contactEmail %></a>
+      <% } %>
+    </div>
+    <p class="pk-bk-off-foot">Gracias por tu paciencia. Volveremos pronto.</p>
+  </div>
+</div>
+
 <script>
 (function(){
-  var bg=document.getElementById('rvBurger'),nv=document.getElementById('rvNav');
-  if(bg&&nv){bg.addEventListener('click',function(){nv.classList.toggle('open');});
-    nv.addEventListener('click',function(e){if(e.target.tagName==='A')nv.classList.remove('open');});}
+  document.addEventListener('click', function(e){
+    var btn = e.target.closest('.nav-toggle');
+    if (btn) {
+      e.preventDefault();
+      var links = document.getElementById('navLinks');
+      btn.classList.toggle('open');
+      if (links) links.classList.toggle('open');
+      return;
+    }
+    var link = e.target.closest('.nav-links a');
+    if (link) {
+      var openLinks = document.querySelector('.nav-links.open');
+      if (openLinks) openLinks.classList.remove('open');
+      var openBtn = document.querySelector('.nav-toggle.open');
+      if (openBtn) openBtn.classList.remove('open');
+    }
+  });
 })();
+
 (function(){
-  var form=document.getElementById('rvForm');
-  var mode=form.dataset.mode;
-  var pricing=JSON.parse(form.dataset.pricing||'{}');
-  var DAYS=JSON.parse(form.dataset.days||'[]');
-  var SLOTS=JSON.parse(form.dataset.slots||'[]');
-  var curPrice=parseFloat(form.dataset.curprice)||0;
-  var totalEl=document.getElementById('rvTotal');
-  var detEl=document.getElementById('rvSumDetail');
-  var subs=[document.getElementById('rvSubmitL'),document.getElementById('rvSubmitR')];
-  var total=curPrice;
+  var form = document.getElementById('rvForm');
+  var mode = form.dataset.mode;
+  var pricing = JSON.parse(form.dataset.pricing||'{}');
+  var DAYS = JSON.parse(form.dataset.days||'[]');
+  var SLOTS = JSON.parse(form.dataset.slots||'[]');
+  var LESSONS = JSON.parse((form.dataset.lessons||'{}').replace(/&#39;/g,"'"));
+  var EXTRAS = JSON.parse((form.dataset.extras||'[]').replace(/&#39;/g,"'"));
+  var curPrice = parseFloat(form.dataset.curprice)||0;
+  var DISC_THR = parseInt(form.dataset.discountThreshold||'0', 10);
+  var DISC_PCT = parseFloat(form.dataset.discountPercent||'0');
+  var MAX_PARTS = 20;
 
-  function datePills(){return DAYS.map(function(d){return '<button type="button" class="pk-date" data-date="'+d.iso+'" role="radio" aria-checked="false"><span class="pk-date-day">'+d.dow+'</span><span class="pk-date-num">'+d.num+'</span></button>';}).join('');}
-  function slotPills(){return SLOTS.map(function(s){return '<button type="button" class="pk-slot" data-slot="'+s+'" role="radio" aria-checked="false">'+s+'</button>';}).join('');}
+  // ===== Riferimenti elementi summary (devono esistere PRIMA della prima sync()) =====
+  var totalEl = document.getElementById('rvTotal');
+  var detEl = document.getElementById('rvSumDetail');
+  var sumPartsEl = document.getElementById('rvSumParts');
+  var subs = [document.getElementById('rvSubmitL'), document.getElementById('rvSubmitR')];
 
-  // Single: fórmula + N lezioni
-  if(mode==='single_lessons'){
-    var opts=document.querySelectorAll('.rv-opt');
-    var countInp=document.getElementById('rvCount');
-    var box=document.getElementById('rvLessons');
+  // ---- State ----
+  // participants: array di oggetti, gli input vivono nel DOM (querySelector); qui solo lo "stato" minimo
+  // tutors: array di oggetti (firstName, lastName, email, phone, relationship)
+  var STATE = {
+    perParticipant: curPrice,  // prezzo per partecipante (cambia con la fórmula Single)
+    participantsCount: 1,
+    tutors: [],                // [{firstName, lastName, email, phone, relationship}]
+    openParticipantIdx: 0,     // accordion aperto
+    openTutorIdx: -1,
+  };
+
+  // ===== Helpers UI =====
+  function escapeHtml(s){ return String(s||'').replace(/[&<>"]/g, function(c){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]; }); }
+  function ageYears(isoOrDate){
+    if (!isoOrDate) return null;
+    var b = (isoOrDate instanceof Date) ? isoOrDate : new Date(isoOrDate);
+    if (isNaN(b.getTime())) return null;
+    var n = new Date(), a = n.getFullYear() - b.getFullYear();
+    var m = n.getMonth() - b.getMonth();
+    if (m < 0 || (m===0 && n.getDate() < b.getDate())) a--;
+    return a;
+  }
+  function isValidEmail(s){ return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s||''); }
+
+  // ===== Single Class — formula + lessons =====
+  /* Full Spanish date label es. "29 Julio 2026" come design */
+  var SP_MONTHS = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  function datePills(){return DAYS.map(function(d){
+    var dt = new Date(d.iso+'T00:00:00');
+    var label = d.num + ' ' + (SP_MONTHS[dt.getMonth()] || d.mon) + ' ' + dt.getFullYear();
+    return '<button type="button" class="scx-date pk-date" data-date="'+d.iso+'" role="radio" aria-checked="false"><span class="pk-date-inline">'+label+'</span></button>';
+  }).join('');}
+  function slotPills(){return SLOTS.map(function(s){return '<button type="button" class="scx-slot pk-slot" data-slot="'+s+'" role="radio" aria-checked="false">'+s+'</button>';}).join('');}
+  function dayIndexOf(iso){ for(var i=0;i<DAYS.length;i++){ if(DAYS[i].iso===iso) return i+1; } return 0; }
+  function lessonAt(iso, time){ var d=dayIndexOf(iso); if(!d||!LESSONS[d]) return null; return LESSONS[d][time] || null; }
+  function lessonsForFascia(dayIndex, isAfternoon){
+    if (!LESSONS[dayIndex]) return [];
+    var out = [];
+    Object.keys(LESSONS[dayIndex]).forEach(function(time){
+      var l = LESSONS[dayIndex][time];
+      if (l.isPause) return;
+      if (!!l.isAfternoon === !!isAfternoon) out.push({ time: time, title: l.title, professor: l.professor });
+    });
+    out.sort(function(a,b){ return a.time.localeCompare(b.time); });
+    return out;
+  }
+  if (mode === 'single_lessons') {
+    var opts = document.querySelectorAll('.rv-opt');
+    var countInp = document.getElementById('rvCount');
+    var box = document.getElementById('rvLessons');
     function renderLessons(n){
       var h='';
-      for(var i=0;i<n;i++){
-        h+='<div class="rv-lesson"><b>Clase '+(i+1)+'</b>'+
-           '<div class="pk-sub-label">Fecha</div><div class="pk-dates rv-d" data-i="'+i+'">'+datePills()+'</div>'+
-           '<div class="pk-sub-label pk-sub-label-spaced">Horario</div><div class="pk-slots-row rv-s" data-i="'+i+'">'+slotPills()+'</div>'+
-           '<input type="hidden" name="lesson_day_'+i+'" value=""><input type="hidden" name="lesson_slot_'+i+'" value=""></div>';
+      for (var i=0; i<n; i++) {
+        h += '<div class="rv-lesson scx-clase">'+
+               '<div class="scx-clase-header"><span class="scx-clase-title">CLASE '+(i+1)+'</span></div>'+
+               '<div class="scx-clase-body">'+
+                 '<div class="scx-clase-label">FECHA</div>'+
+                 '<div class="scx-dyn-dates pk-dates rv-d" data-i="'+i+'">'+datePills()+'</div>'+
+                 '<div class="scx-clase-label">HORARIO</div>'+
+                 '<div class="scx-dyn-slots pk-slots-row rv-s" data-i="'+i+'">'+slotPills()+'</div>'+
+                 '<div class="scx-clase-label">LECCIÓN</div>'+
+                 '<div class="scx-lecion-display" data-lecion-display="'+i+'">-</div>'+
+                 '<input type="hidden" name="lesson_day_'+i+'" value="">'+
+                 '<input type="hidden" name="lesson_slot_'+i+'" value="">'+
+               '</div>'+
+             '</div>';
       }
-      box.innerHTML=h;
+      box.innerHTML = h;
     }
     function selOpt(btn){
-      opts.forEach(function(o){o.classList.remove('is-selected');o.setAttribute('aria-checked','false');});
-      btn.classList.add('is-selected');btn.setAttribute('aria-checked','true');
-      countInp.value=btn.dataset.count;
-      total=parseFloat(btn.dataset.price)||0;
-      renderLessons(parseInt(btn.dataset.count,10));
+      opts.forEach(function(o){o.classList.remove('is-selected'); o.setAttribute('aria-checked','false');});
+      btn.classList.add('is-selected'); btn.setAttribute('aria-checked','true');
+      countInp.value = btn.dataset.count;
+      STATE.perParticipant = parseFloat(btn.dataset.price)||0;
+      renderLessons(parseInt(btn.dataset.count, 10));
       sync();
     }
-    opts.forEach(function(o){o.addEventListener('click',function(){selOpt(o);});});
-    if(opts[0]) selOpt(opts[0]);
-    box.addEventListener('click',function(e){
-      var dt=e.target.closest('.pk-date'), sl=e.target.closest('.pk-slot');
-      if(dt){var c=dt.closest('.rv-d');c.querySelectorAll('.pk-date').forEach(function(x){x.classList.remove('is-selected');x.setAttribute('aria-checked','false');});dt.classList.add('is-selected');dt.setAttribute('aria-checked','true');c.parentNode.querySelector('input[name="lesson_day_'+c.dataset.i+'"]').value=dt.dataset.date;sync();}
-      if(sl){var c2=sl.closest('.rv-s');c2.querySelectorAll('.pk-slot').forEach(function(x){x.classList.remove('is-selected');x.setAttribute('aria-checked','false');});sl.classList.add('is-selected');sl.setAttribute('aria-checked','true');c2.parentNode.querySelector('input[name="lesson_slot_'+c2.dataset.i+'"]').value=sl.dataset.slot;sync();}
+    opts.forEach(function(o){ o.addEventListener('click', function(){ selOpt(o); }); });
+    if (opts[0]) selOpt(opts[0]);
+    function updateLecionDisplay(idx){
+      var d = form.querySelector('input[name="lesson_day_'+idx+'"]').value;
+      var s = form.querySelector('input[name="lesson_slot_'+idx+'"]').value;
+      var lecEl = box.querySelector('[data-lecion-display="'+idx+'"]');
+      if (!lecEl) return;
+      if (d && s) {
+        var l = lessonAt(d, s);
+        lecEl.textContent = l ? (l.title + (l.professor ? ' · ' + l.professor : '')) : '-';
+      } else lecEl.textContent = '-';
+    }
+    box.addEventListener('click', function(e){
+      var dt = e.target.closest('.pk-date'), sl = e.target.closest('.pk-slot');
+      if (dt) {
+        var c = dt.closest('.rv-d');
+        c.querySelectorAll('.pk-date').forEach(function(x){x.classList.remove('is-selected');x.setAttribute('aria-checked','false');});
+        dt.classList.add('is-selected'); dt.setAttribute('aria-checked','true');
+        c.parentNode.querySelector('input[name="lesson_day_'+c.dataset.i+'"]').value = dt.dataset.date;
+        updateLecionDisplay(parseInt(c.dataset.i, 10));
+        sync();
+      }
+      if (sl) {
+        var c2 = sl.closest('.rv-s');
+        c2.querySelectorAll('.pk-slot').forEach(function(x){x.classList.remove('is-selected');x.setAttribute('aria-checked','false');});
+        sl.classList.add('is-selected'); sl.setAttribute('aria-checked','true');
+        c2.parentNode.querySelector('input[name="lesson_slot_'+c2.dataset.i+'"]').value = sl.dataset.slot;
+        updateLecionDisplay(parseInt(c2.dataset.i, 10));
+        sync();
+      }
     });
   }
 
-  // Red: AM/PM per giorno
-  if(mode==='red'){
+  // ===== Red — AM/PM per giorno + LECCIÓN display per giorno =====
+  if (mode === 'red') {
+    function updateRedLecion(dayIso, fascia){
+      var lecEl = document.querySelector('[data-red-lecion="'+dayIso+'"]');
+      if (!lecEl) return;
+      var dayIdx = 0;
+      DAYS.forEach(function(d, i){ if (d.iso === dayIso) dayIdx = i + 1; });
+      if (!dayIdx || !fascia) { lecEl.textContent = '-'; return; }
+      var isAfternoon = (fascia === 'PM');
+      var ls = lessonsForFascia(dayIdx, isAfternoon);
+      if (!ls.length) { lecEl.textContent = '-'; return; }
+      lecEl.innerHTML = ls.map(function(x){
+        return '<div style="font-size:13.5px;color:#5a5a5a;line-height:1.6">'+escapeHtml(x.time)+' — '+escapeHtml(x.title)+(x.professor?' · '+escapeHtml(x.professor):'')+'</div>';
+      }).join('');
+    }
     document.querySelectorAll('.rv-ampm').forEach(function(row){
-      row.addEventListener('click',function(e){
-        var b=e.target.closest('.pk-slot'); if(!b)return;
+      row.addEventListener('click', function(e){
+        var b = e.target.closest('.pk-slot'); if (!b) return;
         row.querySelectorAll('.pk-slot').forEach(function(x){x.classList.remove('is-selected');x.setAttribute('aria-checked','false');});
-        b.classList.add('is-selected');b.setAttribute('aria-checked','true');
-        row.parentNode.querySelector('input[name="day_'+row.dataset.day+'"]').value=b.dataset.val;
+        b.classList.add('is-selected'); b.setAttribute('aria-checked','true');
+        var dayIso = row.dataset.day;
+        row.parentNode.querySelector('input[name="day_'+dayIso+'"]').value = b.dataset.val;
+        updateRedLecion(dayIso, b.dataset.val);
         sync();
       });
     });
   }
 
-  // Metodo pagamento (solo visivo)
+  // Billing toggle (scx-factura-card → scx-factura-form)
+  (function(){
+    var t = document.getElementById('rvBillToggle');
+    var f = document.getElementById('rvBillFields');
+    if (t && f) {
+      t.addEventListener('change', function(){
+        if (t.checked) { f.classList.add('is-open'); f.style.display='flex'; }
+        else { f.classList.remove('is-open'); f.style.display='none'; }
+        sync();
+      });
+    }
+  })();
+
+  // Metodo pagamento visivo
   document.querySelectorAll('.pk-pay-row-head').forEach(function(h){
-    h.addEventListener('click',function(){
-      document.querySelectorAll('.pk-pay-row').forEach(function(r){r.classList.remove('is-active');});
-      document.querySelectorAll('.pk-pay-row-head').forEach(function(x){x.setAttribute('aria-selected','false');});
-      h.closest('.pk-pay-row').classList.add('is-active');h.setAttribute('aria-selected','true');
+    h.addEventListener('click', function(){
+      document.querySelectorAll('.pk-pay-row').forEach(function(r){ r.classList.remove('is-active'); });
+      document.querySelectorAll('.pk-pay-row-head').forEach(function(x){ x.setAttribute('aria-selected','false'); });
+      h.closest('.pk-pay-row').classList.add('is-active'); h.setAttribute('aria-selected','true');
     });
   });
 
-  // Età -> consenso genitori
-  var bd=document.getElementById('rvBd'),pbox=document.getElementById('rvParentBox'),pc=document.getElementById('rvPc');
-  function checkAge(){
-    if(!bd.value){pbox.classList.add('rv-hide');pc.required=false;pc.checked=false;sync();return;}
-    var b=new Date(bd.value),n=new Date(),a=n.getFullYear()-b.getFullYear(),m=n.getMonth()-b.getMonth();
-    if(m<0||(m===0&&n.getDate()<b.getDate()))a--;
-    if(a<18){pbox.classList.remove('rv-hide');pc.required=true;}else{pbox.classList.add('rv-hide');pc.required=false;pc.checked=false;}
+  // ===== Counter partecipanti =====
+  var partCounter = document.getElementById('rvPartCounter');
+  var partCountEl = document.getElementById('rvPartCount');
+  partCounter.addEventListener('click', function(e){
+    var b = e.target.closest('button[data-act]'); if (!b) return;
+    var n = STATE.participantsCount;
+    if (b.dataset.act === 'inc') n = Math.min(MAX_PARTS, n+1);
+    else n = Math.max(1, n-1);
+    if (n === STATE.participantsCount) return;
+    STATE.participantsCount = n;
+    partCountEl.textContent = n;
+    renderParticipants();
     sync();
-  }
-  bd.addEventListener('change',checkAge);
+  });
 
+  // ===== Partecipanti accordion =====
+  var partsBox = document.getElementById('rvParticipants');
+  function renderParticipants(){
+    // Salva valori esistenti prima di rerender
+    var existing = [];
+    partsBox.querySelectorAll('.rv-part').forEach(function(el){
+      existing.push({
+        firstName: el.querySelector('input[data-fld=firstName]').value,
+        lastName:  el.querySelector('input[data-fld=lastName]').value,
+        birthDate: el.querySelector('input[data-fld=birthDate]').value,
+        address:   el.querySelector('input[data-fld=address]').value,
+        city:      el.querySelector('input[data-fld=city]').value,
+        zip:       el.querySelector('input[data-fld=zip]').value,
+        country:   el.querySelector('input[data-fld=country]') ? el.querySelector('input[data-fld=country]').value : 'ES',
+        email:     el.querySelector('input[data-fld=email]')   ? el.querySelector('input[data-fld=email]').value : '',
+        phone:     el.querySelector('input[data-fld=phone]')   ? el.querySelector('input[data-fld=phone]').value : '',
+        tutorIdx:  (function(){ var r=el.querySelector('input[name^="participant_tutor_"]:checked'); return r ? r.value : ''; })(),
+      });
+    });
+
+    var html = '';
+    for (var i=0; i<STATE.participantsCount; i++) {
+      var p = existing[i] || {};
+      html += '<div class="rv-part scx-participant-card" data-pi="'+i+'">'+
+        '<div class="rv-part-head scx-participant-header" data-toggle="'+i+'">'+
+          '<span class="scx-participant-title">Participante '+(i+1)+'</span>'+
+          '<span class="rv-part-status" data-status style="display:none"></span>'+
+          '<button type="button" class="scx-participant-toggle" aria-expanded="true">'+
+            '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>'+
+          '</button>'+
+        '</div>'+
+        '<div class="rv-part-body scx-participant-body">'+
+          '<div class="scx-participant-grid">'+
+            '<input class="scx-pg-input" type="text" data-fld="firstName" placeholder="Nombre" value="'+escapeHtml(p.firstName||'')+'">'+
+            '<input class="scx-pg-input" type="text" data-fld="lastName" placeholder="Apellidos" value="'+escapeHtml(p.lastName||'')+'">'+
+            '<input class="scx-pg-input scx-pg-full" type="text" data-fld="address" placeholder="Dirección de residencia (calle y número)" value="'+escapeHtml(p.address||'')+'">'+
+            '<div class="scx-pg-row3">'+
+              '<input class="scx-pg-input" type="text" data-fld="city" placeholder="Ciudad" value="'+escapeHtml(p.city||'')+'">'+
+              '<input class="scx-pg-input" type="text" inputmode="numeric" pattern="[0-9]{5}" maxlength="5" data-fld="zip" placeholder="Código postal" value="'+escapeHtml(p.zip||'')+'">'+
+              '<input class="scx-pg-input" type="text" data-fld="country" placeholder="ES" value="'+escapeHtml(p.country||'ES')+'">'+
+            '</div>'+
+            '<input class="scx-pg-input scx-minor-hide" type="tel" inputmode="numeric" data-fld="phone" placeholder="Teléfono" value="'+escapeHtml(p.phone||'')+'">'+
+            '<input class="scx-pg-input scx-minor-hide" type="email" data-fld="email" placeholder="Email" value="'+escapeHtml(p.email||'')+'">'+
+            '<label class="scx-pg-full scx-pg-label" style="font-family:\'Manrope\',system-ui,sans-serif;font-size:11px;font-weight:700;color:#5a5a5a;text-transform:uppercase;letter-spacing:.16em;margin:8px 0 -4px">Fecha de nacimiento</label>'+
+            '<input class="scx-pg-input scx-pg-full" type="date" data-fld="birthDate" data-participant-birth placeholder="dd/mm/aaaa" value="'+escapeHtml(p.birthDate||'')+'">'+
+            '<div class="scx-minor-tutor-note scx-minor-hide-inverse rv-hide" data-minor-note>'+
+              'Este participante es menor de edad. <strong>El pagante actúa como tutor responsable.</strong>'+
+            '</div>'+
+          '</div>'+
+        '</div>'+
+      '</div>';
+    }
+    partsBox.innerHTML = html;
+    // Restore tutor selection (re-render then re-fill)
+    partsBox.querySelectorAll('.rv-part').forEach(function(el, idx){
+      var prev = existing[idx];
+      updateTutorOptions(idx);
+      if (prev && prev.tutorIdx !== '') {
+        var rb = el.querySelector('input[name="participant_tutor_'+idx+'"][value="'+prev.tutorIdx+'"]');
+        if (rb) rb.checked = true;
+      }
+    });
+    // Tutte le card aperte di default (design pattern); collassa tutte tranne openParticipantIdx
+    if (STATE.openParticipantIdx >= STATE.participantsCount) STATE.openParticipantIdx = 0;
+    partsBox.querySelectorAll('.rv-part').forEach(function(c, k){
+      c.classList.add('is-open');  // legacy class per il vecchio CSS
+      var body = c.querySelector('.rv-part-body');
+      if (k !== STATE.openParticipantIdx) {
+        c.classList.add('is-collapsed');
+        if (body) body.classList.add('is-collapsed');
+      }
+    });
+    refreshAllStatuses();
+  }
+  partsBox.addEventListener('click', function(e){
+    var t = e.target.closest('[data-toggle]'); if (!t) return;
+    var idx = parseInt(t.dataset.toggle, 10);
+    var card = t.closest('.rv-part');
+    var body = card.querySelector('.rv-part-body');
+    var wasCollapsed = card.classList.contains('is-collapsed');
+    if (wasCollapsed) {
+      card.classList.remove('is-collapsed');
+      if (body) body.classList.remove('is-collapsed');
+      STATE.openParticipantIdx = idx;
+    } else {
+      card.classList.add('is-collapsed');
+      if (body) body.classList.add('is-collapsed');
+    }
+  });
+  partsBox.addEventListener('change', function(e){
+    var inp = e.target.closest('input[data-fld=birthDate]');
+    if (inp) onBirthChange(inp);
+    sync();
+    refreshAllStatuses();
+  });
+  partsBox.addEventListener('input', function(){ sync(); refreshAllStatuses(); });
+
+  function onBirthChange(inp){
+    var card = inp.closest('.rv-part');
+    var age = ageYears(inp.value);
+    var minor = (age != null && age < 18);
+    var noteBox = card.querySelector('[data-minor-note]');
+    if (minor) {
+      card.classList.add('scx-is-minor');
+      // scx-minor-hide CSS: nasconde email/phone — svuota anche i valori
+      card.querySelectorAll('.scx-minor-hide').forEach(function(x){ if (x.tagName === 'INPUT') x.value=''; });
+      if (noteBox) noteBox.classList.remove('rv-hide');
+    } else {
+      card.classList.remove('scx-is-minor');
+      if (noteBox) noteBox.classList.add('rv-hide');
+    }
+    showHideTutorsSection();
+  }
+
+  function isParticipantComplete(card){
+    var fn = card.querySelector('input[data-fld=firstName]').value.trim();
+    var ln = card.querySelector('input[data-fld=lastName]').value.trim();
+    var bd = card.querySelector('input[data-fld=birthDate]').value;
+    var ad = card.querySelector('input[data-fld=address]').value.trim();
+    var ci = card.querySelector('input[data-fld=city]').value.trim();
+    var zp = card.querySelector('input[data-fld=zip]').value.trim();
+    if (fn.length<2 || ln.length<2 || !bd || !ad || !ci || !zp) return false;
+    var age = ageYears(bd);
+    if (age == null) return false;
+    if (age < 18) {
+      return true;  // minore: nessun campo aggiuntivo, il pagante è il tutor
+    } else {
+      var em = card.querySelector('input[data-fld=email]').value.trim();
+      var ph = card.querySelector('input[data-fld=phone]').value.trim();
+      return isValidEmail(em) && !!ph;
+    }
+  }
+  function refreshAllStatuses(){
+    partsBox.querySelectorAll('.rv-part').forEach(function(card){
+      var st = card.querySelector('[data-status]');
+      var bd = card.querySelector('input[data-fld=birthDate]').value;
+      var age = ageYears(bd);
+      var badge = '';
+      if (age != null) {
+        if (age < 18) badge = '<span class="rv-part-badge rv-part-badge-minor">menor</span>';
+        else badge = '<span class="rv-part-badge rv-part-badge-adult">adulto</span>';
+      }
+      var ok = isParticipantComplete(card);
+      var okBadge = ok ? '<span class="rv-part-badge rv-part-badge-ok">completo</span>'
+                       : '<span class="rv-part-badge rv-part-badge-incomplete">incompleto</span>';
+      st.innerHTML = badge + ' ' + okBadge;
+    });
+  }
+
+  // ===== Consent minorenni: appare solo se almeno un partecipante è minore =====
+  // (Il tutore è automaticamente il pagante — niente sezione tutor separata)
+  var minorConsentBox = document.getElementById('rvMinorConsent');
+  var minorConsentCb = document.getElementById('rvMc');
+  function showHideTutorsSection(){
+    var hasMinor = false;
+    partsBox.querySelectorAll('.rv-part').forEach(function(card){
+      var bd = card.querySelector('input[data-fld=birthDate]').value;
+      var age = ageYears(bd);
+      if (age != null && age < 18) hasMinor = true;
+    });
+    if (hasMinor) {
+      minorConsentBox.classList.remove('rv-hide');
+      minorConsentCb.required = true;
+    } else {
+      minorConsentBox.classList.add('rv-hide');
+      minorConsentCb.required = false;
+      minorConsentCb.checked = false;
+    }
+  }
+  function updateTutorOptions(){}  // no-op: nessuna selezione tutor — il pagante è il tutor di tutti i minori
+
+  // ===== Extras =====
+  function extrasInfo(){
+    var sum = 0, rows = [];
+    EXTRAS.forEach(function(x){
+      var cb = form.querySelector('input[type=checkbox][name="extras"][value="'+x.id+'"]');
+      var on = x.mandatory || (cb && cb.checked);
+      if (on) { sum += (x.price||0); rows.push(x); }
+    });
+    return { sum: sum, rows: rows };
+  }
+
+  // ===== Selezione lezioni/giorni OK? =====
   function selectionOk(){
-    if(mode==='single_lessons'){
-      var n=parseInt(document.getElementById('rvCount').value,10);
-      for(var i=0;i<n;i++){var d=form.querySelector('input[name="lesson_day_'+i+'"]'),s=form.querySelector('input[name="lesson_slot_'+i+'"]');if(!d||!s||!d.value||!s.value)return false;}
+    if (mode === 'single_lessons') {
+      var n = parseInt(document.getElementById('rvCount').value, 10);
+      for (var i=0; i<n; i++) {
+        var d = form.querySelector('input[name="lesson_day_'+i+'"]');
+        var s = form.querySelector('input[name="lesson_slot_'+i+'"]');
+        if (!d || !s || !d.value || !s.value) return false;
+      }
       return true;
     }
-    if(mode==='red'){var rows=document.querySelectorAll('.rv-ampm');for(var k=0;k<rows.length;k++){var inp=rows[k].parentNode.querySelector('input');if(!inp.value)return false;}return true;}
+    if (mode === 'red') {
+      var rows = document.querySelectorAll('.rv-ampm');
+      for (var k=0; k<rows.length; k++) {
+        var inp = rows[k].parentNode.querySelector('input');
+        if (!inp.value) return false;
+      }
+      return true;
+    }
     return true;
   }
-  function fieldsOk(){
-    var fn=form.firstName.value.trim(),ln=form.lastName.value.trim(),em=form.email.value.trim(),ph=form.phone.value.trim();
-    if(fn.length<2||ln.length<2||!ph||!bd.value)return false;
-    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em))return false;
-    if(!document.getElementById('rvIc').checked)return false;
-    if(!document.getElementById('rvDc').checked)return false;
-    if(!document.getElementById('rvHc').checked)return false;
-    if(pc.required&&!pc.checked)return false;
+
+  // ===== Validation =====
+  function payerOk(){
+    var fn = form.payerFirstName.value.trim();
+    var ln = form.payerLastName.value.trim();
+    var em = form.payerEmail.value.trim();
+    var ph = form.payerPhone.value.trim();
+    if (fn.length<2 || ln.length<2 || !ph) return false;
+    if (!isValidEmail(em)) return false;
+    if (!document.getElementById('rvIc').checked) return false;
+    if (!document.getElementById('rvDc').checked) return false;
+    if (!document.getElementById('rvHc').checked) return false;
+    // Se c'è almeno un minore, il pagante deve aver dato il consenso minorenni
+    var mc = document.getElementById('rvMc');
+    if (mc && mc.required && !mc.checked) return false;
     return true;
   }
+  function participantsOk(){
+    var cards = partsBox.querySelectorAll('.rv-part');
+    if (cards.length === 0) return false;
+    for (var i=0; i<cards.length; i++) if (!isParticipantComplete(cards[i])) return false;
+    return true;
+  }
+  function tutorsOk(){ return true; }  // tutore = pagante (validato in payerOk via minorConsent)
+
+  // ===== Sync (totale + dettaglio + bottoni) — gli elementi sono già stati raccolti in alto =====
   function sync(){
-    // dettaglio + totale
-    var det='—';
-    if(mode==='single_lessons'){var n=parseInt(document.getElementById('rvCount').value,10);det=n+' clase'+(n>1?'s':'');}
-    else if(mode==='red'){det='3 clases/día · '+DAYS.length+' días';}
-    else if(mode==='junior'){det='Mañanas 9:30–12:30 · '+DAYS.length+' días';}
-    else{det='Open class · '+DAYS.length+' días';}
-    detEl.textContent=det; detEl.classList.remove('pk-summary-empty');
-    totalEl.textContent=(total||curPrice)+'€';
-    var ready=selectionOk()&&fieldsOk();
-    subs.forEach(function(b){ if(ready){b.classList.remove('is-disabled');}else{b.classList.add('is-disabled');} });
+    var N = STATE.participantsCount;
+    sumPartsEl.textContent = N + (N===1 ? ' persona' : ' personas');
+
+    // dettaglio
+    var detHtml = '—';
+    if (mode === 'single_lessons') {
+      var n = parseInt(document.getElementById('rvCount').value, 10) || 1;
+      var lines = [];
+      for (var i=0; i<n; i++) {
+        var dEl = form.querySelector('input[name="lesson_day_'+i+'"]');
+        var sEl = form.querySelector('input[name="lesson_slot_'+i+'"]');
+        var d = dEl ? dEl.value : '';
+        var s = sEl ? sEl.value : '';
+        if (d && s) {
+          var dayInfo = DAYS.find(function(x){return x.iso===d;});
+          var dayLabel = dayInfo ? (dayInfo.num+' '+dayInfo.mon) : d;
+          var l = lessonAt(d, s);
+          if (l) lines.push('<div><strong>'+s+'</strong> '+escapeHtml(l.title)+(l.professor?' <span style="opacity:.65">· '+escapeHtml(l.professor)+'</span>':'')+' <span style="opacity:.55;font-size:.85em">'+dayLabel+'</span></div>');
+          else lines.push('<div><strong>'+s+'</strong> <span style="opacity:.55">'+dayLabel+'</span></div>');
+        }
+      }
+      detHtml = lines.length ? lines.join('') : (n+' clase'+(n>1?'s':''));
+    } else if (mode === 'red') {
+      var rows = document.querySelectorAll('.rv-ampm');
+      var blocks = [];
+      rows.forEach(function(row, idx){
+        var picked = row.parentNode.querySelector('input').value;
+        if (!picked) return;
+        var dayIdx = idx + 1;
+        var dayInfo = DAYS[idx];
+        var dayLabel = dayInfo ? (dayInfo.num+' '+dayInfo.mon) : ('Día '+dayIdx);
+        var fascia = picked === 'AM' ? 'Mañana' : 'Tarde';
+        var ls = lessonsForFascia(dayIdx, picked === 'PM');
+        var lessonsHtml = ls.length ? ls.map(function(x){
+          return '<div style="font-size:.92em;opacity:.85;padding:1px 0 1px 12px"><strong>'+x.time+'</strong> '+escapeHtml(x.title)+(x.professor?' <span style="opacity:.7">· '+escapeHtml(x.professor)+'</span>':'')+'</div>';
+        }).join('') : '';
+        blocks.push('<div style="margin-bottom:8px"><strong>'+dayLabel+' — '+fascia+'</strong>'+lessonsHtml+'</div>');
+      });
+      detHtml = blocks.length ? blocks.join('') : ('3 clases/día · '+DAYS.length+' días');
+    } else if (mode === 'junior') {
+      detHtml = 'Mañanas 9:30–12:30 · '+DAYS.length+' días';
+    } else {
+      /* GOLD / open: elenca TUTTE le lezioni dei giorni */
+      var goldBlocks = [];
+      DAYS.forEach(function(d, idx){
+        var dayIdx = idx + 1;
+        var dayInfo = d;
+        var dayLabel = dayInfo ? (dayInfo.num+' '+dayInfo.mon+' '+dayInfo.label.split(' ').pop()) : ('Día '+dayIdx);
+        if (!LESSONS[dayIdx]) return;
+        var times = Object.keys(LESSONS[dayIdx]).sort();
+        var dayHtml = '<div style="margin-top:'+(idx>0?'10px':'0')+'"><div style="font-weight:700;font-size:13px;color:#2a2a2a;text-align:right;margin-bottom:4px">'+escapeHtml(dayLabel)+'</div>';
+        times.forEach(function(t){
+          var l = LESSONS[dayIdx][t];
+          if (l.isPause) return;
+          dayHtml += '<div style="font-size:12.5px;text-align:right;color:#5a5a5a;line-height:1.5">'+escapeHtml(t)+' — '+escapeHtml(l.title)+(l.professor?' · '+escapeHtml(l.professor):'')+'</div>';
+        });
+        dayHtml += '</div>';
+        goldBlocks.push(dayHtml);
+      });
+      detHtml = goldBlocks.length ? goldBlocks.join('') : 'Open class · '+DAYS.length+' días';
+    }
+
+    // Riepilogo extras
+    var ext = extrasInfo();
+    if (ext.rows.length) {
+      detHtml += '<div style="margin-top:8px;padding-top:8px;border-top:1px dashed rgba(0,0,0,.1)">';
+      ext.rows.forEach(function(x){
+        detHtml += '<div style="display:flex;justify-content:space-between;font-size:.92em;padding:2px 0">'+
+          '<span>'+escapeHtml(x.name)+(x.mandatory?' <span style="opacity:.65;font-size:.85em">(obl.)</span>':'')+'</span>'+
+          '<span>+'+x.price+'€'+(N>1?' <span class="pk-summary-multiplier">× '+N+'</span>':'')+'</span>'+
+        '</div>';
+      });
+      detHtml += '</div>';
+    }
+    if (N > 1) {
+      detHtml += '<div style="margin-top:8px;padding-top:8px;border-top:1px dashed rgba(0,0,0,.1);font-size:.92em;display:flex;justify-content:space-between">'+
+        '<span>Paquete por participante</span>'+
+        '<span>'+STATE.perParticipant+'€ × '+N+'</span>'+
+      '</div>';
+    }
+
+    // ===== Sconto quantità =====
+    var subtotal = STATE.perParticipant * N;
+    var discountAmount = 0;
+    if (DISC_THR > 0 && DISC_PCT > 0 && N >= DISC_THR) {
+      discountAmount = Math.round(subtotal * DISC_PCT) / 100;
+      detHtml += '<div style="margin-top:6px;padding:6px 0;font-size:.92em;display:flex;justify-content:space-between;color:#1b6b3e;font-weight:600">'+
+        '<span>Descuento '+DISC_PCT+'% ('+DISC_THR+'+ participantes)</span>'+
+        '<span>−'+discountAmount.toFixed(2)+'€</span>'+
+      '</div>';
+    }
+
+    detEl.innerHTML = detHtml;
+    detEl.classList.remove('pk-summary-empty');
+
+    var grossPack = subtotal - discountAmount;        // lordo pacchetto post multi-discount
+    var refDiscGross = 0;
+    if (window.RV_REFCODE && window.RV_REFCODE.valid) {
+      var IVA = 0.21;
+      var netPack = grossPack / (1 + IVA);
+      var refDiscNet;
+      if (window.RV_REFCODE.discountType === 'fixed') {
+        refDiscNet = parseFloat(window.RV_REFCODE.discountValue) || 0;
+        if (refDiscNet > netPack) refDiscNet = netPack;
+      } else {
+        refDiscNet = netPack * (parseFloat(window.RV_REFCODE.discountValue) || 0) / 100;
+      }
+      refDiscGross = Math.round(refDiscNet * (1 + IVA) * 100) / 100;
+    }
+    var grand = grossPack - refDiscGross + (ext.sum * N);
+    totalEl.textContent = (Math.round(grand*100)/100) + '€';
+
+    /* Riga sconto referral nel summary */
+    var refRow = document.getElementById('rvSumRefcodeRow');
+    if (refRow) {
+      if (refDiscGross > 0 && window.RV_REFCODE && window.RV_REFCODE.valid) {
+        refRow.hidden = false;
+        document.getElementById('rvSumRefcodeName').textContent = window.RV_REFCODE.code;
+        document.getElementById('rvSumRefcodeAmt').textContent = '−' + refDiscGross.toFixed(2) + '€';
+      } else {
+        refRow.hidden = true;
+      }
+    }
+    /* Aggiorna amount Stripe Payment Element se montato */
+    if (typeof updateStripeAmount === 'function') updateStripeAmount();
+
+    /* Riempi le nuove righe summary stile design */
+    var unitEl = document.querySelector('[data-sum-unit]');
+    if (unitEl) unitEl.textContent = STATE.perParticipant + '€ × ' + N;
+    var seguroEl = document.querySelector('[data-sum-seguro]');
+    if (seguroEl && ext.rows.length) {
+      var seguroPrice = ext.rows.reduce(function(s,x){return s + (x.price||0);}, 0);
+      seguroEl.textContent = '+' + seguroPrice + '€ × ' + N;
+    }
+    var detalleEl = document.querySelector('[data-sum-detalle]');
+    if (detalleEl && mode === 'single_lessons') {
+      var nClasses = parseInt(document.getElementById('rvCount').value, 10) || 1;
+      detalleEl.textContent = nClasses + (nClasses===1?' clase':' clases');
+    }
+
+    var ready = selectionOk() && payerOk() && participantsOk() && tutorsOk();
+    subs.forEach(function(b){ if (ready) b.classList.remove('is-disabled'); else b.classList.add('is-disabled'); });
   }
-  form.addEventListener('input',sync);
-  form.addEventListener('change',sync);
-  form.addEventListener('submit',function(e){
-    if(!(selectionOk()&&fieldsOk())){e.preventDefault();sync();window.scrollTo({top:0,behavior:'smooth'});}
+
+  form.addEventListener('input', sync);
+  form.addEventListener('change', sync);
+
+  var BOOKINGS_ENABLED = <%= bookingsEnabled ? 'true' : 'false' %>;
+
+  form.addEventListener('submit', function(e){
+    e.preventDefault();
+    if (!(selectionOk() && payerOk() && participantsOk() && tutorsOk())) {
+      sync();
+      window.scrollTo({top:0,behavior:'smooth'});
+      return;
+    }
+    if (!BOOKINGS_ENABLED) { showBookingsOffModal(); return; }
+    startEmbeddedCheckout();
   });
-  checkAge(); sync();
+
+  // ===== Modale "Bookings disabled" =====
+  function showBookingsOffModal(){ var m=document.getElementById('rvBookingsOff'); if(!m)return; m.hidden=false; document.body.style.overflow='hidden'; }
+  function hideBookingsOffModal(){ var m=document.getElementById('rvBookingsOff'); if(!m)return; m.hidden=true; document.body.style.overflow=''; }
+  (function(){
+    var x = document.getElementById('rvBkOffClose');
+    var bd = document.getElementById('rvBkOffBackdrop');
+    if (x) x.addEventListener('click', hideBookingsOffModal);
+    if (bd) bd.addEventListener('click', hideBookingsOffModal);
+    document.addEventListener('keydown', function(e){ if (e.key==='Escape') hideBookingsOffModal(); });
+  })();
+
+  // ===== Stripe Elements (Payment Element inline — un click = pagamento) =====
+  var STRIPE_PK = <%- JSON.stringify(stripePk || '') %>;
+  var stripeObj = null, elementsObj = null, paymentEl = null;
+  function getStripeJs(){
+    return new Promise(function(resolve, reject){
+      if (stripeObj) return resolve(stripeObj);
+      if (!STRIPE_PK) return reject(new Error('Stripe non configurato'));
+      var tries = 0;
+      function check(){
+        if (window.Stripe) { try { stripeObj = window.Stripe(STRIPE_PK); resolve(stripeObj); } catch(e){ reject(e); } return; }
+        if (++tries > 60) return reject(new Error('Stripe.js non caricato'));
+        setTimeout(check, 100);
+      }
+      check();
+    });
+  }
+  /* Mount Stripe Payment Element unificato — auto-include card / link / paypal / sepa / qualsiasi metodo attivo */
+  var paymentElement = null;
+  async function mountPaymentElement(){
+    try {
+      var stripe = await getStripeJs();
+      if (elementsObj && paymentElement) return;
+      var amount = Math.max(50, Math.round((parseFloat(totalEl.textContent)||0) * 100));
+      elementsObj = stripe.elements({
+        mode: 'payment',
+        amount: amount,
+        currency: '<%= (plan.currency || "eur").toLowerCase() %>',
+        paymentMethodCreation: 'manual',
+        appearance: {
+          theme: 'stripe',
+          variables: {
+            colorPrimary: '#F5C518',
+            colorBackground: '#ffffff',
+            colorText: '#2a2a2a',
+            colorDanger: '#c0392b',
+            fontFamily: 'Manrope, system-ui, sans-serif',
+            fontSizeBase: '15px',
+            borderRadius: '8px',
+            spacingUnit: '4px',
+          },
+          rules: {
+            '.Input': { border: '1px solid rgba(42,42,42,.18)', boxShadow: 'none', padding: '14px 16px', fontSize: '15px' },
+            '.Input:focus': { borderColor: '#F5C518', boxShadow: 'none' },
+            '.Label': { fontSize: '11px', fontWeight: '700', color: '#5a5a5a', textTransform: 'uppercase', letterSpacing: '.16em' },
+            '.Tab': { border: '1px solid rgba(42,42,42,.15)', borderRadius: '10px', padding: '14px', backgroundColor: '#ffffff' },
+            '.Tab:hover': { borderColor: '#F5C518', backgroundColor: '#ffffff' },
+            '.Tab--selected': { backgroundColor: '#fdf7e3', borderColor: '#F5C518', boxShadow: '0 0 0 1px #F5C518 inset', color: '#2a2a2a' },
+            '.TabLabel': { fontWeight: '600' },
+            '.TabIcon--selected, .TabLabel--selected': { color: '#2a2a2a' },
+          },
+        },
+      });
+      paymentElement = elementsObj.create('payment', { layout: { type: 'tabs', defaultCollapsed: false } });
+      var wrap = document.getElementById('scx-pay-element');
+      if (wrap) wrap.innerHTML = '';
+      paymentElement.mount('#scx-pay-element');
+    } catch (e) { console.warn('[stripe] mount fail:', e.message); }
+  }
+  function updateStripeAmount(){
+    if (!elementsObj) return;
+    var amount = Math.max(50, Math.round((parseFloat(totalEl.textContent)||0) * 100));
+    try { elementsObj.update({ amount: amount }); } catch(e){}
+  }
+  /* Monta Stripe Elements immediato — placeholders visibili da subito */
+  setTimeout(function(){ mountPaymentElement(); }, 100);
+
+  function buildPayload(){
+    var payer = {
+      firstName: form.payerFirstName.value.trim(),
+      lastName: form.payerLastName.value.trim(),
+      email: form.payerEmail.value.trim(),
+      phone: form.payerPhone.value.trim(),
+      imageConsent: document.getElementById('rvIc').checked,
+      dataConsent: document.getElementById('rvDc').checked,
+      healthConsent: document.getElementById('rvHc').checked,
+    };
+    if (document.getElementById('rvBillToggle').checked) {
+      payer.billing = {
+        address: (form.billingAddress.value||'').trim(),
+        city:    (form.billingCity.value||'').trim(),
+        zip:     (form.billingZip.value||'').trim(),
+        country: (form.billingCountry.value||'').trim() || 'ES',
+        nif:     (form.billingNif.value||'').trim(),
+      };
+    }
+    var participants = [];
+    partsBox.querySelectorAll('.rv-part').forEach(function(card, idx){
+      var bd = card.querySelector('input[data-fld=birthDate]').value;
+      var age = ageYears(bd);
+      var isMinor = (age != null && age < 18);
+      var pp = {
+        firstName: card.querySelector('input[data-fld=firstName]').value.trim(),
+        lastName:  card.querySelector('input[data-fld=lastName]').value.trim(),
+        birthDate: bd,
+        address:   card.querySelector('input[data-fld=address]').value.trim(),
+        city:      card.querySelector('input[data-fld=city]').value.trim(),
+        zip:       card.querySelector('input[data-fld=zip]').value.trim(),
+        country:   card.querySelector('input[data-fld=country]').value.trim() || 'ES',
+      };
+      if (!isMinor) {
+        pp.email = card.querySelector('input[data-fld=email]').value.trim();
+        pp.phone = card.querySelector('input[data-fld=phone]').value.trim();
+      }
+      participants.push(pp);
+    });
+    var extras = [];
+    document.querySelectorAll('input[type=checkbox][name="extras"]:not(:disabled)').forEach(function(cb){
+      if (cb.checked) extras.push(parseInt(cb.value, 10));
+    });
+    // minorConsent: il pagante autorizza la partecipazione dei minori
+    var mcEl = document.getElementById('rvMc');
+    payer.minorConsent = !!(mcEl && mcEl.checked);
+    var payload = { payer: payer, participants: participants, tutors: [], extras: extras };
+    if (window.RV_REFCODE && window.RV_REFCODE.valid) {
+      payload.referralCode = window.RV_REFCODE.code;
+    }
+    if (mode === 'single_lessons') {
+      payload.classesPerParticipant = parseInt(document.getElementById('rvCount').value, 10);
+      var lessons = [];
+      var n = payload.classesPerParticipant;
+      for (var i=0; i<n; i++) {
+        lessons.push({
+          day: form.querySelector('input[name="lesson_day_'+i+'"]').value,
+          slot: form.querySelector('input[name="lesson_slot_'+i+'"]').value,
+        });
+      }
+      payload.lessons = lessons;
+    }
+    return payload;
+  }
+
+  /* Pagamento inline 1 click — Stripe Payment Element (auto-include tutti i metodi attivi) */
+  async function startEmbeddedCheckout(){
+    var btnL = document.getElementById('rvSubmitL');
+    var btnR = document.getElementById('rvSubmitR');
+    var msgEl = document.getElementById('scx-pay-message');
+    function setBtn(txt, dis){ [btnL,btnR].forEach(function(b){ if (!b) return; b.disabled = !!dis; if (txt) b.textContent = txt; }); }
+    function showMsg(t){ if (msgEl) { msgEl.textContent = t; msgEl.hidden = false; } }
+    function clearMsg(){ if (msgEl) { msgEl.textContent = ''; msgEl.hidden = true; } }
+    clearMsg();
+    setBtn('Procesando...', true);
+    try {
+      // 1. Assicurati che Payment Element sia montato
+      await mountPaymentElement();
+      if (!elementsObj || !paymentElement) throw new Error('Métodos de pago no cargados, prueba a recargar');
+      // 2. Validazione client-side del Payment Element
+      var sub = await elementsObj.submit();
+      if (sub && sub.error) throw new Error(sub.error.message || 'Datos de pago no válidos');
+      // 3. Crea PaymentIntent server-side (+ booking pending)
+      var r = await fetch('/reserva/' + <%- JSON.stringify(plan.slug) %> + '/payment-intent', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify(buildPayload()),
+        credentials: 'same-origin',
+      });
+      var j = await r.json().catch(function(){ return {}; });
+      if (!r.ok || !j.ok) throw new Error(j.error || ('HTTP ' + r.status));
+      var origin = window.location.origin;
+      var successUrl = origin + '/reserva/success?b=' + j.bookingId;
+      // 4. Conferma pagamento (Stripe gestisce automaticamente carta/Link/PayPal/3DS/redirect)
+      var stripe = await getStripeJs();
+      var conf = await stripe.confirmPayment({
+        elements: elementsObj,
+        clientSecret: j.clientSecret,
+        confirmParams: {
+          return_url: successUrl,
+          receipt_email: form.payerEmail.value.trim(),
+          payment_method_data: { billing_details: { name: (form.payerFirstName.value + ' ' + form.payerLastName.value).trim(), email: form.payerEmail.value.trim(), phone: form.payerPhone.value.trim() } },
+        },
+        redirect: 'if_required',
+      });
+      if (conf && conf.error) throw new Error(conf.error.message || 'Pago no confirmado');
+      // Success without redirect → vai alla success
+      window.location.href = successUrl;
+    } catch (err) {
+      showMsg('Error: ' + (err.message || 'No se ha podido procesar el pago.'));
+    } finally {
+      setBtn('Confirmar y pagar', false);
+    }
+  }
+
+  var backBtn = document.getElementById('rvEmbedBack');
+  if (backBtn) backBtn.addEventListener('click', function(){
+    try { if (embeddedInstance) embeddedInstance.unmount(); embeddedInstance = null; } catch(e){}
+    document.getElementById('rvEmbedded').hidden = true;
+    document.getElementById('rvEmbedLoading').hidden = false;
+    document.getElementById('rvEmbedError').hidden = true;
+    document.getElementById('embed-payment').innerHTML = '';
+    form.hidden = false;
+    window.scrollTo({top:0,behavior:'smooth'});
+  });
+
+  // Bottom sheet mobile
+  (function(){
+    var trig = document.getElementById('rvSumTrigger');
+    var box = document.getElementById('rvSummary');
+    if (!trig || !box) return;
+    trig.addEventListener('click', function(){
+      var open = box.classList.toggle('is-open');
+      trig.setAttribute('aria-expanded', open ? 'true' : 'false');
+    });
+    document.addEventListener('click', function(e){
+      if (!box.classList.contains('is-open')) return;
+      if (box.contains(e.target)) return;
+      if (window.matchMedia('(max-width:980px)').matches) {
+        box.classList.remove('is-open');
+        trig.setAttribute('aria-expanded', 'false');
+      }
+    });
+  })();
+  (function(){
+    var src = document.getElementById('rvTotal');
+    var dst = document.getElementById('rvTotalMobile');
+    if (!src || !dst) return;
+    new MutationObserver(function(){ dst.textContent = src.textContent; })
+      .observe(src, { childList:true, characterData:true, subtree:true });
+  })();
+
+  // ===== Codice referral (validazione AJAX) =====
+  window.RV_REFCODE = null;
+  (function(){
+    var input = document.getElementById('rvRefCodeInput');
+    var btn = document.getElementById('rvRefCodeApply');
+    var st = document.getElementById('rvRefCodeStatus');
+    if (!input || !btn || !st) return;
+
+    function showStatus(msg, ok){
+      st.hidden = false;
+      st.textContent = msg;
+      st.className = 'rv-refcode-status ' + (ok ? 'ok' : 'err');
+    }
+    function clearStatus(){
+      st.hidden = true; st.textContent = '';
+      window.RV_REFCODE = null;
+      btn.classList.remove('is-applied');
+      btn.textContent = 'Aplicar';
+      input.disabled = false;
+      sync();
+    }
+
+    input.addEventListener('input', function(){
+      input.value = input.value.toUpperCase();
+      if (window.RV_REFCODE) clearStatus();
+    });
+
+    btn.addEventListener('click', function(){
+      if (window.RV_REFCODE) { clearStatus(); return; }
+      var code = (input.value||'').trim();
+      if (!code) return;
+      btn.disabled = true;
+      btn.textContent = 'Verificando…';
+      fetch('/reserva/validate-code', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ code: code })
+      }).then(function(r){return r.json();}).then(function(j){
+        btn.disabled = false;
+        if (j.ok) {
+          window.RV_REFCODE = { valid:true, code: j.code, discountType: j.discountType, discountValue: j.discountValue };
+          showStatus('✓ Código aplicado: ' + j.label, true);
+          btn.classList.add('is-applied');
+          btn.textContent = 'Quitar';
+          input.disabled = true;
+          sync();
+        } else {
+          showStatus('✗ ' + (j.error || 'Código no válido'), false);
+          window.RV_REFCODE = null;
+          btn.textContent = 'Aplicar';
+        }
+      }).catch(function(){
+        btn.disabled = false;
+        btn.textContent = 'Aplicar';
+        showStatus('Error de conexión. Reintenta.', false);
+      });
+    });
+  })();
+
+  // ===== Init =====
+  renderParticipants();
+  sync();
 })();
 </script>
+<script id="scx-flatpickr-init">
+(function(){
+  if (typeof flatpickr === 'undefined') { setTimeout(arguments.callee, 200); return; }
+  var CAL_ICO='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="3"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>';
+  var CHEV='<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>';
+  var MONTHS=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  function closeAllDrops(){document.querySelectorAll('.scx-fp-drop.visible').forEach(function(d){d.classList.remove('visible');});document.querySelectorAll('.scx-fp-btn.open').forEach(function(b){b.classList.remove('open');});}
+  function makeSelector(label,items,onSelect){
+    var sel=document.createElement('div');sel.className='scx-fp-sel';
+    var btn=document.createElement('button');btn.type='button';btn.className='scx-fp-btn';btn.innerHTML=label+CHEV;
+    var drop=document.createElement('ul');drop.className='scx-fp-drop';
+    items.forEach(function(item){var li=document.createElement('li');li.textContent=item.label;li.dataset.val=item.val;li.addEventListener('click',function(e){e.stopPropagation();closeAllDrops();onSelect(item.val,li);});drop.appendChild(li);});
+    btn.addEventListener('click',function(e){e.stopPropagation();var isOpen=drop.classList.contains('visible');closeAllDrops();if(!isOpen){drop.classList.add('visible');btn.classList.add('open');}});
+    sel.appendChild(btn);sel.appendChild(drop);return {el:sel,btn:btn,drop:drop};
+  }
+  function buildHeader(fp){
+    var cal=fp.calendarContainer;if(!cal)return;
+    var old=cal.querySelector('.scx-fp-header');if(old)old.remove();
+    var hdr=document.createElement('div');hdr.className='scx-fp-header';
+    var curMonth=fp.currentMonth;
+    var monthItems=MONTHS.map(function(m,i){return {label:m,val:i};});
+    var mSel=makeSelector(MONTHS[curMonth],monthItems,function(val){fp.changeMonth(val-fp.currentMonth,false);mSel.btn.innerHTML=MONTHS[val]+CHEV;mSel.drop.querySelectorAll('li').forEach(function(el){el.classList.toggle('active',parseInt(el.dataset.val)===val);});});
+    mSel.drop.querySelectorAll('li').forEach(function(el){el.classList.toggle('active',parseInt(el.dataset.val)===curMonth);});
+    var curYear=fp.currentYear;var thisYear=new Date().getFullYear();
+    var yearItems=[];for(var y=thisYear;y>=1924;y--)yearItems.push({label:String(y),val:y});
+    var ySel=makeSelector(String(curYear),yearItems,function(val){fp.changeYear(val);ySel.btn.innerHTML=String(val)+CHEV;ySel.drop.querySelectorAll('li').forEach(function(el){el.classList.toggle('active',parseInt(el.dataset.val)===val);});});
+    ySel.drop.querySelectorAll('li').forEach(function(el){el.classList.toggle('active',parseInt(el.dataset.val)===curYear);});
+    setTimeout(function(){var act=ySel.drop.querySelector('li.active');if(act)act.scrollIntoView({block:'nearest'});},50);
+    var prevBtn=document.createElement('button');prevBtn.type='button';prevBtn.style.cssText='background:none;border:none;cursor:pointer;padding:5px;color:#5a5a5a;display:flex;align-items:center';
+    prevBtn.innerHTML='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>';
+    prevBtn.addEventListener('click',function(e){e.stopPropagation();fp.changeMonth(-1);});
+    var nextBtn=document.createElement('button');nextBtn.type='button';nextBtn.style.cssText='background:none;border:none;cursor:pointer;padding:5px;color:#5a5a5a;display:flex;align-items:center';
+    nextBtn.innerHTML='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>';
+    nextBtn.addEventListener('click',function(e){e.stopPropagation();fp.changeMonth(1);});
+    mSel.drop.classList.add('months-drop');ySel.drop.classList.add('years-drop');
+    hdr.appendChild(prevBtn);hdr.appendChild(mSel.el);hdr.appendChild(ySel.el);hdr.appendChild(nextBtn);
+    var xBtn=document.createElement('button');xBtn.type='button';xBtn.className='scx-cal-close';
+    xBtn.innerHTML='<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
+    xBtn.addEventListener('click',function(e){e.stopPropagation();closeAllDrops();fp.close();});
+    var oldX=cal.querySelector('.scx-cal-close');if(oldX)oldX.remove();cal.appendChild(xBtn);
+    var months=cal.querySelector('.flatpickr-months');if(months)months.after(hdr);else cal.prepend(hdr);
+    cal._scxMSel=mSel;cal._scxYSel=ySel;
+  }
+  function updateHeader(fp){var cal=fp.calendarContainer;if(!cal)return;if(cal._scxMSel)cal._scxMSel.btn.innerHTML=MONTHS[fp.currentMonth]+CHEV;if(cal._scxYSel)cal._scxYSel.btn.innerHTML=String(fp.currentYear)+CHEV;if(cal._scxMSel)cal._scxMSel.drop.querySelectorAll('li').forEach(function(el){el.classList.toggle('active',parseInt(el.dataset.val)===fp.currentMonth);});if(cal._scxYSel)cal._scxYSel.drop.querySelectorAll('li').forEach(function(el){el.classList.toggle('active',parseInt(el.dataset.val)===fp.currentYear);});}
+  function initFp(input){
+    if(input._flatpickr||input.dataset.fpReady)return;input.dataset.fpReady='1';
+    var isFullCol=input.classList.contains('scx-pg-full');
+    var wrapper=document.createElement('div');wrapper.className='scx-date-wrap'+(isFullCol?' scx-pg-full':'');
+    if(isFullCol)input.classList.remove('scx-pg-full');
+    input.parentNode.insertBefore(wrapper,input);wrapper.appendChild(input);
+    var calBtn=document.createElement('button');calBtn.type='button';calBtn.className='scx-cal-btn';calBtn.innerHTML=CAL_ICO;calBtn.tabIndex=-1;wrapper.appendChild(calBtn);
+    input.placeholder='dd/mm/aaaa';
+    var fp=flatpickr(input,{
+      dateFormat:'Y-m-d',altInput:true,altFormat:'d/m/Y',allowInput:false,clickOpens:false,maxDate:'today',disableMobile:false,
+      onChange:function(){input.dispatchEvent(new Event('input',{bubbles:true}));input.dispatchEvent(new Event('change',{bubbles:true}));},
+      onReady:function(_s,_str,fp2){buildHeader(fp2);if(fp2.altInput){fp2.altInput.className=input.className;fp2.altInput.style.cssText='width:100%;padding-right:42px;cursor:pointer;box-sizing:border-box';fp2.altInput.placeholder='dd/mm/aaaa';}},
+      onMonthChange:function(_s,_str,fp2){updateHeader(fp2);},
+      onYearChange:function(_s,_str,fp2){updateHeader(fp2);}
+    });
+    calBtn.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();fp.toggle();});
+  }
+  document.addEventListener('click',function(){closeAllDrops();});
+  function initAll(){document.querySelectorAll('input[data-participant-birth],input[data-payer-birth]').forEach(initFp);}
+  initAll();
+  new MutationObserver(function(muts){muts.forEach(function(m){m.addedNodes.forEach(function(n){if(n.nodeType!==1)return;if(n.querySelectorAll){n.querySelectorAll('[data-participant-birth],[data-payer-birth]').forEach(initFp);}if(n.matches&&(n.matches('[data-participant-birth]')||n.matches('[data-payer-birth]')))initFp(n);});});}).observe(document.body,{childList:true,subtree:true});
+})();
+</script>
+<script src="/tracker.js" defer></script>
 </body>
 </html>

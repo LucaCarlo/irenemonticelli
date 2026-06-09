@@ -1,6 +1,4 @@
 // Catalogo permessi raggruppato. "*" in un ruolo = tutti i permessi.
-// Le aree non ancora implementate sono gi� previste qui cos� i ruoli sono
-// pronti quando le costruiremo (eventi, prenotazioni, piani...).
 
 const CATALOG = [
   {
@@ -28,33 +26,40 @@ const CATALOG = [
     ],
   },
   {
-    group: 'Sistema',
-    items: [
-      { key: 'stats.view', label: 'Vedere statistiche' },
-      { key: 'backup.manage', label: 'Gestire backup' },
-    ],
-  },
-  // ---- Aree future (gi� mappate, implementazione successiva) ----
-  {
-    group: 'Contenuti (in arrivo)',
+    group: 'Contenuti',
     items: [
       { key: 'events.manage', label: 'Gestire eventi' },
       { key: 'professors.manage', label: 'Gestire professori' },
-      { key: 'pages.manage', label: 'Gestire pagine' },
+      { key: 'lessons.manage', label: 'Gestire programma lezioni' },
+      { key: 'pages.manage', label: 'Gestire pagine (video homepage, ...)' },
     ],
   },
   {
-    group: 'Prenotazioni (in arrivo)',
+    group: 'Prenotazioni',
     items: [
       { key: 'plans.manage', label: 'Gestire piani/pacchetti' },
       { key: 'bookings.manage', label: 'Gestire prenotazioni' },
+      { key: 'extras.manage', label: 'Gestire extras/suplementi' },
     ],
   },
   {
-    group: 'Comunicazione (in arrivo)',
+    group: 'Comunicazione',
     items: [
-      { key: 'newsletter.manage', label: 'Gestire newsletter' },
-      { key: 'messages.manage', label: 'Gestire messaggi di contatto' },
+      { key: 'messages.view', label: 'Vedere messaggi di contatto' },
+      { key: 'messages.delete', label: 'Eliminare messaggi' },
+      { key: 'newsletter.manage', label: 'Gestire newsletter (campagne + iscritti)' },
+      { key: 'referrals.view', label: 'Vedere referrer' },
+      { key: 'referrals.manage', label: 'Approvare/disattivare/eliminare referrer' },
+      { key: 'referrals.codes.manage', label: 'Gestire codici sconto referral' },
+      { key: 'referrals.commissions.manage', label: 'Vedere e segnare commissioni come pagate' },
+    ],
+  },
+  {
+    group: 'Sistema',
+    items: [
+      { key: 'stats.view', label: 'Vedere statistiche' },
+      { key: 'audit.view', label: 'Vedere log attività' },
+      { key: 'backup.manage', label: 'Gestire backup' },
     ],
   },
 ];

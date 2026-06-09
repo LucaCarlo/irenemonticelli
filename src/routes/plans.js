@@ -16,11 +16,27 @@ const MODES = [
 router.use(requirePermission('plans.manage'));
 
 router.get('/', A(async (req, res) => {
-  const plans = await prisma.plan.findMany({
-    orderBy: [{ sort: 'asc' }, { id: 'asc' }],
-    include: { event: { select: { title: true } } },
-  });
-  res.render('plans/list', { title: 'Piani / Pacchetti', plans, MODES });
+  const dt = require('../lib/datatable');
+  const params = dt.parseParams(req, { defaultSort: 'sort', allowedSorts: ['name','slug','price','bookingMode','active','sort'] });
+  const status = String(req.query.status || '').trim();
+  params._extra = { status };
+  const where = {};
+  if (params.q) where.OR = [
+    { name: { contains: params.q, mode: 'insensitive' } },
+    { slug: { contains: params.q, mode: 'insensitive' } },
+    { description: { contains: params.q, mode: 'insensitive' } },
+  ];
+  if (status === 'active') where.active = true;
+  if (status === 'inactive') where.active = false;
+  const orderBy = {}; orderBy[params.sort] = params.dir;
+  const [totalUnfiltered, total, plans] = await Promise.all([
+    prisma.plan.count(),
+    prisma.plan.count({ where }),
+    prisma.plan.findMany({ where, orderBy, skip: params.skip, take: params.take, include: { event: { select: { title: true } } } }),
+  ]);
+  const totalPages = Math.max(1, Math.ceil(total / params.perPage));
+  const links = dt.pageLinks(params.page, totalPages);
+  res.render('plans/list', { title: 'Piani / Pacchetti', plans, MODES, params, total, totalUnfiltered, totalPages, links, status });
 }));
 
 router.get('/new', A(async (req, res) => {
@@ -41,6 +57,8 @@ router.post('/', A(async (req, res) => {
       description: b.description || '',
       bookingMode: b.bookingMode || 'single_lessons',
       pricingJson: (b.pricingJson || '').trim(),
+      discountThreshold: Math.max(0, parseInt(b.discountThreshold, 10) || 0),
+      discountPercent:   Math.max(0, Math.min(100, parseFloat(b.discountPercent) || 0)),
       ctaLabel: b.ctaLabel || 'Reserva',
       active: b.active ? true : false,
       sort: parseInt(b.sort, 10) || 0,
@@ -72,6 +90,8 @@ router.post('/:id(\\d+)', A(async (req, res) => {
       description: b.description || '',
       bookingMode: b.bookingMode || 'single_lessons',
       pricingJson: (b.pricingJson || '').trim(),
+      discountThreshold: Math.max(0, parseInt(b.discountThreshold, 10) || 0),
+      discountPercent:   Math.max(0, Math.min(100, parseFloat(b.discountPercent) || 0)),
       ctaLabel: b.ctaLabel || 'Reserva',
       active: b.active ? true : false,
       sort: parseInt(b.sort, 10) || 0,

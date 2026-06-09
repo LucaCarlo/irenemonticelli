@@ -14,11 +14,27 @@ function parseDate(v) {
 router.use(requirePermission('events.manage'));
 
 router.get('/', A(async (req, res) => {
-  const events = await prisma.event.findMany({
-    orderBy: [{ sort: 'asc' }, { startDate: 'asc' }],
-    include: { _count: { select: { bookings: true } } },
-  });
-  res.render('events/list', { title: 'Eventi', events });
+  const dt = require('../lib/datatable');
+  const params = dt.parseParams(req, { defaultSort: 'startDate', allowedSorts: ['title','startDate','location','active','sort'] });
+  const status = String(req.query.status || '').trim();
+  params._extra = { status };
+  const where = {};
+  if (params.q) where.OR = [
+    { title: { contains: params.q, mode: 'insensitive' } },
+    { subtitle: { contains: params.q, mode: 'insensitive' } },
+    { location: { contains: params.q, mode: 'insensitive' } },
+  ];
+  if (status === 'active') where.active = true;
+  if (status === 'inactive') where.active = false;
+  const orderBy = {}; orderBy[params.sort] = params.dir;
+  const [totalUnfiltered, total, events] = await Promise.all([
+    prisma.event.count(),
+    prisma.event.count({ where }),
+    prisma.event.findMany({ where, orderBy, skip: params.skip, take: params.take, include: { _count: { select: { bookings: true } } } }),
+  ]);
+  const totalPages = Math.max(1, Math.ceil(total / params.perPage));
+  const links = dt.pageLinks(params.page, totalPages);
+  res.render('events/list', { title: 'Eventi', events, params, total, totalUnfiltered, totalPages, links, status });
 }));
 
 router.get('/new', (req, res) => {
@@ -36,6 +52,8 @@ router.post('/', A(async (req, res) => {
       location: b.location || '',
       description: b.description || '',
       slotsJson: (b.slotsJson || '').trim(),
+      morningHours: (b.morningHours || '9:30 - 12:30').trim(),
+      afternoonHours: (b.afternoonHours || '15:30 - 18:30').trim(),
       active: b.active ? true : false,
       sort: parseInt(b.sort, 10) || 0,
     },
@@ -62,6 +80,8 @@ router.post('/:id(\\d+)', A(async (req, res) => {
       location: b.location || '',
       description: b.description || '',
       slotsJson: (b.slotsJson || '').trim(),
+      morningHours: (b.morningHours || '9:30 - 12:30').trim(),
+      afternoonHours: (b.afternoonHours || '15:30 - 18:30').trim(),
       active: b.active ? true : false,
       sort: parseInt(b.sort, 10) || 0,
     },

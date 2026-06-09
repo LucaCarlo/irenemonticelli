@@ -11,6 +11,17 @@ html,body{margin:0;padding:0}
 body{background:#f4f5f8;color:var(--ink);font-size:14.5px;line-height:1.5}
 a{color:var(--brand-d);text-decoration:none}
 a:hover{text-decoration:underline}
+/* Container-like links (button, card, sidebar, kpi, feed…) NON devono sottolineare nulla all'hover. */
+a.btn, a.btn:hover, a.btn:hover *,
+.sb-link, .sb-link:hover, .sb-link:hover *,
+.pg-tab, .pg-tab:hover, .pg-tab:hover *,
+.st-tab, .st-tab:hover, .st-tab:hover *,
+a.kpi, a.kpi:hover, a.kpi:hover *,
+a.qa, a.qa:hover, a.qa:hover *,
+.feed-link, .feed-link:hover, .feed-link:hover *,
+.pg-quick, .pg-quick:hover, .pg-quick:hover *,
+.dash-alert, .dash-alert:hover, .dash-alert:hover *,
+.row-actions a, .row-actions a:hover{text-decoration:none !important}
 h1,h2,h3{margin:0 0 .6rem}
 code{background:#f0f1f4;padding:1px 6px;border-radius:5px;font-size:.8em;color:#555}
 .muted{color:var(--muted)}
@@ -119,6 +130,36 @@ img{max-width:100%}
 .color-dot{display:inline-block;width:16px;height:16px;border-radius:50%;border:1px solid rgba(0,0,0,.15);vertical-align:middle}
 .sub{margin-top:10px;font-size:15px}
 
+/* Form sections — pattern condiviso per pagine "modifica" */
+.fs-page{display:flex;flex-direction:column;gap:18px}
+.fs-page-head{background:#fff;border:1px solid var(--line);border-radius:12px;padding:18px 22px;display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}
+.fs-page-head h2{margin:0;font-size:19px}
+.fs-page-head p{margin:4px 0 0;font-size:13px;color:var(--muted)}
+.fs-section{background:#fff;border:1px solid var(--line);border-radius:12px;padding:22px 24px}
+.fs-section-head{display:flex;align-items:center;gap:14px;margin-bottom:18px;padding-bottom:14px;border-bottom:1px solid #eef0f4}
+.fs-section-ico{width:42px;height:42px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.fs-section-title{margin:0;font-size:16px;font-weight:600}
+.fs-section-sub{margin:3px 0 0;font-size:12.5px;color:var(--muted)}
+.fs-grid{display:grid;grid-template-columns:repeat(2, minmax(220px, 1fr));gap:14px 22px}
+.fs-grid .field{margin-bottom:0}
+.fs-grid .field-full{grid-column:1/-1}
+.fs-actions{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;padding:14px 0 4px;position:sticky;bottom:0;background:rgba(244,245,248,.92);backdrop-filter:blur(4px);margin:8px -4px 0;padding:14px 4px;border-top:1px solid var(--line);z-index:5}
+.fs-actions .btn{min-width:120px;justify-content:center}
+.fs-switch-card{background:#fafbfc;border:1px solid var(--line);border-radius:10px;padding:12px 16px;display:flex;align-items:center;gap:12px}
+.fs-switch-card .switch{margin:0}
+.fs-help{background:#fffbe8;border:1px solid #ead9a8;border-radius:10px;padding:10px 14px;font-size:12.5px;color:#5a4d20}
+.fs-help code{background:#fff;border:1px solid #ead9a8;color:#7a5800}
+
+/* Chip-input for arrays (slots/keywords) */
+.chips{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:10px;border:1px solid var(--line);border-radius:10px;background:#fff;min-height:50px}
+.chip{display:inline-flex;align-items:center;gap:6px;background:#fffbe8;border:1px solid #ead9a8;color:#7a5800;
+  padding:5px 10px 5px 12px;border-radius:99px;font-size:13px;font-weight:600;line-height:1}
+.chip-input{display:flex;gap:4px;align-items:center}
+.chip-input input{border:0 !important;background:transparent !important;padding:4px 6px !important;width:90px !important;font-size:13px !important;outline:none !important;color:var(--ink) !important}
+.chip-input input:focus{outline:none !important;box-shadow:none !important}
+.chip-x{background:transparent;border:0;color:#7a5800;cursor:pointer;font-size:14px;line-height:1;padding:0;display:flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%}
+.chip-x:hover{background:#7a5800;color:#fffbe8}
+
 /* Tabs */
 .tabs{display:flex;gap:4px;flex-wrap:wrap;border-bottom:1px solid var(--line);margin-bottom:20px}
 .tab{padding:10px 16px;border-radius:9px 9px 0 0;color:var(--muted);font-weight:600;font-size:13.5px}
@@ -126,13 +167,69 @@ img{max-width:100%}
 .tab.active{background:#fff;color:var(--ink);border:1px solid var(--line);border-bottom-color:#fff;margin-bottom:-1px}
 .tab-panel.hidden{display:none}
 
-/* Tables */
+/* ═══════════════════════════════════════════════════════
+   Datatable: toolbar filtri / search / count / paginazione
+   ═══════════════════════════════════════════════════════ */
+.dt-toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:0 0 12px;padding:14px;background:#fafbfc;border:1px solid var(--line);border-radius:12px}
+.dt-search{flex:1;min-width:240px;position:relative}
+.dt-search input{width:100%;height:42px;padding:0 14px 0 40px;border:1px solid var(--line);border-radius:8px;background:#fff;font-size:13.5px;color:var(--ink);box-sizing:border-box;font-family:inherit}
+.dt-search input:focus{outline:none;border-color:var(--brand);box-shadow:0 0 0 3px rgba(224,170,0,.15)}
+.dt-search::before{content:"";position:absolute;left:14px;top:50%;transform:translateY(-50%);width:15px;height:15px;background:url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2390959f' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cline x1='21' y1='21' x2='16.65' y2='16.65'/%3E%3C/svg%3E") no-repeat center/contain;pointer-events:none}
+.dt-filter{height:42px;padding:0 36px 0 14px;border:1px solid var(--line);border-radius:8px;background:#fff url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2390959f' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E") no-repeat right 12px center/12px 12px;font-size:13.5px;color:var(--ink);min-width:160px;appearance:none;cursor:pointer;font-family:inherit}
+.dt-filter:focus{outline:none;border-color:var(--brand);box-shadow:0 0 0 3px rgba(224,170,0,.15)}
+.dt-btn{height:42px;padding:0 20px;border-radius:8px;background:var(--brand);color:#1c1408;border:0;font-size:13.5px;font-weight:700;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;justify-content:center;text-decoration:none;letter-spacing:.01em}
+.dt-btn:hover{background:#c8970a;color:#1c1408;text-decoration:none}
+.dt-btn-ghost{background:#fff;color:var(--ink);border:1px solid var(--line)}
+.dt-btn-ghost:hover{background:#fafbfc;color:var(--ink)}
+.dt-meta{display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin:0 0 14px;padding:0 4px;color:var(--muted);font-size:13.5px}
+.dt-meta strong{color:var(--ink);font-size:14.5px}
+.dt-th{cursor:pointer;user-select:none;white-space:nowrap}
+.dt-th a{color:var(--muted) !important;text-decoration:none;display:inline-flex;align-items:center;gap:5px}
+.dt-th a:hover{color:var(--ink) !important;text-decoration:none}
+.dt-th-arrow{font-size:10px;opacity:.45}
+.dt-th-arrow.active{opacity:1;color:var(--brand-d);font-weight:700}
+.dt-pagination{display:flex;gap:5px;align-items:center;justify-content:center;flex-wrap:wrap;margin:20px 0 4px}
+.dt-page{display:inline-flex;align-items:center;justify-content:center;min-width:38px;height:38px;padding:0 12px;border-radius:8px;border:1px solid var(--line);background:#fff;font-size:13px;color:var(--ink);text-decoration:none;font-weight:600;transition:.12s}
+.dt-page:hover{border-color:var(--brand);color:var(--ink);text-decoration:none}
+.dt-page.active{background:var(--brand);border-color:var(--brand);color:#1c1408;cursor:default}
+.dt-page.disabled{opacity:.35;pointer-events:none}
+.dt-page-ellipsis{padding:0 6px;color:var(--muted);font-weight:600}
+
+/* Tables — minimale, ogni cella identica */
 .table-wrap{width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
 .table{width:100%;border-collapse:collapse;font-size:13.8px;min-width:560px}
-.table th,.table td{text-align:left;padding:11px 12px;border-bottom:1px solid var(--line);vertical-align:middle}
-.table th{font-size:11.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
-.row-actions{display:flex;gap:7px;flex-wrap:wrap;align-items:center}
-.row-actions form{margin:0}
+.table th,.table td{text-align:left;padding:12px 14px;border-bottom:1px solid var(--line);vertical-align:middle;background:transparent}
+.table th{font-size:11.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);background:transparent}
+.table tr:last-child td{border-bottom:0}
+/* Cella azioni: tutti i pulsanti alla stessa altezza, allineati a destra.
+   NOTA: il <td> resta display:table-cell (non si tocca), il flex è interno. */
+.table td.row-actions{text-align:right;white-space:nowrap;vertical-align:middle;font-size:0}
+.row-actions form{display:inline-block;margin:0;vertical-align:middle;font-size:13.5px}
+.row-actions .btn,.row-actions a.btn,.row-actions button.btn{
+  height:32px;padding:0 12px;line-height:30px;
+  display:inline-block;vertical-align:middle;box-sizing:border-box;
+  margin:0 0 0 6px;font-size:12.5px}
+.row-actions > *:first-child{margin-left:0}
+.row-actions form > .btn{margin-left:0}
+
+/* Pulsanti solo-icona (matita modifica, cestino elimina, occhio mostra/nascondi…) */
+.btn-ico{
+  width:32px;height:32px;padding:0;border-radius:8px;
+  display:inline-flex;align-items:center;justify-content:center;vertical-align:middle;
+  background:#fff;border:1px solid var(--line);color:#5a5e6a;cursor:pointer;
+  transition:background .15s,color .15s,border-color .15s,transform .12s;
+  box-sizing:border-box;line-height:1}
+.btn-ico:hover{transform:translateY(-1px)}
+.btn-ico svg{width:16px;height:16px;display:block}
+.btn-ico-edit:hover{background:#fdf2c9;color:#7a5800;border-color:#ead9a8}
+.btn-ico-show:hover{background:#e3f0ff;color:#0d5290;border-color:#bcdaff}
+.btn-ico-hide:hover{background:#fafbfc;color:#1c1f26;border-color:#d8dbe2}
+.btn-ico-confirm:hover{background:#d6f3df;color:#1b6b3e;border-color:#a8dfba}
+.btn-ico-cancel:hover{background:#ffe1dc;color:#8a2a1c;border-color:#f3c9c9}
+.btn-ico-danger:hover{background:#ffe1dc;color:#8a2a1c;border-color:#f3c9c9}
+.btn-ico-open:hover{background:#fdf2c9;color:#7a5800;border-color:#ead9a8}
+/* Versione "row-actions": override altezza/padding ereditati */
+.row-actions .btn-ico{height:32px;line-height:1;padding:0}
 .badge{display:inline-block;background:#eef0f4;color:#555;font-size:11px;padding:3px 9px;border-radius:20px;font-weight:600}
 .badge-role{background:#eef4ff;color:#3a63b8}
 .badge-ok{background:#e6f6ec;color:var(--ok)}

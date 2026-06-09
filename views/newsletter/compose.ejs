@@ -1,0 +1,221 @@
+<%- include('../partials/header') %>
+
+<div class="card form-card wide">
+  <div class="card-head">
+    <h2><%= campaign ? 'Campagna #'+campaign.id : 'Nuova campagna' %></h2>
+    <div class="head-tools">
+      <a class="btn btn-ghost" href="/admin/newsletter">← Lista campagne</a>
+      <% if (campaign) { %>
+        <a class="btn btn-ghost" href="/admin/newsletter/<%= campaign.id %>/preview" target="_blank">Anteprima</a>
+      <% } %>
+    </div>
+  </div>
+
+  <form method="post" action="<%= campaign ? '/admin/newsletter/'+campaign.id : '/admin/newsletter' %>" id="nlForm" class="form">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+    <div class="field">
+      <label class="field-lbl">Oggetto email</label>
+      <input type="text" name="subject" value="<%= campaign ? campaign.subject : '' %>" required placeholder="Es: Nuove date Pro Dance Experience 2027">
+    </div>
+
+    <div class="field">
+      <label class="field-lbl">Preheader <span class="muted">(testo di anteprima nella casella, max 200 caratteri)</span></label>
+      <input type="text" name="preheader" value="<%= campaign ? campaign.preheader : '' %>" placeholder="Riserva il tuo posto, posti limitati...">
+    </div>
+
+    <div class="field">
+      <label class="field-lbl">Destinatari</label>
+      <select name="audience">
+        <option value="all" <%= campaign && campaign.audience==='all'?'selected':'' %>>Tutti gli iscritti attivi</option>
+        <option value="bookings" <%= campaign && campaign.audience==='bookings'?'selected':'' %>>Solo chi ha prenotato</option>
+        <option value="contacts" <%= campaign && campaign.audience==='contacts'?'selected':'' %>>Solo dal form contatti</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label class="field-lbl">Contenuto email</label>
+
+      <!-- Toolbar -->
+      <div class="nl-toolbar">
+        <button type="button" data-cmd="bold" title="Grassetto"><b>B</b></button>
+        <button type="button" data-cmd="italic" title="Corsivo"><i>I</i></button>
+        <button type="button" data-cmd="underline" title="Sottolineato"><u>U</u></button>
+        <span class="nl-sep"></span>
+        <button type="button" data-block="h2" title="Titolo grande">H2</button>
+        <button type="button" data-block="h3" title="Titolo medio">H3</button>
+        <button type="button" data-block="p" title="Paragrafo">P</button>
+        <span class="nl-sep"></span>
+        <button type="button" data-cmd="insertUnorderedList" title="Elenco puntato">• Lista</button>
+        <button type="button" data-cmd="insertOrderedList" title="Elenco numerato">1. Lista</button>
+        <span class="nl-sep"></span>
+        <button type="button" id="nlInsertLink" title="Inserisci link">🔗 Link</button>
+        <button type="button" id="nlInsertImage" title="Inserisci immagine">🖼️ Immagine</button>
+        <button type="button" id="nlInsertHr" title="Separatore orizzontale">— Separatore</button>
+        <button type="button" id="nlInsertButton" title="Inserisci bottone CTA">▶ Bottone</button>
+        <span class="nl-sep"></span>
+        <button type="button" data-align="left" title="Allinea sinistra">⬅</button>
+        <button type="button" data-align="center" title="Centra">⬌</button>
+        <button type="button" data-align="right" title="Allinea destra">➡</button>
+        <span class="nl-sep"></span>
+        <button type="button" data-cmd="removeFormat" title="Rimuovi formattazione">T✕</button>
+      </div>
+
+      <!-- Editor -->
+      <div class="nl-editor" id="nlEditor" contenteditable="true"><%- campaign ? campaign.htmlBody : '<p>Hola,</p><p>Scrive qui il contenuto della newsletter...</p>' %></div>
+      <textarea name="htmlBody" id="nlHidden" hidden></textarea>
+
+      <div class="field-help" style="margin-top:8px">
+        Le immagini vengono caricate nella libreria media e inserite via URL.
+        L'header (logo Irene Monticelli) e il footer (link disiscrizione) vengono aggiunti automaticamente all'invio.
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <button class="btn btn-primary" name="action" value="save">Salva bozza</button>
+      <% if (campaign) { %>
+        <button type="button" class="btn btn-ghost" id="nlPreviewBtn">Anteprima</button>
+      <% } %>
+    </div>
+  </form>
+
+  <% if (campaign) { %>
+  <!-- Invio test -->
+  <div style="margin-top:32px;padding-top:24px;border-top:1px solid var(--line)">
+    <h3 style="margin:0 0 14px">Invio di prova</h3>
+    <p class="muted" style="margin:0 0 12px">Invia una versione di test a un solo indirizzo per controllarne il risultato prima dell'invio finale.</p>
+    <form method="post" action="/admin/newsletter/<%= campaign.id %>/test" class="form" style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <div class="field" style="flex:1;min-width:240px;margin-bottom:0">
+        <label class="field-lbl">Indirizzo di test</label>
+        <input type="email" name="to" required placeholder="email@dominio.com">
+      </div>
+      <button class="btn btn-ghost">Invia prova</button>
+    </form>
+  </div>
+
+  <!-- Invio reale -->
+  <div style="margin-top:32px;padding:20px;background:#fff3d6;border:1px solid #f0d28a;border-radius:10px">
+    <h3 style="margin:0 0 8px">Invio finale a tutti gli iscritti</h3>
+    <p class="muted" style="margin:0 0 14px">Una volta inviata la campagna non può essere modificata o annullata. Controlla l'anteprima e fai un invio di prova prima di procedere.</p>
+    <form method="post" action="/admin/newsletter/<%= campaign.id %>/send" onsubmit="return confirm('Confermi l\\'invio della newsletter a tutti gli iscritti? Operazione non reversibile.')">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <button class="btn btn-danger" type="submit">Invia ora a tutti</button>
+    </form>
+  </div>
+  <% } %>
+</div>
+
+<!-- File picker hidden per upload immagini -->
+<input type="file" id="nlImageInput" accept="image/*" hidden>
+
+<style>
+  .nl-toolbar{display:flex;flex-wrap:wrap;gap:4px;padding:8px;background:#f7f8fa;border:1px solid var(--line);border-radius:8px 8px 0 0}
+  .nl-toolbar button{background:#fff;border:1px solid var(--line);border-radius:7px;min-width:34px;height:32px;padding:0 10px;cursor:pointer;font-size:13px;color:var(--ink)}
+  .nl-toolbar button:hover{background:var(--brand,#e0aa00);color:#1c1408;border-color:var(--brand,#e0aa00)}
+  .nl-sep{width:1px;background:var(--line);margin:2px 4px}
+  .nl-editor{min-height:380px;padding:20px 24px;font-size:15px;line-height:1.7;outline:none;background:#fff;border:1px solid var(--line);border-top:0;border-radius:0 0 8px 8px;color:#1c1f26;font-family:Arial,Helvetica,sans-serif}
+  .nl-editor:focus{box-shadow:inset 0 0 0 2px rgba(224,170,0,.25)}
+  .nl-editor h2{font-size:24px;margin:18px 0 12px;font-weight:600;color:#1c1f26;border-bottom:2px solid #e0aa00;padding-bottom:6px;display:inline-block}
+  .nl-editor h3{font-size:18px;margin:14px 0 10px;font-weight:600;color:#1c1f26}
+  .nl-editor p{margin:0 0 14px}
+  .nl-editor img{max-width:100%;height:auto;border-radius:4px;margin:14px 0}
+  .nl-editor hr{border:0;border-top:1px solid #e0aa00;margin:24px 0;opacity:.5}
+  .nl-editor a{color:#c8970a;text-decoration:underline}
+  .nl-editor .nl-cta{display:inline-block;padding:14px 28px;background:#e0aa00;color:#1c1408 !important;font-weight:600;text-decoration:none !important;border-radius:6px;letter-spacing:.04em;font-size:14px;margin:12px 0}
+</style>
+
+<script>
+(function(){
+  var editor = document.getElementById('nlEditor');
+  var hidden = document.getElementById('nlHidden');
+  var form = document.getElementById('nlForm');
+  var imageInput = document.getElementById('nlImageInput');
+  var csrf = '<%= csrfToken %>';
+
+  // Toolbar: cmd execCommand
+  document.querySelectorAll('.nl-toolbar button[data-cmd]').forEach(function(b){
+    b.addEventListener('click', function(){
+      editor.focus();
+      document.execCommand(b.dataset.cmd, false, null);
+    });
+  });
+  // Block type (h2/h3/p)
+  document.querySelectorAll('.nl-toolbar button[data-block]').forEach(function(b){
+    b.addEventListener('click', function(){
+      editor.focus();
+      document.execCommand('formatBlock', false, b.dataset.block);
+    });
+  });
+  // Align
+  document.querySelectorAll('.nl-toolbar button[data-align]').forEach(function(b){
+    b.addEventListener('click', function(){
+      editor.focus();
+      var cmd = 'justify' + b.dataset.align.charAt(0).toUpperCase() + b.dataset.align.slice(1);
+      document.execCommand(cmd, false, null);
+    });
+  });
+  // Link
+  document.getElementById('nlInsertLink').addEventListener('click', function(){
+    var url = prompt('URL del link (https://...):', 'https://');
+    if (url) { editor.focus(); document.execCommand('createLink', false, url); }
+  });
+  // Separator
+  document.getElementById('nlInsertHr').addEventListener('click', function(){
+    editor.focus(); document.execCommand('insertHTML', false, '<hr>');
+  });
+  // CTA Button
+  document.getElementById('nlInsertButton').addEventListener('click', function(){
+    var label = prompt('Testo del bottone:', 'Reservar ahora');
+    if (!label) return;
+    var url = prompt('URL di destinazione:', 'https://irenemonticelli.com/pro-dance');
+    if (!url) return;
+    editor.focus();
+    document.execCommand('insertHTML', false,
+      '<div style="text-align:center;margin:18px 0"><a href="'+url.replace(/"/g,'')+'" class="nl-cta" style="display:inline-block;padding:14px 28px;background:#e0aa00;color:#1c1408;font-weight:600;text-decoration:none;border-radius:6px;letter-spacing:.04em;font-size:14px">'+label.replace(/</g,'&lt;')+'</a></div><p><br></p>');
+  });
+  // Image: apre file picker, upload via /admin/media/upload, inserisce <img>
+  document.getElementById('nlInsertImage').addEventListener('click', function(){
+    imageInput.click();
+  });
+  imageInput.addEventListener('change', function(){
+    var f = imageInput.files && imageInput.files[0]; if (!f) return;
+    var fd = new FormData();
+    fd.append('_csrf', csrf);
+    fd.append('files', f);
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST', '/admin/media/upload');
+    xhr.setRequestHeader('Accept', 'application/json');
+    xhr.onload = function(){
+      try {
+        var j = JSON.parse(xhr.responseText||'{}');
+        if (xhr.status>=200 && xhr.status<300 && j.ok && j.media && j.media[0]) {
+          var m = j.media[0];
+          var url = location.origin + m.path;
+          editor.focus();
+          document.execCommand('insertHTML', false, '<img src="'+url+'" alt="" style="max-width:100%;height:auto;border-radius:4px;margin:14px 0"><p><br></p>');
+        } else {
+          alert('Upload immagine fallito: ' + (j.error||xhr.status));
+        }
+      } catch(e){ alert('Errore upload immagine'); }
+      imageInput.value = '';
+    };
+    xhr.onerror = function(){ alert('Errore di rete'); imageInput.value = ''; };
+    xhr.send(fd);
+  });
+
+  // On submit: salva HTML del contenteditable nell'input hidden
+  form.addEventListener('submit', function(){
+    hidden.value = editor.innerHTML;
+  });
+
+  // Preview button (apre /preview in nuova scheda dopo aver salvato)
+  var pb = document.getElementById('nlPreviewBtn');
+  if (pb) pb.addEventListener('click', function(){
+    hidden.value = editor.innerHTML;
+    // submit + open preview after
+    form.submit();
+  });
+})();
+</script>
+<%- include('../partials/footer') %>

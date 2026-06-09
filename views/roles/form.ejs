@@ -1,43 +1,94 @@
 <%- include('../partials/header') %>
-<div class="card form-card">
-  <h2><%= role ? 'Modifica ruolo' : 'Nuovo ruolo' %></h2>
-  <form method="post" action="<%= role ? '/admin/roles/'+role.id : '/admin/roles' %>" class="form">
-    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-    <div class="field">
-      <label class="field-lbl">Nome ruolo</label>
-      <input type="text" name="name" required value="<%= role ? role.name : '' %>">
+<form method="post" action="<%= role ? '/admin/roles/'+role.id : '/admin/roles' %>" class="form fs-page" id="roleForm">
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+  <div class="fs-page-head">
+    <div>
+      <h2><%= role ? 'Modifica ruolo' : 'Nuovo ruolo' %></h2>
+      <p><%= role ? 'ID #'+role.id+' · '+(role.isSystem?'ruolo di sistema':'ruolo personalizzato') : 'Crea un nuovo ruolo con permessi granulari per i collaboratori.' %></p>
     </div>
-    <div class="field">
-      <label class="field-lbl">Descrizione</label>
-      <input type="text" name="description" value="<%= role ? role.description : '' %>">
+    <a class="btn btn-ghost" href="/admin/roles">← Torna ai ruoli</a>
+  </div>
+
+  <section class="fs-section">
+    <div class="fs-section-head">
+      <div class="fs-section-ico" style="background:#fdf2c9;color:#7a5800">🏷</div>
+      <div>
+        <h3 class="fs-section-title">Identità ruolo</h3>
+        <p class="fs-section-sub">Come riconoscere il ruolo nella lista amministratori.</p>
+      </div>
+    </div>
+    <div class="fs-grid">
+      <div class="field">
+        <label class="field-lbl">Nome *</label>
+        <input type="text" name="name" required value="<%= role ? role.name : '' %>" placeholder="es. Redattore">
+      </div>
+      <div class="field">
+        <label class="field-lbl">Descrizione</label>
+        <input type="text" name="description" value="<%= role ? role.description : '' %>" placeholder="A cosa serve questo ruolo (opzionale)">
+      </div>
+    </div>
+  </section>
+
+  <section class="fs-section">
+    <div class="fs-section-head">
+      <div class="fs-section-ico" style="background:#e3f0ff;color:#0d5290">🔐</div>
+      <div>
+        <h3 class="fs-section-title">Permessi</h3>
+        <p class="fs-section-sub">Spunta cosa può fare. Click sull'intestazione del gruppo per selezionare tutto.</p>
+      </div>
     </div>
 
-    <h3 class="sub">Permessi</h3>
-    <p class="muted">Seleziona in dettaglio cosa puo fare questo ruolo. Le aree marcate "in arrivo" sono gia predisposte.</p>
-
-    <% CATALOG.forEach(function(grp){ %>
-      <fieldset class="perm-group">
-        <legend>
-          <label class="perm-all">
-            <input type="checkbox" class="perm-group-toggle"> <%= grp.group %>
-          </label>
-        </legend>
-        <div class="perm-grid">
-        <% grp.items.forEach(function(it){ %>
-          <label class="perm-item">
-            <input type="checkbox" name="permissions" value="<%= it.key %>" <%= selected.indexOf(it.key) > -1 ? 'checked' : '' %>>
-            <span><%= it.label %></span>
-            <code><%= it.key %></code>
-          </label>
-        <% }) %>
-        </div>
-      </fieldset>
-    <% }) %>
-
-    <div class="form-actions">
-      <button type="submit" class="btn btn-primary"><%= role ? 'Salva modifiche' : 'Crea ruolo' %></button>
-      <a class="btn btn-ghost" href="/admin/roles">Annulla</a>
+    <div class="perm-wrap">
+      <% CATALOG.forEach(function(grp){ %>
+        <fieldset class="perm-group">
+          <legend>
+            <label class="perm-all">
+              <input type="checkbox" class="perm-group-toggle"> <%= grp.group %>
+            </label>
+          </legend>
+          <div class="perm-grid">
+          <% grp.items.forEach(function(it){ %>
+            <label class="perm-item">
+              <input type="checkbox" name="permissions" value="<%= it.key %>" <%= selected.indexOf(it.key) > -1 ? 'checked' : '' %>>
+              <span><%= it.label %></span>
+              <code><%= it.key %></code>
+            </label>
+          <% }) %>
+          </div>
+        </fieldset>
+      <% }) %>
     </div>
-  </form>
-</div>
+  </section>
+
+  <div class="fs-actions">
+    <a class="btn btn-ghost" href="/admin/roles">Annulla</a>
+    <button type="submit" class="btn btn-primary"><%= role ? '💾 Salva modifiche' : '✨ Crea ruolo' %></button>
+  </div>
+</form>
+
+<style>
+  .perm-wrap{display:flex;flex-direction:column;gap:12px}
+  .perm-group{background:#fafbfc}
+  .perm-group legend{font-size:13.5px;color:var(--ink)}
+</style>
+
+<script>
+(function(){
+  // Toggle "tutto il gruppo"
+  document.querySelectorAll('.perm-group').forEach(function(grp){
+    var head = grp.querySelector('.perm-group-toggle');
+    var boxes = grp.querySelectorAll('.perm-item input[type=checkbox]');
+    function sync(){
+      var allOn = Array.prototype.every.call(boxes, function(b){ return b.checked; });
+      head.checked = allOn;
+    }
+    head.addEventListener('change', function(){
+      boxes.forEach(function(b){ b.checked = head.checked; });
+    });
+    boxes.forEach(function(b){ b.addEventListener('change', sync); });
+    sync();
+  });
+})();
+</script>
 <%- include('../partials/footer') %>

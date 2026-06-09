@@ -1,0 +1,53 @@
+<%- shellPrefix %>
+<style>
+  .legal-band{max-width:calc(var(--max-w) + 2*var(--pad-x));margin:0 auto;
+    padding:120px var(--pad-x) 80px;width:100%;box-sizing:border-box}
+  .legal-head{text-align:center;margin-bottom:60px}
+  .legal-eyebrow{font-family:var(--sans);font-size:13px;letter-spacing:.18em;text-transform:uppercase;
+    color:var(--ink-soft);margin-bottom:18px;font-weight:500}
+  .legal-eyebrow::before{content:'';display:inline-block;width:32px;height:1px;background:var(--ink-soft);
+    vertical-align:middle;margin-right:14px}
+  .legal-h1{font-family:var(--sans);font-weight:300;letter-spacing:-.02em;
+    font-size:clamp(34px,4.2vw,58px);line-height:1.05;color:var(--ink);margin:0;text-transform:uppercase}
+  .legal-h1 .it{font-style:italic;color:var(--yellow);font-weight:400}
+  .legal-updated{font-size:13.5px;color:var(--ink-soft);margin-top:18px;letter-spacing:.04em}
+
+  .legal-body{max-width:780px;margin:0 auto;font-size:16px;line-height:1.75;color:var(--ink)}
+  .legal-body h2{font-family:var(--sans);font-weight:500;letter-spacing:-.01em;
+    font-size:24px;margin:52px 0 16px;color:var(--ink);text-transform:none;line-height:1.25}
+  .legal-body h2::before{content:'';display:inline-block;width:20px;height:1px;
+    background:var(--yellow);vertical-align:middle;margin-right:14px;position:relative;top:-4px}
+  .legal-body h3{font-family:var(--sans);font-weight:500;font-size:17px;
+    margin:26px 0 10px;color:var(--ink)}
+  .legal-body p{margin:0 0 16px;color:var(--ink-soft)}
+  .legal-body strong{color:var(--ink);font-weight:500}
+  .legal-body a{color:var(--ink);border-bottom:1px solid rgba(42,42,42,.25);
+    text-decoration:none;transition:border-color .3s ease,color .3s ease}
+  .legal-body a:hover{color:var(--yellow);border-bottom-color:var(--yellow)}
+  .legal-body ul{margin:0 0 18px;padding-left:1.4em}
+  .legal-body li{margin-bottom:8px;color:var(--ink-soft)}
+  .legal-body .box{background:#f7f4ed;border-left:3px solid var(--yellow);
+    padding:18px 22px;margin:24px 0;border-radius:0 6px 6px 0;font-size:15px}
+  .legal-body .box p:last-child{margin:0}
+  @media(max-width:720px){
+    .legal-band{padding:96px 6vw 60px}
+    .legal-body{font-size:15px;line-height:1.7}
+    .legal-body h2{font-size:21px}
+  }
+</style>
+
+<section class="sec-white">
+  <div class="legal-band">
+    <div class="legal-head">
+      <div class="legal-eyebrow">Información legal</div>
+      <h1 class="legal-h1">Política de <i class="it">Privacidad</i></h1>
+      <div class="legal-updated">Última actualización: <%= new Date().toLocaleDateString('es-ES', { day:'numeric', month:'long', year:'numeric' }) %></div>
+    </div>
+
+    <div class="legal-body">
+      <%- bodyHtml %>
+    </div>
+  </div>
+</section>
+
+<%- shellSuffix %>
