@@ -553,6 +553,7 @@
       <div class="pk-checkout-main">
         <form class="pk-form" id="rvForm" novalidate
               data-mode="<%= plan.bookingMode %>"
+              data-event="<%= plan.eventId || '' %>"
               data-pricing='<%- JSON.stringify(pricing) %>'
               data-days='<%- JSON.stringify(days) %>'
               data-slots='<%- JSON.stringify(slots) %>'
@@ -1807,6 +1808,99 @@
   sync();
 })();
 </script>
+
+<script id="scx-capacity-gate">
+/* Disabilita UI in checkout quando le lezioni sono piene.
+   - GOLD/JUNIOR: se almeno una lezione attiva e' piena -> blocca i submit
+   - RED: se in (giorno X, fascia AM/PM) almeno una lezione e' piena -> disabilita quel button AM/PM
+   Funziona insieme alla protezione server-side assertCapacity. */
+(function(){
+  var form = document.getElementById('rvForm');
+  if (!form) return;
+  var mode = form.dataset.mode;
+  var eventId = parseInt(form.dataset.event||'0', 10);
+  if (!eventId) return;
+  if (mode !== 'gold' && mode !== 'junior' && mode !== 'red') return;
+
+  function showBanner(msg, kind){
+    var bar = document.getElementById('scx-cap-banner');
+    if (!bar) {
+      bar = document.createElement('div');
+      bar.id = 'scx-cap-banner';
+      bar.style.cssText = 'margin:14px 0;padding:14px 18px;border-radius:10px;font-size:14px;font-weight:600;display:flex;align-items:center;gap:10px';
+      form.insertBefore(bar, form.firstChild);
+    }
+    bar.style.background = kind === 'err' ? '#fef0ec' : '#fff7e0';
+    bar.style.border = kind === 'err' ? '1px solid #f3c5b9' : '1px solid #f5d878';
+    bar.style.color = kind === 'err' ? '#a8351c' : '#7a5800';
+    bar.textContent = msg;
+  }
+
+  function blockSubmits(reason){
+    ['rvSubmitL','rvSubmitR'].forEach(function(id){
+      var b = document.getElementById(id);
+      if (!b) return;
+      b.disabled = true;
+      b.classList.add('is-disabled');
+      b.dataset.capacityBlocked = '1';
+      b.title = reason;
+    });
+  }
+
+  fetch('/api/lessons/availability/' + eventId, { credentials: 'same-origin' })
+    .then(function(r){ return r.json(); })
+    .then(function(j){
+      if (!j.ok || !j.lessons) return;
+      var lessons = j.lessons.filter(function(L){ return L.active && !L.isPause; });
+
+      if (mode === 'gold' || mode === 'junior') {
+        var anyFull = lessons.some(function(L){ return L.full; });
+        if (anyFull) {
+          var fullList = lessons.filter(function(L){return L.full;}).map(function(L){return L.time + ' ' + L.title;}).join(', ');
+          showBanner('⚠ Sin disponibilidad: ' + fullList + '. No se puede comprar este pack hasta que se liberen plazas.', 'err');
+          blockSubmits('Algunas clases están llenas');
+        }
+        return;
+      }
+
+      // RED: aggrega per (dayIso, segment) -> { anyFull }
+      var fullMap = {}; // key "iso|AM" or "iso|PM" -> true
+      lessons.forEach(function(L){
+        if (!L.dayIso || !L.full) return;
+        var seg = L.isAfternoon ? 'PM' : 'AM';
+        fullMap[L.dayIso + '|' + seg] = true;
+      });
+      // Applica disabilitazione ai button .scx-ampm-btn dentro .rv-ampm[data-day=iso]
+      var hasBlocked = false;
+      document.querySelectorAll('.rv-ampm').forEach(function(row){
+        var iso = row.getAttribute('data-day');
+        ['AM','PM'].forEach(function(seg){
+          var btn = row.querySelector('.scx-ampm-btn[data-val="'+seg+'"]');
+          if (!btn) return;
+          if (fullMap[iso + '|' + seg]) {
+            btn.disabled = true;
+            btn.setAttribute('aria-disabled','true');
+            btn.classList.add('is-full');
+            btn.title = 'Sin plazas disponibles para esta franja';
+            // Sovrascrivi click per evitare selezione
+            btn.addEventListener('click', function(e){ e.stopPropagation(); e.preventDefault(); }, true);
+            hasBlocked = true;
+          }
+        });
+      });
+      if (hasBlocked) {
+        showBanner('Algunas franjas están llenas y aparecen tachadas. Selecciona las disponibles.', 'warn');
+      }
+    })
+    .catch(function(){ /* fail silently, server-side validation will protect */ });
+})();
+</script>
+<style id="scx-capacity-style">
+  .pk-booking-wrap .scx-ampm-btn.is-full{background:#f4f4f4 !important;color:#999 !important;border-color:#ddd !important;cursor:not-allowed !important;text-decoration:line-through;position:relative}
+  .pk-booking-wrap .scx-ampm-btn.is-full::after{content:'Sin plazas';position:absolute;bottom:4px;left:0;right:0;text-align:center;font-size:9px;font-weight:600;color:#9b2727;text-decoration:none;letter-spacing:.04em;text-transform:uppercase}
+  .pk-confirm-final[data-capacity-blocked="1"]{background:#999 !important;cursor:not-allowed !important}
+</style>
+
 <script id="scx-flatpickr-init">
 (function(){
   if (typeof flatpickr === 'undefined') { setTimeout(arguments.callee, 200); return; }

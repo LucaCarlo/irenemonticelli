@@ -169,6 +169,7 @@ async function computeEventOccupancy(eventId) {
 // Restituisce array stato per ogni lezione attiva non-pausa.
 async function getEventCapacityStatus(eventId) {
   const { event, lessons, occupancy } = await computeEventOccupancy(eventId);
+  const isoFor = buildIsoForDayIndexMap(event);
   return {
     event,
     lessons: lessons.map((L) => {
@@ -176,7 +177,8 @@ async function getEventCapacityStatus(eventId) {
       const occ = occupancy.get(L.id) || 0;
       const remaining = cap > 0 ? Math.max(0, cap - occ) : Infinity;
       return {
-        id: L.id, dayIndex: L.dayIndex, time: L.time, title: L.title,
+        id: L.id, dayIndex: L.dayIndex, dayIso: isoFor.get(L.dayIndex) || null,
+        time: L.time, title: L.title,
         isAfternoon: L.isAfternoon, isPause: L.isPause, active: L.active,
         capacity: cap, occupied: occ, remaining,
         full: cap > 0 && occ >= cap,

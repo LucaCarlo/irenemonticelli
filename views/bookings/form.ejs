@@ -107,19 +107,46 @@
     </section>
 
     <!-- Partecipanti -->
+    <%
+      // Costruisce la lista da mostrare:
+      //  - se la booking ha record Participant li uso direttamente
+      //  - se NO (booking legacy pre-multipart) ricostruisco un partecipante "virtuale"
+      //    dai campi pagante salvati direttamente sulla Booking.
+      var participantsView = booking.participants.slice();
+      var isLegacy = false;
+      if (!participantsView.length && (booking.firstName || booking.customerName)) {
+        isLegacy = true;
+        participantsView.push({
+          firstName: booking.firstName || (booking.customerName||'').split(' ')[0],
+          lastName: booking.lastName || (booking.customerName||'').split(' ').slice(1).join(' '),
+          email: booking.customerEmail || '',
+          phone: booking.phone || '',
+          birthDate: booking.birthDate || null,
+          isMinor: !!booking.isMinor,
+          tutorBlock: null,
+          address: '', city: '', zip: '', country: '',
+        });
+      }
+    %>
     <section class="fs-section">
       <div class="fs-section-head">
         <div class="fs-section-ico" style="background:#e3f0ff;color:#0d5290">🧑‍🤝‍🧑</div>
         <div>
-          <h3 class="fs-section-title">Partecipanti (<%= booking.participants.length %>)</h3>
-          <p class="fs-section-sub">Persone iscritte sotto questa prenotazione.</p>
+          <h3 class="fs-section-title">Partecipanti (<%= participantsView.length %>)</h3>
+          <p class="fs-section-sub">
+            <% if (isLegacy) { %>
+              Prenotazione legacy (pre-multipartecipante): il pagante è anche il partecipante.
+            <% } else { %>
+              Persone iscritte sotto questa prenotazione.
+            <% } %>
+          </p>
         </div>
       </div>
-      <% if (!booking.participants.length) { %>
-        <p class="muted" style="padding:14px 0">Nessun partecipante registrato. (Prenotazione legacy: il pagante è anche il partecipante.)</p>
+      <% if (!participantsView.length) { %>
+        <p class="muted" style="padding:14px 0">Nessun partecipante registrato.</p>
       <% } else { %>
         <div class="bk-parts">
-          <% booking.participants.forEach(function(p, i){ var age = ageOf(p.birthDate); %>
+          <% participantsView.forEach(function(p, i){ var age = ageOf(p.birthDate); %>
             <div class="bk-part">
               <div class="bk-part-num"><%= i+1 %></div>
               <div class="bk-part-body">
@@ -127,6 +154,7 @@
                   <strong><%= p.firstName %> <%= p.lastName %></strong>
                   <% if (p.isMinor) { %><span class="chip chip-warn">MINORE</span><% } %>
                   <% if (age !== null) { %><span class="muted">· <%= age %> anni</span><% } %>
+                  <% if (isLegacy) { %><span class="chip" style="background:#eef0f4;color:#5a5e6a">legacy</span><% } %>
                 </div>
                 <div class="bk-part-grid">
                   <% if (p.email) { %><div><span class="bk-k">Email</span><span class="bk-v"><a href="mailto:<%= p.email %>"><%= p.email %></a></span></div><% } %>
