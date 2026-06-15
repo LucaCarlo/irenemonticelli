@@ -162,42 +162,96 @@
       </section>
     <% } %>
 
-    <!-- Lezioni scelte -->
-    <% if (lessonsResolved && lessonsResolved.length) { %>
+    <!-- Lezioni: single_lessons + red (selezione esplicita) -->
+    <% if (lessonsResolved && lessonsResolved.length) {
+         // Raggruppo per giorno per leggibilità
+         var byDayR = {};
+         lessonsResolved.forEach(function(L){ (byDayR[L.day] = byDayR[L.day] || []).push(L); });
+         var daysR = Object.keys(byDayR).sort();
+    %>
       <section class="fs-section">
         <div class="fs-section-head">
           <div class="fs-section-ico" style="background:#e7f3ec;color:#1b6b3e">🎭</div>
           <div>
-            <h3 class="fs-section-title">Lezioni scelte (<%= lessonsResolved.length %>)</h3>
-            <p class="fs-section-sub">Day + slot scelti dal pagante in checkout.</p>
+            <h3 class="fs-section-title">Lezioni della prenotazione (<%= lessonsResolved.length %>)</h3>
+            <p class="fs-section-sub">
+              <% if (booking.plan && booking.plan.bookingMode === 'red') { %>
+                Pack <strong>RED</strong> — fascia scelta per ogni giorno (<%= daysR.length %> giorni).
+              <% } else { %>
+                Lezioni selezionate al checkout (day + orario).
+              <% } %>
+            </p>
           </div>
         </div>
-        <div class="table-wrap">
-          <table class="table">
-            <thead><tr><th>Giorno</th><th>Orario</th><th>Titolo lezione</th><th>Professore</th></tr></thead>
-            <tbody>
-              <% lessonsResolved.forEach(function(L){ %>
-                <tr>
-                  <td><%= fmtDate(L.day) %></td>
-                  <td><strong><%= L.slot %></strong></td>
-                  <td><%= L.lesson ? L.lesson.title : '<span class="muted">— non risolto —</span>' %></td>
-                  <td><%= (L.lesson && L.lesson.professor) ? (L.lesson.professor.firstName + ' ' + L.lesson.professor.lastName) : '—' %></td>
-                </tr>
-              <% }) %>
-            </tbody>
-          </table>
-        </div>
-        <p class="muted" style="font-size:12px;margin-top:8px">Posti occupati su queste lezioni: <strong><%= booking.participantsCount || 1 %></strong> (per ogni lezione = N partecipanti).</p>
+        <% daysR.forEach(function(d){ var rows = byDayR[d]; var seg = rows[0] && rows[0].segment; %>
+          <div class="bk-day-group">
+            <div class="bk-day-head">
+              <strong><%= fmtDate(d) %></strong>
+              <% if (seg) { %><span class="chip <%= seg==='Tarde' ? 'chip-warn' : 'chip-ok' %>"><%= seg %></span><% } %>
+              <span class="muted" style="font-size:12px"><%= rows.length %> lezioni</span>
+            </div>
+            <div class="table-wrap">
+              <table class="table">
+                <thead><tr><th style="width:90px">Orario</th><th>Titolo lezione</th><th>Professore</th><th style="width:120px">Fascia</th></tr></thead>
+                <tbody>
+                  <% rows.forEach(function(L){ %>
+                    <tr>
+                      <td><strong><%= L.slot %></strong></td>
+                      <td><%= L.lesson ? L.lesson.title : '<span class="muted">— non risolto —</span>' %></td>
+                      <td><%= (L.lesson && L.lesson.professor) ? (L.lesson.professor.firstName + ' ' + L.lesson.professor.lastName) : '—' %></td>
+                      <td>
+                        <% if (L.lesson) { %>
+                          <% if (L.lesson.isAfternoon) { %><span class="chip chip-warn">Tarde</span><% } else { %><span class="chip chip-ok">Mañana</span><% } %>
+                        <% } else { %>—<% } %>
+                      </td>
+                    </tr>
+                  <% }) %>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        <% }) %>
+        <p class="muted" style="font-size:12px;margin-top:8px">Posti occupati: <strong><%= booking.participantsCount || 1 %></strong> partecipanti × <strong><%= lessonsResolved.length %></strong> lezioni.</p>
       </section>
-    <% } else if (items && items.lessons === undefined && booking.plan && booking.plan.bookingMode !== 'single_lessons') { %>
+
+    <!-- Lezioni: gold / junior (tutto incluso) -->
+    <% } else if (lessonsAuto && lessonsAuto.length) {
+         var byDayA = {};
+         lessonsAuto.forEach(function(L){ (byDayA[L.day] = byDayA[L.day] || []).push(L); });
+         var daysA = Object.keys(byDayA).sort();
+    %>
       <section class="fs-section">
         <div class="fs-section-head">
           <div class="fs-section-ico" style="background:#e7f3ec;color:#1b6b3e">🎭</div>
           <div>
-            <h3 class="fs-section-title">Lezioni incluse</h3>
-            <p class="fs-section-sub">Pack <strong><%= booking.plan.name %></strong>: include automaticamente tutte le lezioni dell'evento <% if (booking.slot) { %>(<%= booking.slot %>)<% } %>.</p>
+            <h3 class="fs-section-title">Lezioni incluse — Pack <%= booking.plan.name %> (<%= lessonsAuto.length %>)</h3>
+            <p class="fs-section-sub">Il pack include automaticamente tutte le lezioni attive dell'evento.</p>
           </div>
         </div>
+        <% daysA.forEach(function(d){ var rows = byDayA[d]; %>
+          <div class="bk-day-group">
+            <div class="bk-day-head">
+              <strong><%= fmtDate(d) %></strong>
+              <span class="muted" style="font-size:12px"><%= rows.length %> lezioni</span>
+            </div>
+            <div class="table-wrap">
+              <table class="table">
+                <thead><tr><th style="width:90px">Orario</th><th>Titolo lezione</th><th>Professore</th><th style="width:120px">Fascia</th></tr></thead>
+                <tbody>
+                  <% rows.forEach(function(L){ %>
+                    <tr>
+                      <td><strong><%= L.slot %></strong></td>
+                      <td><%= L.lesson.title %></td>
+                      <td><%= L.lesson.professor ? (L.lesson.professor.firstName + ' ' + L.lesson.professor.lastName) : '—' %></td>
+                      <td><% if (L.lesson.isAfternoon) { %><span class="chip chip-warn">Tarde</span><% } else { %><span class="chip chip-ok">Mañana</span><% } %></td>
+                    </tr>
+                  <% }) %>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        <% }) %>
+        <p class="muted" style="font-size:12px;margin-top:8px">Posti occupati: <strong><%= booking.participantsCount || 1 %></strong> partecipanti × <strong><%= lessonsAuto.length %></strong> lezioni.</p>
       </section>
     <% } %>
 
@@ -526,6 +580,12 @@
   .bk-money-total td{font-size:18px;font-family:'Fraunces',Georgia,serif;padding-top:10px}
   .bk-money-iva td{padding:2px 0;font-size:12.5px}
   .bk-warn{margin-top:12px;padding:10px 12px;background:#fff7e0;border:1px solid #f5d878;border-radius:8px;font-size:13px;color:#7a5800}
+
+  .bk-day-group{margin-top:12px;border:1px solid #eef0f4;border-radius:10px;overflow:hidden}
+  .bk-day-group + .bk-day-group{margin-top:14px}
+  .bk-day-head{display:flex;align-items:center;gap:10px;padding:9px 14px;background:linear-gradient(135deg,#fbf6e6,#fff);border-bottom:1px dashed #eef0f4;font-size:14px}
+  .bk-day-group .table-wrap{padding:0}
+  .bk-day-group .table{margin:0}
 
   .bk-audit{display:flex;flex-direction:column;gap:10px;padding-top:6px;max-height:480px;overflow:auto}
   .bk-audit-row{display:grid;grid-template-columns:120px 1fr;gap:12px;font-size:13px;border-bottom:1px dashed #eef0f4;padding-bottom:8px}

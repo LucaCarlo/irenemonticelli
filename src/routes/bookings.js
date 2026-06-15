@@ -194,29 +194,69 @@ router.get('/:id(\\d+)/edit', A(async (req, res) => {
   try { extras = booking.extrasJson ? JSON.parse(booking.extrasJson) : []; } catch (_) {}
   if (!Array.isArray(extras)) extras = [];
 
-  // Risolvi i titoli delle lezioni single_lessons (match day+slot → Lesson) se Event ha lessons.
-  // items.lessons = [{day:'2026-07-29', slot:'9:30'}, ...]
-  let lessonsResolved = [];
-  if (items && Array.isArray(items.lessons) && items.lessons.length && booking.eventId) {
+  // Risolvi lezioni della booking in base al bookingMode del pack.
+  //   single_lessons: items.lessons = [{day, slot}, ...]                 → match esatto day+slot
+  //   red:            items.days    = {iso: 'AM'|'PM', ...}              → tutte le lezioni del giorno + segmento
+  //   gold/junior:    nessuna selezione                                    → tutte le lezioni attive non-pausa dell'evento
+  let lessonsResolved = [];   // per single_lessons + red: lista esplicita
+  let lessonsAuto = [];       // per gold/junior: lista derivata dall'evento
+  if (booking.eventId && booking.plan) {
     const ev = await prisma.event.findUnique({
       where: { id: booking.eventId },
-      include: { lessons: { include: { professor: true } } },
+      include: { lessons: { include: { professor: true }, orderBy: [{ dayIndex: 'asc' }, { sort: 'asc' }] } },
     });
     const allLessons = (ev && ev.lessons) || [];
-    // Map per dayIndex → ISO date. Calcoliamo da event.startDate + dayIndex-1.
     function isoForDayIndex(dayIdx) {
       if (!ev || !ev.startDate) return null;
       const dt = new Date(ev.startDate);
       dt.setDate(dt.getDate() + (dayIdx - 1));
       return dt.toISOString().slice(0, 10);
     }
-    lessonsResolved = items.lessons.map((sel) => {
-      const matches = allLessons.filter((L) => {
-        const iso = isoForDayIndex(L.dayIndex);
-        return iso === sel.day && L.time === sel.slot;
+    function dayIndexForIso(iso) {
+      if (!ev || !ev.startDate || !iso) return null;
+      const start = new Date(ev.startDate);
+      const target = new Date(iso + 'T00:00:00');
+      const diff = Math.round((target - start) / 86400000);
+      return diff >= 0 ? diff + 1 : null;
+    }
+
+    const mode = booking.plan.bookingMode;
+
+    if (mode === 'single_lessons' && items && Array.isArray(items.lessons)) {
+      lessonsResolved = items.lessons.map((sel) => {
+        const match = allLessons.find((L) => isoForDayIndex(L.dayIndex) === sel.day && L.time === sel.slot && !L.isPause);
+        return { day: sel.day, slot: sel.slot, segment: '', lesson: match || null };
       });
-      return { day: sel.day, slot: sel.slot, lesson: matches[0] || null };
-    });
+    } else if (mode === 'red' && items && items.days && typeof items.days === 'object') {
+      Object.keys(items.days).sort().forEach((iso) => {
+        const segment = items.days[iso];   // 'AM' | 'PM'
+        const di = dayIndexForIso(iso);
+        if (!di) return;
+        const matches = allLessons.filter((L) => {
+          if (L.isPause || !L.active) return false;
+          if (L.dayIndex !== di) return false;
+          const isMorning = !L.isAfternoon;
+          return (segment === 'AM' && isMorning) || (segment === 'PM' && L.isAfternoon);
+        });
+        matches.forEach((L) => {
+          lessonsResolved.push({
+            day: iso,
+            slot: L.time,
+            segment: segment === 'AM' ? 'Mañana' : 'Tarde',
+            lesson: L,
+          });
+        });
+      });
+    } else if (mode === 'gold' || mode === 'junior') {
+      lessonsAuto = allLessons
+        .filter((L) => L.active && !L.isPause)
+        .map((L) => ({
+          day: isoForDayIndex(L.dayIndex),
+          slot: L.time,
+          segment: L.isAfternoon ? 'Tarde' : 'Mañana',
+          lesson: L,
+        }));
+    }
   }
 
   // Audit log per questa booking (ultimi 25)
@@ -244,7 +284,7 @@ router.get('/:id(\\d+)/edit', A(async (req, res) => {
   res.render('bookings/form', {
     title: 'Prenotazione #' + booking.id,
     booking, plans, events, STATUSES,
-    items, extras, lessonsResolved, auditEntries,
+    items, extras, lessonsResolved, lessonsAuto, auditEntries,
     breakdown: { subtotal, discountAmount, referralDiscount, extrasTotal, total, totalNet, totalIva, computedTotal, totalMatches, ivaRate: IVA_RATE },
   });
 }));
