@@ -194,6 +194,7 @@
           <th>Codice</th>
           <th>Sconto cliente</th>
           <th>Commissione %</th>
+          <th>Pacchetti applicabili</th>
           <th>Clic link</th>
           <th>Usi</th>
           <th>Scadenza</th>
@@ -201,21 +202,76 @@
           <th></th>
         </tr></thead>
         <tbody>
-        <% referrer.codes.forEach(function(c){ %>
+        <% referrer.codes.forEach(function(c){ var assignedIds = (c.plans||[]).map(function(p){return p.id;}); %>
           <tr class="<%= c.active ? '' : 'is-off' %>">
             <td><code style="background:#fffbe8;color:#7a5800;font-weight:700;padding:3px 10px;border-radius:6px;font-size:13px;letter-spacing:.05em"><%= c.code %></code></td>
             <td><strong><%= c.discountValue %><%= c.discountType==='fixed' ? ' €' : ' %' %></strong></td>
             <td><strong style="color:#1b6b3e"><%= c.commissionPct %> %</strong></td>
+            <td>
+              <% if (!c.plans || !c.plans.length) { %>
+                <span class="chip chip-ok">Tutti i pacchetti</span>
+              <% } else { c.plans.forEach(function(p){ %>
+                <span class="chip" style="background:#fff3d6;color:#7a5800;margin:2px"><%= p.name %></span>
+              <% }) } %>
+            </td>
             <td>👁 <strong><%= c.clicks || 0 %></strong></td>
             <td><%= c.usedCount %><%= c.maxUses ? ' / '+c.maxUses : '' %></td>
             <td><%= c.validUntil ? new Date(c.validUntil).toLocaleDateString('it-IT') : '—' %></td>
             <td><% if (c.active) { %><span class="badge badge-ok">attivo</span><% } else { %><span class="badge badge-off">disattivo</span><% } %></td>
             <td class="row-actions">
-              <form method="post" action="/admin/referrals/codes/<%= c.id %>/toggle">
+              <details class="code-edit-dd">
+                <summary class="btn-ico" title="Modifica">✎</summary>
+                <form method="post" action="/admin/referrals/codes/<%= c.id %>" class="form code-edit-form">
+                  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                  <div class="fs-grid">
+                    <div class="field">
+                      <label class="field-lbl">Tipo sconto</label>
+                      <select name="discountType">
+                        <option value="percent" <%= c.discountType==='percent'?'selected':'' %>>%</option>
+                        <option value="fixed" <%= c.discountType==='fixed'?'selected':'' %>>€ fissi</option>
+                      </select>
+                    </div>
+                    <div class="field">
+                      <label class="field-lbl">Valore sconto</label>
+                      <input type="number" name="discountValue" step="0.5" min="0" value="<%= c.discountValue %>">
+                    </div>
+                    <div class="field">
+                      <label class="field-lbl">Commissione %</label>
+                      <input type="number" name="commissionPct" step="0.5" min="0" max="100" value="<%= c.commissionPct %>">
+                    </div>
+                    <div class="field">
+                      <label class="field-lbl">Max usi</label>
+                      <input type="number" name="maxUses" min="1" value="<%= c.maxUses || '' %>" placeholder="illimitato">
+                    </div>
+                    <div class="field">
+                      <label class="field-lbl">Scadenza</label>
+                      <input type="date" name="validUntil" value="<%= c.validUntil ? new Date(c.validUntil).toISOString().slice(0,10) : '' %>">
+                    </div>
+                    <div class="field field-full">
+                      <label class="field-lbl">Pacchetti applicabili</label>
+                      <div class="plan-chips">
+                        <% plans.forEach(function(p){ %>
+                          <label class="plan-chip">
+                            <input type="checkbox" name="planIds" value="<%= p.id %>" <%= assignedIds.includes(p.id)?'checked':'' %>>
+                            <span><%= p.name %></span>
+                          </label>
+                        <% }) %>
+                      </div>
+                      <div class="field-help">Nessuno selezionato = vale per <strong>tutti</strong> i pacchetti.</div>
+                    </div>
+                    <div class="field field-full">
+                      <label class="field-lbl">Note interne</label>
+                      <input type="text" name="internalNotes" value="<%= c.internalNotes || '' %>">
+                    </div>
+                  </div>
+                  <div style="margin-top:10px;text-align:right"><button class="btn btn-primary btn-sm">💾 Salva</button></div>
+                </form>
+              </details>
+              <form method="post" action="/admin/referrals/codes/<%= c.id %>/toggle" style="display:inline">
                 <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                 <button type="submit" class="btn-ico <%= c.active?'btn-ico-hide':'btn-ico-show' %>" title="<%= c.active?'Disattiva':'Riattiva' %>"><%- include('../partials/ico', { name: c.active?'eye':'eye-off' }) %></button>
               </form>
-              <form method="post" action="/admin/referrals/codes/<%= c.id %>/delete" onsubmit="return confirm('Eliminare il codice <%= c.code %>?')">
+              <form method="post" action="/admin/referrals/codes/<%= c.id %>/delete" onsubmit="return confirm('Eliminare il codice <%= c.code %>?')" style="display:inline">
                 <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                 <button type="submit" class="btn-ico btn-ico-danger" title="Elimina"><%- include('../partials/ico', { name:'trash' }) %></button>
               </form>
@@ -265,6 +321,18 @@
           <input type="date" name="validUntil">
         </div>
         <div class="field field-full">
+          <label class="field-lbl">Pacchetti applicabili</label>
+          <div class="plan-chips">
+            <% plans.forEach(function(p){ %>
+              <label class="plan-chip">
+                <input type="checkbox" name="planIds" value="<%= p.id %>">
+                <span><%= p.name %></span>
+              </label>
+            <% }) %>
+          </div>
+          <div class="field-help">Nessuno selezionato = vale per <strong>tutti</strong> i pacchetti. Spunta solo quelli su cui questo coupon deve funzionare.</div>
+        </div>
+        <div class="field field-full">
           <label class="field-lbl">Note interne</label>
           <input type="text" name="internalNotes" placeholder="es. campagna instagram estate 2026">
         </div>
@@ -275,6 +343,19 @@
     </form>
   </details>
 </div>
+
+<style>
+  .plan-chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+  .plan-chip{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border:1.5px solid #d4d8e0;border-radius:20px;cursor:pointer;font-size:13.5px;background:#fff;transition:all .15s;user-select:none}
+  .plan-chip:hover{border-color:#1c1f26}
+  .plan-chip input{margin:0;accent-color:#e0aa00}
+  .plan-chip input:checked + span{font-weight:700;color:#7a5800}
+  .plan-chip:has(input:checked){background:#fffbe8;border-color:#e0aa00}
+  .code-edit-dd{display:inline-block;position:relative}
+  .code-edit-dd > summary{list-style:none;cursor:pointer;color:#0d5290}
+  .code-edit-dd > summary::-webkit-details-marker{display:none}
+  .code-edit-form{position:absolute;right:0;top:30px;z-index:30;background:#fff;border:1px solid #d4d8e0;border-radius:10px;padding:18px;box-shadow:0 12px 40px rgba(0,0,0,.12);width:min(640px, 90vw)}
+</style>
 <% } %>
 
 <!-- Spazio sotto le sezioni per non far coprire dall'action bar fissa -->

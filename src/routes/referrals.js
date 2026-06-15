@@ -271,11 +271,19 @@ router.get('/:id(\\d+)/edit', requirePermission('referrals.view'), A(async (req,
   const r = await prisma.referrer.findUnique({
     where: { id },
     include: {
-      codes: { orderBy: { createdAt: 'desc' } },
+      codes: {
+        orderBy: { createdAt: 'desc' },
+        include: { plans: { select: { id: true, slug: true, name: true } } },
+      },
       _count: { select: { commissions: true } },
     },
   });
   if (!r) return res.redirect('/admin/referrals');
+  const plans = await prisma.plan.findMany({
+    where: { active: true },
+    orderBy: { sort: 'asc' },
+    select: { id: true, slug: true, name: true },
+  });
   const codeIds = r.codes.map((c) => c.id);
 
   // Statistiche commissioni + funnel
@@ -315,7 +323,7 @@ router.get('/:id(\\d+)/edit', requirePermission('referrals.view'), A(async (req,
     paid: r._count.commissions,
     conversionRate: totalClicks > 0 ? +(r._count.commissions / totalClicks * 100).toFixed(1) : 0,
   };
-  res.render('referrals/form', { title: `Referrer ${r.firstName} ${r.lastName}`, referrer: r, stats, sources });
+  res.render('referrals/form', { title: `Referrer ${r.firstName} ${r.lastName}`, referrer: r, stats, sources, plans });
 }));
 
 router.post('/:id(\\d+)', requirePermission('referrals.manage'), A(async (req, res) => {
@@ -435,6 +443,9 @@ router.post('/:id(\\d+)/codes', requirePermission('referrals.codes.manage'), A(a
     req.flash('error', `Codice "${code}" già usato. Scegli un altro.`);
     return res.redirect(`/admin/referrals/${referrerId}/edit`);
   }
+  // Pacchetti su cui il coupon è applicabile (array di Plan.id). Vuoto = tutti.
+  let planIds = Array.isArray(b.planIds) ? b.planIds : (b.planIds ? [b.planIds] : []);
+  planIds = planIds.map((v) => parseInt(v, 10)).filter((n) => Number.isInteger(n));
   const newCode = await prisma.referralCode.create({
     data: {
       code,
@@ -446,6 +457,7 @@ router.post('/:id(\\d+)/codes', requirePermission('referrals.codes.manage'), A(a
       validUntil: b.validUntil ? new Date(b.validUntil) : null,
       active: true,
       internalNotes: String(b.internalNotes || '').slice(0, 500),
+      plans: planIds.length ? { connect: planIds.map((id) => ({ id })) } : undefined,
     },
   });
   await audit.log(req, 'referrer.code.create', { entity: 'ReferralCode', details: { code, referrerId } });
@@ -465,6 +477,9 @@ router.post('/codes/:codeId(\\d+)', requirePermission('referrals.codes.manage'),
   const existing = await prisma.referralCode.findUnique({ where: { id: codeId } });
   if (!existing) return res.redirect('/admin/referrals');
   const b = req.body || {};
+  // Pacchetti applicabili: set completo (vuoto = vale per tutti).
+  let planIds = Array.isArray(b.planIds) ? b.planIds : (b.planIds ? [b.planIds] : []);
+  planIds = planIds.map((v) => parseInt(v, 10)).filter((n) => Number.isInteger(n));
   await prisma.referralCode.update({
     where: { id: codeId },
     data: {
@@ -474,6 +489,7 @@ router.post('/codes/:codeId(\\d+)', requirePermission('referrals.codes.manage'),
       maxUses: b.maxUses ? parseInt(b.maxUses, 10) : null,
       validUntil: b.validUntil ? new Date(b.validUntil) : null,
       internalNotes: String(b.internalNotes || '').slice(0, 500),
+      plans: { set: planIds.map((id) => ({ id })) },
     },
   });
   await audit.log(req, 'referrer.code.update', { entity: 'ReferralCode', entityId: String(codeId) });

@@ -116,13 +116,13 @@ async function resolveExtras(plan, selectedExtraIds) {
 
 // Cerca codice referral (case-insensitive) e ne valuta validità.
 // Ritorna { code, error } — error string in spagnolo per il cliente.
-async function resolveReferralCode(rawCode) {
+async function resolveReferralCode(rawCode, plan) {
   if (!rawCode) return { code: null };
   const codeUpper = String(rawCode).trim().toUpperCase().replace(/\s+/g, '');
   if (!codeUpper) return { code: null };
   const code = await prisma.referralCode.findUnique({
     where: { code: codeUpper },
-    include: { referrer: true },
+    include: { referrer: true, plans: { select: { id: true, slug: true, name: true } } },
   });
   const validation = RC.codeIsValid(code);
   if (!validation.ok) {
@@ -132,6 +132,13 @@ async function resolveReferralCode(rawCode) {
   // Referrer deve essere attivo
   if (!code.referrer || code.referrer.status !== 'approved') {
     return { code: null, error: 'Código no válido' };
+  }
+  // Restrizione per pacchetto: se plans non vuoto, il plan corrente deve essere incluso.
+  if (plan && Array.isArray(code.plans) && code.plans.length > 0) {
+    const allowedIds = code.plans.map((p) => p.id);
+    if (!allowedIds.includes(plan.id)) {
+      return { code: null, error: 'Este código no es válido para este pack' };
+    }
   }
   return { code };
 }
@@ -308,7 +315,7 @@ async function createMultiBooking(plan, body) {
   if (!breakdown.ok) return { error: breakdown.error };
 
   // ---- CODICE REFERRAL (opzionale) ----
-  const refRes = await resolveReferralCode(body.referralCode);
+  const refRes = await resolveReferralCode(body.referralCode, plan);
   if (body.referralCode && refRes.error) return { error: refRes.error };
   applyReferralDiscount(breakdown, refRes.code);
 

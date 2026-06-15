@@ -370,7 +370,13 @@ router.post('/reserva/:slug/embedded-session-v2', A(async (req, res) => {
 router.post('/reserva/validate-code', express.json(), A(async (req, res) => {
   const codeStr = String((req.body && req.body.code) || '').trim();
   if (!codeStr) return res.json({ ok: false, error: 'Inserta un código' });
-  const r = await MB.resolveReferralCode(codeStr);
+  // Plan opzionale: se passato (slug), valida che il codice sia applicabile a quel pack.
+  const planSlug = String((req.body && req.body.planSlug) || '').trim();
+  let plan = null;
+  if (planSlug) {
+    plan = await prisma.plan.findUnique({ where: { slug: planSlug }, select: { id: true } });
+  }
+  const r = await MB.resolveReferralCode(codeStr, plan);
   if (r.error || !r.code) return res.json({ ok: false, error: r.error || 'Código no válido' });
   // Auto-uso bloccato: un referrer non può usare il proprio codice
   const currentRefId = req.session && req.session.referrerId;

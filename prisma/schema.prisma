@@ -90,6 +90,9 @@ model Plan {
   event       Event?    @relation(fields: [eventId], references: [id])
   bookings    Booking[]
   extras      BookingExtra[]
+  // Codici sconto applicabili a questo pacchetto (many-to-many).
+  // Se un ReferralCode non ha pacchetti collegati, vale per TUTTI i pack.
+  referralCodes ReferralCode[]
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 }
@@ -438,6 +441,8 @@ model ReferralCode {
   validUntil      DateTime?
   active          Boolean   @default(true)
   internalNotes   String    @default("")
+  // Pacchetti su cui questo codice è applicabile. Lista VUOTA = vale su TUTTI.
+  plans           Plan[]
   bookings        Booking[]
   commissions     ReferralCommission[]
   clicks          ReferralClick[]
