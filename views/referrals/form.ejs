@@ -271,10 +271,6 @@
                   <div style="margin-top:10px;text-align:right"><button class="btn btn-primary btn-sm">💾 Salva</button></div>
                 </form>
               </details>
-              <form method="post" action="/admin/referrals/codes/<%= c.id %>/toggle" style="display:inline">
-                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-                <button type="submit" class="btn-ico <%= c.active?'btn-ico-hide':'btn-ico-show' %>" title="<%= c.active?'Disattiva':'Riattiva' %>"><%- include('../partials/ico', { name: c.active?'eye':'eye-off' }) %></button>
-              </form>
               <form method="post" action="/admin/referrals/codes/<%= c.id %>/delete" onsubmit="return confirm('Eliminare il codice <%= c.code %>?')" style="display:inline">
                 <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                 <button type="submit" class="btn-ico btn-ico-danger" title="Elimina"><%- include('../partials/ico', { name:'trash' }) %></button>

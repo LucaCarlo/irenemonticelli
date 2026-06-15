@@ -45,7 +45,7 @@
         <td><%= b.dateLabel %><% if (b.slot) { %><br><span class="muted"><%= b.slot %></span><% } %></td>
         <td><strong><%= b.amount ? b.amount + ' €' : '—' %></strong></td>
         <td class="row-actions">
-          <a class="btn-ico btn-ico-open" href="/admin/bookings/<%= b.id %>/edit" title="Apri"><%- include('../partials/ico', { name:'open' }) %></a>
+          <a class="btn-ico btn-ico-edit" href="/admin/bookings/<%= b.id %>/edit" title="Modifica"><%- include('../partials/ico', { name:'edit' }) %></a>
           <form method="post" action="/admin/bookings/<%= b.id %>/delete" onsubmit="return confirm('Eliminare questa prenotazione?')" style="display:inline"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button type="submit" class="btn-ico btn-ico-danger" title="Elimina"><%- include('../partials/ico', { name:'trash' }) %></button></form>
         </td>
       </tr>
