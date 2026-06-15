@@ -1975,33 +1975,8 @@ window.RV_RESUME = <%- resumeData ? JSON.stringify(resumeData) : 'null' %>;
                 });
               });
               console.log('[draft] restored', restoredCount, 'fields from', Object.keys(d.values).length, 'saved');
-
-              // Banner ben visibile in cima al form
-              var bn = document.createElement('div');
-              bn.id = 'rv-draft-banner';
-              bn.setAttribute('style',
-                'margin:14px 0 18px !important;padding:16px 20px !important;'
-                + 'background:linear-gradient(135deg,#e8f7ee,#f4fbf6) !important;'
-                + 'border:2px solid #1b6b3e !important;border-radius:12px !important;'
-                + 'font-size:14.5px !important;color:#1b6b3e !important;'
-                + 'display:flex !important;align-items:center !important;'
-                + 'justify-content:space-between !important;gap:14px !important;'
-                + 'box-shadow:0 4px 14px rgba(27,107,62,.15) !important;'
-                + 'font-family:"Manrope",system-ui,sans-serif !important;');
-              bn.innerHTML = ''
-                + '<span style="display:flex;align-items:center;gap:10px;flex:1">'
-                +   '<span style="font-size:24px">✓</span>'
-                +   '<span><strong style="color:#0f4e2c">¡Te recordamos!</strong> Hemos recuperado los datos que ya habías introducido. '
-                +     '<span style="color:#5a5e6a;font-size:13px">Continúa donde lo dejaste.</span>'
-                +   '</span>'
-                + '</span>'
-                + '<button type="button" id="rv-draft-reset" style="background:#fff;border:1.5px solid #1b6b3e;color:#1b6b3e;cursor:pointer;font-weight:600;font-size:12.5px;padding:7px 14px;border-radius:6px;white-space:nowrap;font-family:inherit">Empezar de cero</button>';
-              form.insertBefore(bn, form.firstChild);
-              document.getElementById('rv-draft-reset').addEventListener('click', function(){
-                if (!confirm('¿Quieres borrar todos los datos guardados y empezar de cero?')) return;
-                try { localStorage.removeItem(DRAFT_KEY); } catch(_) {}
-                window.location.reload();
-              });
+              // Restore SILENZIOSO: niente banner sulla stessa pagina checkout.
+              // L'utente vede semplicemente i campi già pieni come li ha lasciati.
               if (typeof sync === 'function') sync();
             }
           } else {
