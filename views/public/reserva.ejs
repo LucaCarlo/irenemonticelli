@@ -1752,12 +1752,17 @@
       st.textContent = msg;
       st.className = 'rv-refcode-status ' + (ok ? 'ok' : 'err');
     }
+    // Persistenza: il coupon applicato resta in sessionStorage per sopravvivere
+    // a reload accidentali (TTL = vita della tab). Chiave per slug del pack.
+    var STORAGE_KEY = 'rv_applied_code_' + <%- JSON.stringify(plan.slug) %>;
+
     function clearStatus(){
       st.hidden = true; st.textContent = '';
       window.RV_REFCODE = null;
       btn.classList.remove('is-applied');
       btn.textContent = 'Aplicar';
       input.disabled = false;
+      try { sessionStorage.removeItem(STORAGE_KEY); } catch (_) {}
       sync();
     }
 
@@ -1766,13 +1771,12 @@
       if (window.RV_REFCODE) clearStatus();
     });
 
-    btn.addEventListener('click', function(){
-      if (window.RV_REFCODE) { clearStatus(); return; }
-      var code = (input.value||'').trim();
-      if (!code) return;
+    // Applica un codice (usato sia da click umano sia da auto-restore al load).
+    // silent=true → in caso di errore non mostra il messaggio rosso, pulisce e basta
+    function applyCode(code, silent){
       btn.disabled = true;
       btn.textContent = 'Verificando…';
-      fetch('/reserva/validate-code', {
+      return fetch('/reserva/validate-code', {
         method:'POST',
         headers:{'Content-Type':'application/json'},
         body: JSON.stringify({ code: code, planSlug: <%- JSON.stringify(plan.slug) %> })
@@ -1784,22 +1788,47 @@
           btn.classList.add('is-applied');
           btn.textContent = 'Quitar';
           input.disabled = true;
+          try { sessionStorage.setItem(STORAGE_KEY, j.code); } catch (_) {}
           sync();
+          return true;
         } else {
-          showStatus('✗ ' + (j.error || 'Código no válido'), false);
+          if (silent) {
+            // Restore fallito (es. codice ora invalido / esaurito): pulisce silenziosamente
+            try { sessionStorage.removeItem(STORAGE_KEY); } catch (_) {}
+            input.value = '';
+            btn.textContent = 'Aplicar';
+          } else {
+            showStatus('✗ ' + (j.error || 'Código no válido'), false);
+            btn.textContent = 'Aplicar';
+          }
           window.RV_REFCODE = null;
-          btn.textContent = 'Aplicar';
+          return false;
         }
       }).catch(function(){
         btn.disabled = false;
         btn.textContent = 'Aplicar';
-        showStatus('Error de conexión. Reintenta.', false);
+        if (!silent) showStatus('Error de conexión. Reintenta.', false);
+        return false;
       });
+    }
+
+    btn.addEventListener('click', function(){
+      if (window.RV_REFCODE) { clearStatus(); return; }
+      var code = (input.value||'').trim();
+      if (!code) return;
+      applyCode(code, false);
     });
 
-    // Auto-apply se l'input arriva pre-compilato dal cookie ref_code (?ref=… o visita precedente).
-    if (input.value && input.value.trim().length) {
-      setTimeout(function(){ btn.click(); }, 200);
+    // Auto-restore al load:
+    // 1. Priorità a sessionStorage (codice già applicato in questa sessione, anche dopo reload)
+    // 2. Altrimenti, valore precompilato dal cookie ref_code (?ref=…)
+    var storedCode = '';
+    try { storedCode = sessionStorage.getItem(STORAGE_KEY) || ''; } catch (_) {}
+    if (storedCode) {
+      input.value = storedCode;
+      setTimeout(function(){ applyCode(storedCode, true); }, 150);
+    } else if (input.value && input.value.trim().length) {
+      setTimeout(function(){ applyCode(input.value.trim(), true); }, 150);
     }
   })();
 
