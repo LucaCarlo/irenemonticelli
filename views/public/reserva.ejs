@@ -1941,44 +1941,134 @@ window.RV_RESUME = <%- resumeData ? JSON.stringify(resumeData) : 'null' %>;
     var DRAFT_KEY = 'rv_draft_' + SLUG;
     var TTL_MS = 24 * 60 * 60 * 1000;  // 24h
 
-    // Restore: se in localStorage c'è una bozza recente E non stiamo già facendo un resume server-side
+    // Helpers per restore
+    function setFormVal(name, val) {
+      var el = form.querySelector('[name="' + name + '"]');
+      if (!el || val == null || val === '') return;
+      el.value = val;
+      el.dispatchEvent(new Event('input', { bubbles: true }));
+      el.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+    function setChecked(id, on) {
+      var el = document.getElementById(id);
+      if (el) { el.checked = !!on; el.dispatchEvent(new Event('change', { bubbles: true })); }
+    }
+
+    // Applica un payload (buildPayload-shape) ai campi DOM
+    function applyPayload(P) {
+      var restored = 0;
+      if (!P) return restored;
+
+      // PAGANTE
+      if (P.payer) {
+        setFormVal('payerFirstName', P.payer.firstName); restored++;
+        setFormVal('payerLastName', P.payer.lastName);
+        setFormVal('payerEmail', P.payer.email);
+        setFormVal('payerPhone', P.payer.phone);
+        setChecked('rvIc', P.payer.imageConsent);
+        setChecked('rvDc', P.payer.dataConsent);
+        setChecked('rvHc', P.payer.healthConsent);
+        setChecked('rvMc', P.payer.minorConsent);
+
+        if (P.payer.billing) {
+          setChecked('rvBillToggle', true);
+          setFormVal('billingAddress', P.payer.billing.address);
+          setFormVal('billingCity', P.payer.billing.city);
+          setFormVal('billingZip', P.payer.billing.zip);
+          setFormVal('billingCountry', P.payer.billing.country);
+          setFormVal('billingNif', P.payer.billing.nif);
+        }
+      }
+
+      // PARTECIPANTI (devono essere renderizzati dopo aver settato participantsCount)
+      if (Array.isArray(P.participants) && P.participants.length) {
+        if (typeof STATE !== 'undefined') STATE.participantsCount = P.participants.length;
+        if (typeof renderParticipants === 'function') renderParticipants();
+        setTimeout(function(){
+          var cards = (typeof partsBox !== 'undefined') ? partsBox.querySelectorAll('.rv-part') : document.querySelectorAll('.rv-part');
+          P.participants.forEach(function(p, idx){
+            var card = cards[idx];
+            if (!card) return;
+            ['firstName','lastName','birthDate','address','city','zip','country','email','phone'].forEach(function(fld){
+              if (p[fld] == null || p[fld] === '') return;
+              var el = card.querySelector('input[data-fld='+fld+']');
+              if (el) { el.value = p[fld]; el.dispatchEvent(new Event('input',{bubbles:true})); el.dispatchEvent(new Event('change',{bubbles:true})); restored++; }
+            });
+          });
+          if (typeof sync === 'function') sync();
+        }, 80);
+      }
+
+      // SINGLE_LESSONS: numero classi + lezioni per slot
+      if (mode === 'single_lessons') {
+        if (P.classesPerParticipant) {
+          var rvCount = document.getElementById('rvCount');
+          if (rvCount) {
+            rvCount.value = String(P.classesPerParticipant);
+            rvCount.dispatchEvent(new Event('change', { bubbles: true }));
+          }
+        }
+        if (Array.isArray(P.lessons)) {
+          setTimeout(function(){
+            P.lessons.forEach(function(l, i){
+              var d = form.querySelector('input[name="lesson_day_'+i+'"]');
+              var s = form.querySelector('input[name="lesson_slot_'+i+'"]');
+              if (d && l.day) d.value = l.day;
+              if (s && l.slot) s.value = l.slot;
+              // Marca visivamente le date/slot scelti nel calendario UI
+              var dateChip = form.querySelector('.scx-date[data-i="'+i+'"][data-date="'+l.day+'"]');
+              if (dateChip) dateChip.classList.add('is-selected');
+              var slotChip = form.querySelector('.scx-slot[data-i="'+i+'"][data-slot="'+l.slot+'"]');
+              if (slotChip) slotChip.classList.add('is-selected');
+            });
+            if (typeof sync === 'function') sync();
+          }, 120);
+        }
+      }
+
+      // PACK RED: hidden inputs day_<iso> + classe is-selected sui button
+      if (mode === 'red' && P.days && typeof P.days === 'object') {
+        Object.keys(P.days).forEach(function(iso){
+          var seg = P.days[iso];
+          var hidden = form.querySelector('input[name="day_'+iso+'"]');
+          if (hidden) hidden.value = seg;
+          var row = form.querySelector('.rv-ampm[data-day="'+iso+'"]');
+          if (row) {
+            row.querySelectorAll('.scx-ampm-btn').forEach(function(b){ b.classList.remove('is-selected'); });
+            var btn = row.querySelector('.scx-ampm-btn[data-val="'+seg+'"]');
+            if (btn) btn.classList.add('is-selected');
+          }
+        });
+      }
+
+      // EXTRAS
+      if (Array.isArray(P.extras)) {
+        P.extras.forEach(function(id){
+          var cb = form.querySelector('input[type="checkbox"][name="extras"][value="'+id+'"]');
+          if (cb) cb.checked = true;
+        });
+      }
+
+      // REFERRAL CODE (compila il campo; lo script coupon lo riapplica via sessionStorage)
+      if (P.referralCode) {
+        var rcEl = document.getElementById('rvRefCodeInput');
+        if (rcEl) rcEl.value = P.referralCode;
+      }
+
+      if (typeof sync === 'function') sync();
+      return restored;
+    }
+
+    // Restore SILENZIOSO al load (se c'è bozza valida e non stiamo facendo un resume server-side)
     if (!window.RV_RESUME) {
       try {
         var raw = localStorage.getItem(DRAFT_KEY);
-        console.log('[draft] localStorage key=', DRAFT_KEY, 'found=', !!raw);
+        console.log('[draft] key=', DRAFT_KEY, 'found=', !!raw);
         if (raw) {
           var d = JSON.parse(raw);
-          if (d && d.savedAt && (Date.now() - d.savedAt) < TTL_MS) {
-            if (d.values && Object.keys(d.values).length > 0) {
-              var restoredCount = 0;
-              Object.keys(d.values).forEach(function(name){
-                // Selettore manuale (no CSS.escape per compatibilità + log nome non trovati)
-                var els = form.querySelectorAll('[name="' + name.replace(/"/g, '\\"') + '"]');
-                if (els.length === 0) {
-                  console.warn('[draft] field not found in form:', name);
-                  return;
-                }
-                els.forEach(function(el){
-                  if (el.type === 'checkbox' || el.type === 'radio') {
-                    if (Array.isArray(d.values[name])) {
-                      el.checked = d.values[name].indexOf(el.value) !== -1;
-                    } else {
-                      el.checked = (el.value === d.values[name]);
-                    }
-                  } else {
-                    el.value = d.values[name];
-                  }
-                  // Dispatch input event così altri listener si aggiornano (es. validators)
-                  el.dispatchEvent(new Event('input', { bubbles: true }));
-                  el.dispatchEvent(new Event('change', { bubbles: true }));
-                  restoredCount++;
-                });
-              });
-              console.log('[draft] restored', restoredCount, 'fields from', Object.keys(d.values).length, 'saved');
-              // Restore SILENZIOSO: niente banner sulla stessa pagina checkout.
-              // L'utente vede semplicemente i campi già pieni come li ha lasciati.
-              if (typeof sync === 'function') sync();
-            }
+          if (d && d.savedAt && (Date.now() - d.savedAt) < TTL_MS && d.payload) {
+            var n = applyPayload(d.payload);
+            console.log('[draft] restored payload, ~' + n + ' base fields + dynamic blocks');
           } else {
             console.log('[draft] expired or invalid');
             try { localStorage.removeItem(DRAFT_KEY); } catch(_) {}
@@ -1989,58 +2079,38 @@ window.RV_RESUME = <%- resumeData ? JSON.stringify(resumeData) : 'null' %>;
       console.log('[draft] skipped: server resume in progress');
     }
 
-    // Salva on input/change con debounce
+    // Salva chiamando buildPayload() (lo stesso del POST finale) → cattura TUTTO:
+    // pagante, participanti, tutor, lezioni single, days red, extras, refcode, billing.
     var saveTimer = null;
-    function snapshot() {
-      var values = {};
-      var inputs = form.querySelectorAll('input, select, textarea');
-      inputs.forEach(function(el){
-        if (!el.name) return;
-        if (el.name === '_csrf') return;
-        if (el.name === 'resumeToken') return;
-        if (el.type === 'submit' || el.type === 'button' || el.type === 'hidden' && el.name === 'csrfToken') return;
-        if (el.type === 'checkbox' || el.type === 'radio') {
-          if (el.checked) {
-            if (values[el.name]) {
-              if (!Array.isArray(values[el.name])) values[el.name] = [values[el.name]];
-              values[el.name].push(el.value);
-            } else {
-              values[el.name] = el.value;
-            }
-          }
-        } else if (el.value) {
-          values[el.name] = el.value;
-        }
-      });
-      return values;
-    }
-
     function persist() {
-      var values = snapshot();
-      // Salva solo se almeno UN campo significativo è compilato (evita di salvare form vuoto)
-      var meaningful = ['payerFirstName', 'payerLastName', 'payerEmail', 'payerPhone'];
-      var hasContent = meaningful.some(function(k){ return values[k] && String(values[k]).length >= 2; });
-      if (!hasContent) {
+      var P = null;
+      try { P = buildPayload(); } catch (e) { return; }
+      if (!P || !P.payer) return;
+      // Salva solo se almeno UN campo significativo del pagante è compilato
+      var p = P.payer;
+      var has = (p.firstName||p.lastName||p.email||p.phone);
+      if (!has || (String(p.firstName||'') + String(p.lastName||'') + String(p.email||'') + String(p.phone||'')).length < 2) {
         try { localStorage.removeItem(DRAFT_KEY); } catch(_) {}
         return;
       }
       try {
-        localStorage.setItem(DRAFT_KEY, JSON.stringify({ savedAt: Date.now(), values: values, planName: <%- JSON.stringify(plan.name) %> }));
-        console.log('[draft] saved', Object.keys(values).length, 'fields');
+        localStorage.setItem(DRAFT_KEY, JSON.stringify({
+          savedAt: Date.now(),
+          payload: P,
+          planName: <%- JSON.stringify(plan.name) %>,
+        }));
+        console.log('[draft] saved (participants:' + (P.participants||[]).length + ', extras:' + (P.extras||[]).length + ', lessons:' + ((P.lessons||[]).length || Object.keys(P.days||{}).length) + ')');
       } catch (_) {}
     }
 
-    form.addEventListener('input', function(){
-      clearTimeout(saveTimer);
-      saveTimer = setTimeout(persist, 800);
-    });
-    form.addEventListener('change', function(){
-      clearTimeout(saveTimer);
-      saveTimer = setTimeout(persist, 200);
-    });
+    // Eventi che triggerano salvataggio
+    form.addEventListener('input',  function(){ clearTimeout(saveTimer); saveTimer = setTimeout(persist, 800); });
+    form.addEventListener('change', function(){ clearTimeout(saveTimer); saveTimer = setTimeout(persist, 200); });
+    // Anche click su pulsanti dinamici (AM/PM, +/- partecipanti, scelta lezioni)
+    form.addEventListener('click',  function(){ clearTimeout(saveTimer); saveTimer = setTimeout(persist, 400); });
+    // Fallback periodico (2s) per stati che non scattano eventi DOM standard
+    setInterval(persist, 2000);
 
-    // Pulizia se la form viene submittata con successo (handled altrove a /reserva/success)
-    // Qui esponiamo il key globale così altri script possono cancellarlo a successo
     window.RV_DRAFT_KEY = DRAFT_KEY;
   })();
 })();
