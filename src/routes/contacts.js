@@ -19,7 +19,8 @@ router.get('/', canSee, A(async (req, res) => {
     defaultSort: 'lastSeen',
     allowedSorts: ['name', 'email', 'phone', 'lastSeen', 'firstSeen', 'bookingsCount'],
   });
-  const source = String(req.query.source || '').trim();
+  // Default = solo clienti che hanno prenotato; per vedere tutti basta selezionare "Tutte le fonti"
+  const source = (req.query.source !== undefined) ? String(req.query.source).trim() : 'booking';
   params._extra = { source };
 
   // Carica i 3 source

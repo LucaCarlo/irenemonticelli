@@ -12,10 +12,7 @@
       <p class="muted" style="margin:4px 0 0;font-size:13.5px">Bozze, programmate e cronologia di tutte le email inviate.</p>
     </div>
     <div class="head-tools" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-      <div class="view-switcher" style="display:inline-flex;border:1px solid #dde0e4;border-radius:8px;overflow:hidden">
-        <a class="btn btn-sm" href="/admin/newsletter" style="border:0;border-radius:0;background:#1c1f26;color:#e0aa00;padding:8px 14px">Campagne</a>
-        <a class="btn btn-sm btn-ghost" href="/admin/newsletter/subscribers" style="border:0;border-radius:0;border-left:1px solid #dde0e4;padding:8px 14px">Iscritti</a>
-      </div>
+      <a class="btn btn-ghost btn-sm" href="/admin/contacts" title="Vai alla pagina utenti">👥 Iscritti totali: <%= subStats.active %></a>
       <a class="btn btn-primary" href="/admin/newsletter/new">+ Nuova campagna</a>
     </div>
   </div>
@@ -71,9 +68,9 @@
                     onsubmit="return confirm('Inviare ora la campagna a tutti gli iscritti dell\'audience selezionata?')">
                 <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                 <select name="audience" class="nl-aud-sel">
-                  <option value="all" <%= c.audience==='all'?'selected':'' %>>Tutti (<%= subStats.active %>)</option>
-                  <option value="bookings" <%= c.audience==='bookings'?'selected':'' %>>Chi ha prenotato</option>
-                  <option value="contacts" <%= c.audience==='contacts'?'selected':'' %>>Dal form contatti</option>
+                  <option value="all" <%= c.audience==='all'?'selected':'' %>>📣 Tutti gli iscritti (<%= subStats.active %>)</option>
+                  <option value="bookings" <%= c.audience==='bookings'?'selected':'' %>>🎟 Solo chi ha prenotato</option>
+                  <option value="contacts" <%= c.audience==='contacts'?'selected':'' %>>✉️ Solo form contatti</option>
                 </select>
               </form>
             </td>

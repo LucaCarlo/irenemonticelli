@@ -27,15 +27,27 @@ router.get('/', A(async (req, res) => {
   res.render('newsletter/list', { title: 'Newsletter', campaigns, subStats });
 }));
 
+// Conteggi audience per il selettore (per non doverli rifare in 2 endpoints)
+async function audienceCounts() {
+  const [all, bookings, contacts] = await Promise.all([
+    prisma.newsletterSubscriber.count({ where: { status: 'active' } }),
+    prisma.newsletterSubscriber.count({ where: { status: 'active', source: 'booking' } }),
+    prisma.newsletterSubscriber.count({ where: { status: 'active', source: 'contact' } }),
+  ]);
+  return { all, bookings, contacts };
+}
+
 // Composer nuova campagna
 router.get('/new', A(async (req, res) => {
-  res.render('newsletter/compose', { title: 'Nuova newsletter', campaign: null });
+  const audCounts = await audienceCounts();
+  res.render('newsletter/compose', { title: 'Nuova newsletter', campaign: null, audCounts });
 }));
 
 router.get('/:id(\\d+)/edit', A(async (req, res) => {
   const c = await prisma.newsletterCampaign.findUnique({ where: { id: parseInt(req.params.id, 10) } });
   if (!c) return res.redirect('/admin/newsletter');
-  res.render('newsletter/compose', { title: 'Modifica campagna', campaign: c });
+  const audCounts = await audienceCounts();
+  res.render('newsletter/compose', { title: 'Modifica campagna', campaign: c, audCounts });
 }));
 
 router.post('/', A(async (req, res) => {

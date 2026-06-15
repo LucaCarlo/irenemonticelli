@@ -25,13 +25,52 @@
     </div>
 
     <div class="field">
-      <label class="field-lbl">Destinatari</label>
-      <select name="audience">
-        <option value="all" <%= campaign && campaign.audience==='all'?'selected':'' %>>Tutti gli iscritti attivi</option>
-        <option value="bookings" <%= campaign && campaign.audience==='bookings'?'selected':'' %>>Solo chi ha prenotato</option>
-        <option value="contacts" <%= campaign && campaign.audience==='contacts'?'selected':'' %>>Solo dal form contatti</option>
-      </select>
+      <label class="field-lbl">A chi mandare questa newsletter?</label>
+      <% var cur = (campaign && campaign.audience) ? campaign.audience : 'all'; %>
+      <div class="aud-grid">
+        <label class="aud-card <%= cur==='all'?'is-on':'' %>">
+          <input type="radio" name="audience" value="all" <%= cur==='all'?'checked':'' %>>
+          <div class="aud-card-ico">📣</div>
+          <div class="aud-card-body">
+            <div class="aud-card-title">Tutti gli iscritti</div>
+            <div class="aud-card-desc">Tutte le persone attive nella lista newsletter, qualunque sia l'origine.</div>
+            <div class="aud-card-num"><%= audCounts.all %> destinatari</div>
+          </div>
+        </label>
+        <label class="aud-card <%= cur==='bookings'?'is-on':'' %>">
+          <input type="radio" name="audience" value="bookings" <%= cur==='bookings'?'checked':'' %>>
+          <div class="aud-card-ico">🎟</div>
+          <div class="aud-card-body">
+            <div class="aud-card-title">Solo chi ha prenotato</div>
+            <div class="aud-card-desc">Clienti che hanno effettuato almeno una prenotazione (e dato consenso dati).</div>
+            <div class="aud-card-num"><%= audCounts.bookings %> destinatari</div>
+          </div>
+        </label>
+        <label class="aud-card <%= cur==='contacts'?'is-on':'' %>">
+          <input type="radio" name="audience" value="contacts" <%= cur==='contacts'?'checked':'' %>>
+          <div class="aud-card-ico">✉️</div>
+          <div class="aud-card-body">
+            <div class="aud-card-title">Solo form contatti</div>
+            <div class="aud-card-desc">Persone che hanno scritto attraverso il form di contatto del sito.</div>
+            <div class="aud-card-num"><%= audCounts.contacts %> destinatari</div>
+          </div>
+        </label>
+      </div>
     </div>
+
+    <style>
+      .aud-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:6px}
+      .aud-card{display:flex;gap:12px;padding:16px 18px;border:2px solid #eef0f4;border-radius:12px;background:#fff;cursor:pointer;transition:all .15s;position:relative}
+      .aud-card:hover{border-color:#1c1f26}
+      .aud-card.is-on,.aud-card:has(input:checked){background:#fffbe8;border-color:#e0aa00;box-shadow:0 4px 14px rgba(224,170,0,.15)}
+      .aud-card input{position:absolute;opacity:0;pointer-events:none}
+      .aud-card-ico{font-size:28px;flex-shrink:0;line-height:1}
+      .aud-card-body{flex:1;min-width:0}
+      .aud-card-title{font-weight:700;font-size:14.5px;color:#1c1f26;margin-bottom:3px}
+      .aud-card-desc{font-size:12.5px;color:#5a5e6a;line-height:1.45;margin-bottom:8px}
+      .aud-card-num{display:inline-block;background:#1c1f26;color:#e0aa00;padding:3px 10px;border-radius:99px;font-size:11.5px;font-weight:700;letter-spacing:.04em}
+      .aud-card.is-on .aud-card-num,.aud-card:has(input:checked) .aud-card-num{background:#e0aa00;color:#1c1408}
+    </style>
 
     <div class="field">
       <label class="field-lbl">Contenuto email</label>
