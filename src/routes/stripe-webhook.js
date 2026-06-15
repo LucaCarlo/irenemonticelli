@@ -4,6 +4,7 @@ const express = require('express');
 const prisma = require('../lib/db');
 const { getStripe, webhookSecret } = require('../lib/stripe');
 const { sendBookingConfirmation } = require('../lib/bookingmail');
+const { ensureSubscriber } = require('../lib/newsletter');
 const RC = require('../lib/referral-calc');
 const settings = require('../lib/settings');
 const { sendMail } = require('../lib/mailer');
@@ -145,6 +146,11 @@ router.post('/stripe/webhook', express.raw({ type: '*/*' }), async (req, res) =>
         });
         // Crea commissione referral (se applicabile)
         await createCommissionIfNeeded(bookingId).catch((e) => console.error('[commission] create fallita:', e.message));
+        // Auto-iscrizione newsletter se il cliente ha dato consenso dati
+        try {
+          const bk = await prisma.booking.findUnique({ where: { id: bookingId }, select: { customerEmail: true, firstName: true, lastName: true, customerName: true, dataConsent: true } });
+          if (bk && bk.dataConsent) await ensureSubscriber({ email: bk.customerEmail, name: bk.customerName || (bk.firstName + ' ' + bk.lastName).trim(), source: 'booking' });
+        } catch (e) { console.error('[newsletter] auto-subscribe fallita:', e.message); }
         // Email di conferma con riepilogo (non bloccare il webhook se SMTP off)
         try { await sendBookingConfirmation(bookingId); }
         catch (e) { console.error('[booking-mail] invio fallito:', e.message); }
@@ -166,6 +172,10 @@ router.post('/stripe/webhook', express.raw({ type: '*/*' }), async (req, res) =>
           },
         });
         await createCommissionIfNeeded(bookingId).catch((e) => console.error('[commission] create fallita:', e.message));
+        try {
+          const bk = await prisma.booking.findUnique({ where: { id: bookingId }, select: { customerEmail: true, firstName: true, lastName: true, customerName: true, dataConsent: true } });
+          if (bk && bk.dataConsent) await ensureSubscriber({ email: bk.customerEmail, name: bk.customerName || (bk.firstName + ' ' + bk.lastName).trim(), source: 'booking' });
+        } catch (e) { console.error('[newsletter] auto-subscribe fallita:', e.message); }
         try { await sendBookingConfirmation(bookingId); }
         catch (e) { console.error('[booking-mail] invio fallito:', e.message); }
       } else {

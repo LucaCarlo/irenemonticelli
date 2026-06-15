@@ -6,6 +6,30 @@ const { sendMail } = require('./mailer');
 
 function genToken() { return crypto.randomBytes(16).toString('hex'); }
 
+// Aggiunge un iscritto se non esiste già (idempotente). Best-effort: ignora errori.
+// Usato dopo: 1) booking pagata con dataConsent, 2) form contatto inviato,
+// 3) referrer approvato. Non blocca il flusso principale se fallisce.
+async function ensureSubscriber({ email, name, source }) {
+  try {
+    if (!email) return;
+    const em = String(email).trim().toLowerCase();
+    if (em.length < 5 || em.indexOf('@') < 1) return;
+    const exists = await prisma.newsletterSubscriber.findUnique({ where: { email: em } });
+    if (exists) return;
+    await prisma.newsletterSubscriber.create({
+      data: {
+        email: em,
+        name: String(name || '').trim(),
+        source: String(source || 'manual'),
+        status: 'active',
+        unsubscribeToken: genToken(),
+      },
+    });
+  } catch (e) {
+    console.error('[newsletter] ensureSubscriber failed:', e.message);
+  }
+}
+
 // Template HTML email professionale (responsive, inline styles per compatibilità email client)
 function wrapEmail(opts) {
   const { subject, preheader, body, unsubscribeUrl, baseUrl } = opts;
@@ -131,4 +155,4 @@ function htmlToText(html) {
     .replace(/\n{3,}/g, '\n\n').trim();
 }
 
-module.exports = { wrapEmail, sendCampaign, importFromBookings, genToken, htmlToText };
+module.exports = { wrapEmail, sendCampaign, importFromBookings, genToken, htmlToText, ensureSubscriber };

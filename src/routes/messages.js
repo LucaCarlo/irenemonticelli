@@ -41,6 +41,12 @@ publicRouter.post('/contacto', A(async (req, res) => {
     },
   });
 
+  // Auto-iscrizione newsletter (chi compila form contatti dà consenso implicito)
+  try {
+    const { ensureSubscriber } = require('../lib/newsletter');
+    ensureSubscriber({ email: msg.email, name: msg.name, source: 'contact' });
+  } catch (e) { console.error('[newsletter] auto-subscribe contact fallita:', e.message); }
+
   // Email all'admin (non blocca la risposta se SMTP è off)
   try {
     const s = await settings.all();

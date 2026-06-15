@@ -372,6 +372,11 @@ router.post('/:id(\\d+)/approve', requirePermission('referrals.manage'), A(async
   let emailOk = true, emailErr = '';
   try { await sendApprovalEmail(ref, tempPassword, req); }
   catch (e) { emailOk = false; emailErr = e.message; }
+  // Auto-iscrizione newsletter (i referrer approvati partecipano al programma)
+  try {
+    const { ensureSubscriber } = require('../lib/newsletter');
+    ensureSubscriber({ email: ref.email, name: (ref.firstName + ' ' + ref.lastName).trim(), source: 'manual' });
+  } catch (e) { /* best-effort */ }
   await audit.log(req, 'referrer.approve', { entity: 'Referrer', entityId: String(id), details: { emailSent: emailOk } });
   if (emailOk) {
     req.flash('success', `Referrer approvato. Email con credenziali inviata a ${ref.email}.`);
