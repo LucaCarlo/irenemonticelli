@@ -21,31 +21,20 @@
     <a class="btn btn-ghost" href="/admin/bookings">→ Prenotazioni pagate</a>
   </div>
 
-  <!-- TAB filtri -->
-  <div class="ac-tabs">
-    <a href="/admin/abandoned-carts" class="ac-tab <%= !filter ? 'is-active' : '' %>">
-      Tutti <span class="ac-tab-n"><%= counts.all %></span>
-    </a>
-    <a href="/admin/abandoned-carts?kind=abandoned" class="ac-tab ac-tab-abandoned <%= filter==='abandoned' ? 'is-active' : '' %>">
-      🚪 Checkout abbandonato <span class="ac-tab-n"><%= counts.abandoned %></span>
-    </a>
-    <a href="/admin/abandoned-carts?kind=payment_error" class="ac-tab ac-tab-error <%= filter==='payment_error' ? 'is-active' : '' %>">
-      ⚠️ Errore pagamento <span class="ac-tab-n"><%= counts.payment_error %></span>
-    </a>
-    <a href="/admin/abandoned-carts?kind=refunded" class="ac-tab ac-tab-refunded <%= filter==='refunded' ? 'is-active' : '' %>">
-      ↩️ Rimborsate <span class="ac-tab-n"><%= counts.refunded %></span>
-    </a>
-    <a href="/admin/abandoned-carts?kind=cancelled" class="ac-tab ac-tab-cancelled <%= filter==='cancelled' ? 'is-active' : '' %>">
-      ✕ Annullate <span class="ac-tab-n"><%= counts.cancelled %></span>
-    </a>
-  </div>
-
   <%- include('../partials/dt-toolbar', {
     params, total, totalUnfiltered,
     entitySingular: 'carrello', entityPlural: 'carrelli',
     basePath: '/admin/abandoned-carts',
     searchPlaceholder: 'Cerca per nome o email…',
-    extraFilters: [],
+    extraFilters: [
+      { name: 'kind', value: filter, options: [
+        { val: '', label: 'Tutti i tipi (' + counts.all + ')' },
+        { val: 'abandoned',     label: '🚪 Checkout abbandonato (' + counts.abandoned + ')' },
+        { val: 'payment_error', label: '⚠️ Errore pagamento (' + counts.payment_error + ')' },
+        { val: 'refunded',      label: '↩️ Rimborsate (' + counts.refunded + ')' },
+        { val: 'cancelled',     label: '✕ Annullate (' + counts.cancelled + ')' },
+      ] },
+    ],
   }) %>
 
   <% if (!items.length) { %>
@@ -111,13 +100,6 @@
 </div>
 
 <style>
-  .ac-tabs{display:flex;flex-wrap:wrap;gap:6px;margin:14px 0 18px;padding-bottom:14px;border-bottom:1px solid #eef0f4}
-  .ac-tab{display:inline-flex;align-items:center;gap:8px;padding:8px 14px;border:1px solid #eef0f4;border-radius:8px;text-decoration:none;color:#5a5e6a;font-size:13px;background:#fff;transition:all .15s}
-  .ac-tab:hover{border-color:#1c1f26;color:#1c1f26}
-  .ac-tab.is-active{background:#1c1f26;color:#e0aa00;border-color:#1c1f26;font-weight:600}
-  .ac-tab-n{display:inline-block;background:#eef0f4;color:#5a5e6a;font-weight:700;font-size:11px;padding:1px 8px;border-radius:11px;min-width:22px;text-align:center}
-  .ac-tab.is-active .ac-tab-n{background:#e0aa00;color:#1c1408}
-
   .ac-kind{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:8px;font-size:12px;font-weight:700;white-space:nowrap}
   .ac-kind.kind-refunded{background:#e3e7f0;color:#3a3f50}
   .ac-kind.kind-error{background:#fef0ec;color:#a8351c;border:1px solid #f3c5b9}
