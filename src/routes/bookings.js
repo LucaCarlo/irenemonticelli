@@ -293,26 +293,41 @@ router.get('/:id(\\d+)/edit', A(async (req, res) => {
   });
 }));
 
+// Mappa il "comboStatus" leggibile a (status, paymentStatus)
+function comboToDb(combo) {
+  switch (combo) {
+    case 'paid':          return { status: 'confirmed', paymentStatus: 'paid' };
+    case 'payment_error': return { status: 'pending',   paymentStatus: 'failed' };
+    case 'refunded':      return { status: 'confirmed', paymentStatus: 'refunded' };
+    case 'cancelled':     return { status: 'cancelled', paymentStatus: 'unpaid' };
+    case 'abandoned':
+    default:              return { status: 'pending',   paymentStatus: 'unpaid' };
+  }
+}
+
 router.post('/:id(\\d+)', A(async (req, res) => {
   const b = req.body;
-  await prisma.booking.update({
-    where: { id: +req.params.id },
-    data: {
-      customerName: b.customerName,
-      customerEmail: b.customerEmail,
-      phone: b.phone || '',
-      planId: b.planId ? +b.planId : null,
-      eventId: b.eventId ? +b.eventId : null,
-      dateLabel: b.dateLabel || '',
-      slot: b.slot || '',
-      method: b.method || '',
-      amount: parseFloat(b.amount) || 0,
-      status: STATUSES.includes(b.status) ? b.status : 'pending',
-      notes: b.notes || '',
-    },
-  });
+  const dbData = {
+    customerName: b.customerName,
+    customerEmail: b.customerEmail,
+    phone: b.phone || '',
+    planId: b.planId ? +b.planId : null,
+    eventId: b.eventId ? +b.eventId : null,
+    dateLabel: b.dateLabel || '',
+    slot: b.slot || '',
+    method: b.method || '',
+    amount: parseFloat(b.amount) || 0,
+    notes: b.notes || '',
+  };
+  // Combo status (UI nuova) → mapping a status + paymentStatus. Compat con vecchio campo "status".
+  if (b.comboStatus) {
+    Object.assign(dbData, comboToDb(b.comboStatus));
+  } else if (b.status) {
+    dbData.status = STATUSES.includes(b.status) ? b.status : 'pending';
+  }
+  await prisma.booking.update({ where: { id: +req.params.id }, data: dbData });
   req.flash('success', 'Prenotazione aggiornata.');
-  res.redirect('/admin/bookings');
+  res.redirect('/admin/bookings/' + req.params.id + '/edit');
 }));
 
 // POST: aggiorna la selezione mañana/tarde per ogni giorno (solo pack RED).

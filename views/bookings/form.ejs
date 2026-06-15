@@ -419,10 +419,26 @@
 
         <div class="fs-grid">
           <div class="field">
-            <label class="field-lbl">Stato prenotazione</label>
-            <select name="status">
-              <% STATUSES.forEach(function(s){ %><option value="<%= s %>" <%= booking.status===s ? 'selected':'' %>><%= s %></option><% }) %>
+            <label class="field-lbl">Stato</label>
+            <%
+              // Stato combinato leggibile (status + paymentStatus)
+              function currentCombo(b){
+                if (b.status === 'cancelled') return 'cancelled';
+                if (b.paymentStatus === 'refunded') return 'refunded';
+                if (b.paymentStatus === 'failed') return 'payment_error';
+                if (b.paymentStatus === 'paid' && b.status === 'confirmed') return 'paid';
+                return 'abandoned';  // pending+unpaid (e tutti gli altri stati intermedi)
+              }
+              var curCombo = currentCombo(booking);
+            %>
+            <select name="comboStatus">
+              <option value="paid"          <%= curCombo==='paid'?'selected':'' %>>✅ Pagato (prenotazione confermata)</option>
+              <option value="abandoned"     <%= curCombo==='abandoned'?'selected':'' %>>🚪 Checkout abbandonato (in attesa)</option>
+              <option value="payment_error" <%= curCombo==='payment_error'?'selected':'' %>>⚠️ Errore pagamento</option>
+              <option value="refunded"      <%= curCombo==='refunded'?'selected':'' %>>↩️ Rimborsato</option>
+              <option value="cancelled"     <%= curCombo==='cancelled'?'selected':'' %>>✕ Annullato</option>
             </select>
+            <div class="field-help">Cambiando lo stato si aggiornano insieme status e paymentStatus.</div>
           </div>
           <div class="field">
             <label class="field-lbl">Importo finale (€)</label>
