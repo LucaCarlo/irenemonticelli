@@ -1859,11 +1859,11 @@ window.RV_RESUME = <%- resumeData ? JSON.stringify(resumeData) : 'null' %>;
         var el = form.querySelector('[name="' + name + '"]');
         if (el && value != null && value !== '') el.value = value;
       }
-      setVal('firstName', R.firstName);
-      setVal('lastName', R.lastName);
-      setVal('email', R.email);
-      setVal('phone', R.phone);
-      setVal('birthDate', R.birthDate);
+      setVal('payerFirstName', R.firstName);
+      setVal('payerLastName', R.lastName);
+      setVal('payerEmail', R.email);
+      setVal('payerPhone', R.phone);
+      setVal('payerBirthDate', R.birthDate);
 
       // Per single_lessons: classes count
       if (mode === 'single_lessons' && R.classesPerParticipant) {
@@ -2014,7 +2014,7 @@ window.RV_RESUME = <%- resumeData ? JSON.stringify(resumeData) : 'null' %>;
     function persist() {
       var values = snapshot();
       // Salva solo se almeno UN campo significativo è compilato (evita di salvare form vuoto)
-      var meaningful = ['firstName', 'lastName', 'email', 'phone'];
+      var meaningful = ['payerFirstName', 'payerLastName', 'payerEmail', 'payerPhone'];
       var hasContent = meaningful.some(function(k){ return values[k] && String(values[k]).length >= 2; });
       if (!hasContent) {
         try { localStorage.removeItem(DRAFT_KEY); } catch(_) {}
@@ -2022,6 +2022,7 @@ window.RV_RESUME = <%- resumeData ? JSON.stringify(resumeData) : 'null' %>;
       }
       try {
         localStorage.setItem(DRAFT_KEY, JSON.stringify({ savedAt: Date.now(), values: values, planName: <%- JSON.stringify(plan.name) %> }));
+        console.log('[draft] saved', Object.keys(values).length, 'fields');
       } catch (_) {}
     }
 
