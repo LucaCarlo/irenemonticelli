@@ -1,0 +1,97 @@
+<%- include('../partials/header') %>
+
+<div class="fs-page-head">
+  <div>
+    <h2>Modifica lezione</h2>
+    <p>
+      <strong><%= lesson.event ? lesson.event.title : 'Evento' %></strong>
+      · Giorno <%= lesson.dayIndex %>
+      <% if (occupied > 0) { %> · <%= occupied %> partecipanti iscritti<% } %>
+    </p>
+  </div>
+  <div style="display:flex;gap:8px">
+    <% if (!lesson.isPause) { %>
+      <a class="btn btn-ghost" href="/admin/lessons/<%= lesson.id %>/participants">👥 Vedi partecipanti</a>
+    <% } %>
+    <a class="btn btn-ghost" href="/admin/lessons?event=<%= lesson.eventId %>">← Torna al programma</a>
+  </div>
+</div>
+
+<form method="post" action="/admin/lessons/<%= lesson.id %>" class="form fs-page">
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+  <section class="fs-section">
+    <div class="fs-section-head">
+      <div class="fs-section-ico" style="background:#fdf2c9;color:#7a5800">🎭</div>
+      <div>
+        <h3 class="fs-section-title">Dettagli lezione</h3>
+        <p class="fs-section-sub">Giorno, orario, titolo e professore.</p>
+      </div>
+    </div>
+    <div class="fs-grid">
+      <div class="field">
+        <label class="field-lbl">Giorno *</label>
+        <input type="number" name="dayIndex" value="<%= lesson.dayIndex %>" min="1" required>
+      </div>
+      <div class="field">
+        <label class="field-lbl">Orario *</label>
+        <input type="text" name="time" value="<%= lesson.time %>" placeholder="9:30" required>
+      </div>
+      <div class="field field-full">
+        <label class="field-lbl">Titolo lezione *</label>
+        <input type="text" name="title" value="<%= lesson.title %>" required>
+      </div>
+      <div class="field field-full">
+        <label class="field-lbl">Professore</label>
+        <select name="professorId">
+          <option value="">— Nessun professore —</option>
+          <% professors.forEach(function(p){ %>
+            <option value="<%= p.id %>" <%= lesson.professorId===p.id?'selected':'' %>><%= p.firstName %> <%= p.lastName %></option>
+          <% }) %>
+        </select>
+      </div>
+    </div>
+  </section>
+
+  <section class="fs-section">
+    <div class="fs-section-head">
+      <div class="fs-section-ico" style="background:#e3f0ff;color:#0d5290">⚙️</div>
+      <div>
+        <h3 class="fs-section-title">Fascia, capacità e visibilità</h3>
+        <p class="fs-section-sub">La capacità conta i partecipanti (non le prenotazioni). 0 = illimitata.</p>
+      </div>
+    </div>
+    <div class="fs-grid">
+      <div class="field">
+        <label class="field-lbl">Fascia</label>
+        <select name="isAfternoon">
+          <option value="" <%= !lesson.isAfternoon?'selected':'' %>>Mañana</option>
+          <option value="1" <%= lesson.isAfternoon?'selected':'' %>>Tarde</option>
+        </select>
+      </div>
+      <div class="field">
+        <label class="field-lbl">Capacità massima</label>
+        <input type="number" name="capacity" value="<%= lesson.capacity %>" min="0" max="9999">
+        <% if (lesson.capacity > 0 && occupied > 0) { %>
+          <div class="field-help">Occupati ora: <strong><%= occupied %> / <%= lesson.capacity %></strong> (<%= Math.round((occupied/lesson.capacity)*100) %>%)</div>
+        <% } %>
+      </div>
+      <div class="field field-full" style="display:flex;gap:24px;flex-wrap:wrap">
+        <label class="switch"><input type="checkbox" name="isPause" value="1" <%= lesson.isPause?'checked':'' %>><span>È una pausa (lunch ecc.)</span></label>
+        <label class="switch"><input type="checkbox" name="active" value="1" <%= lesson.active?'checked':'' %>><span>Lezione attiva</span></label>
+      </div>
+      <div class="field">
+        <label class="field-lbl">Sort</label>
+        <input type="number" name="sort" value="<%= lesson.sort %>">
+        <div class="field-help">Ordine all'interno del giorno. Si aggiorna anche col drag&drop.</div>
+      </div>
+    </div>
+  </section>
+
+  <div class="fs-actions">
+    <a class="btn btn-ghost" href="/admin/lessons?event=<%= lesson.eventId %>">Annulla</a>
+    <button type="submit" class="btn btn-primary">💾 Salva modifiche</button>
+  </div>
+</form>
+
+<%- include('../partials/footer') %>

@@ -119,33 +119,47 @@ router.post('/reorder', express.json(), A(async (req, res) => {
   res.json({ ok: true, updated: items.length });
 }));
 
-// GET partecipanti di una lezione (JSON, on-demand per UI espandibile).
+// GET edit singola lezione (pagina HTML dedicata, niente form inline sulla riga)
+router.get('/:id(\\d+)/edit', A(async (req, res) => {
+  const id = parseInt(req.params.id, 10);
+  const lesson = await prisma.lesson.findUnique({ where: { id }, include: { professor: true, event: true } });
+  if (!lesson) return res.redirect('/admin/lessons');
+  const professors = await prisma.professor.findMany({
+    where: { active: true }, orderBy: [{ sort: 'asc' }, { firstName: 'asc' }],
+  });
+  // Status di occupancy aggiornato
+  let occupied = 0;
+  try {
+    const status = await LC.getEventCapacityStatus(lesson.eventId);
+    const s = status.lessons.find((x) => x.id === id);
+    if (s) occupied = s.occupied;
+  } catch (_) {}
+  res.render('lessons/edit', { title: 'Modifica lezione', lesson, professors, occupied });
+}));
+
+// GET pagina partecipanti di una lezione (HTML dedicata)
 router.get('/:id(\\d+)/participants', A(async (req, res) => {
-  const lessonId = parseInt(req.params.id, 10);
-  const lesson = await prisma.lesson.findUnique({ where: { id: lessonId } });
-  if (!lesson) return res.status(404).json({ ok: false, error: 'not found' });
+  const id = parseInt(req.params.id, 10);
+  const lesson = await prisma.lesson.findUnique({ where: { id }, include: { professor: true, event: true } });
+  if (!lesson) return res.redirect('/admin/lessons');
   const data = await LC.computeEventParticipants(lesson.eventId);
-  const list = (data.participantsById.get(lessonId) || []).map((row) => ({
-    participantId: row.participant.id,
-    firstName: row.participant.firstName,
-    lastName: row.participant.lastName,
-    email: row.participant.email || '',
-    phone: row.participant.phone || '',
-    isMinor: !!row.participant.isMinor,
-    tutor: row.participant.tutorBlock ? {
-      firstName: row.participant.tutorBlock.firstName,
-      lastName: row.participant.tutorBlock.lastName,
-      email: row.participant.tutorBlock.email,
-      phone: row.participant.tutorBlock.phone,
-    } : null,
-    booking: {
-      id: row.booking.id,
-      customerName: row.booking.customerName,
-      plan: row.booking.plan ? row.booking.plan.name : '',
-      planMode: row.booking.plan ? row.booking.plan.bookingMode : '',
-    },
+  const rows = (data.participantsById.get(id) || []).map((r) => ({
+    participant: r.participant,
+    booking: r.booking,
   }));
-  res.json({ ok: true, lessonId, count: list.length, participants: list });
+  // Raggruppo per booking
+  const byBooking = new Map();
+  rows.forEach((r) => {
+    const bid = r.booking.id;
+    if (!byBooking.has(bid)) byBooking.set(bid, { booking: r.booking, participants: [] });
+    byBooking.get(bid).participants.push(r.participant);
+  });
+  res.render('lessons/participants', {
+    title: 'Partecipanti — ' + lesson.title,
+    lesson,
+    groups: Array.from(byBooking.values()),
+    totalCount: rows.length,
+  });
 }));
 
 router.post('/:id(\\d+)/delete', A(async (req, res) => {

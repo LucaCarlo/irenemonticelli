@@ -1,0 +1,120 @@
+<%- include('../partials/header') %>
+
+<%
+  function ageOf(birth){ if(!birth) return null; var dt=new Date(birth); var t=new Date(); var a=t.getFullYear()-dt.getFullYear(); if(t.getMonth()<dt.getMonth()||(t.getMonth()===dt.getMonth()&&t.getDate()<dt.getDate())) a--; return a; }
+%>
+
+<div class="fs-page-head">
+  <div>
+    <h2>
+      <span class="lp-time"><%= lesson.time %></span>
+      <%= lesson.title %>
+    </h2>
+    <p>
+      <strong><%= lesson.event ? lesson.event.title : 'Evento' %></strong> · Giorno <%= lesson.dayIndex %>
+      <% if (lesson.professor) { %> · Prof. <%= lesson.professor.firstName %> <%= lesson.professor.lastName %><% } %>
+      <% if (lesson.isAfternoon) { %> · <span class="chip chip-pm">Tarde</span><% } else { %> · <span class="chip chip-am">Mañana</span><% } %>
+    </p>
+  </div>
+  <div style="display:flex;gap:8px">
+    <a class="btn btn-ghost" href="/admin/lessons/<%= lesson.id %>/edit">✎ Modifica lezione</a>
+    <a class="btn btn-ghost" href="/admin/lessons?event=<%= lesson.eventId %>">← Torna al programma</a>
+  </div>
+</div>
+
+<!-- KPI in alto -->
+<div class="lp-kpi-grid">
+  <div class="lp-kpi">
+    <div class="lp-kpi-lbl">Partecipanti iscritti</div>
+    <div class="lp-kpi-val"><%= totalCount %></div>
+  </div>
+  <div class="lp-kpi">
+    <div class="lp-kpi-lbl">Capacità</div>
+    <div class="lp-kpi-val"><%= lesson.capacity === 0 ? '∞' : lesson.capacity %></div>
+  </div>
+  <div class="lp-kpi">
+    <div class="lp-kpi-lbl">Posti liberi</div>
+    <div class="lp-kpi-val" style="color:<%= lesson.capacity > 0 && (lesson.capacity - totalCount) <= 0 ? '#9b2727' : '#1b6b3e' %>"><%= lesson.capacity === 0 ? '—' : Math.max(0, lesson.capacity - totalCount) %></div>
+  </div>
+  <div class="lp-kpi">
+    <div class="lp-kpi-lbl">Prenotazioni</div>
+    <div class="lp-kpi-val"><%= groups.length %></div>
+  </div>
+</div>
+
+<div class="card">
+  <% if (!totalCount) { %>
+    <div style="text-align:center;padding:60px 20px">
+      <div style="font-size:48px;margin-bottom:8px">🙋</div>
+      <h3 style="margin:0 0 6px">Nessun partecipante ancora iscritto</h3>
+      <p class="muted" style="margin:0">I posti contano solo le prenotazioni confermate e pagate.</p>
+    </div>
+  <% } else { %>
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr>
+            <th style="width:30px">#</th>
+            <th>Partecipante</th>
+            <th>Email</th>
+            <th style="width:120px">Telefono</th>
+            <th style="width:80px">Età</th>
+            <th>Tutor (se minore)</th>
+            <th style="width:150px">Prenotazione</th>
+          </tr>
+        </thead>
+        <tbody>
+          <%
+            var idx = 0;
+            groups.sort(function(a,b){ return a.booking.id - b.booking.id; });
+            groups.forEach(function(grp){
+              grp.participants.forEach(function(p){ idx++;
+                var age = ageOf(p.birthDate);
+          %>
+              <tr>
+                <td><%= idx %></td>
+                <td>
+                  <strong><%= p.firstName %> <%= p.lastName %></strong>
+                  <% if (p.isMinor) { %> <span class="chip chip-warn">MINORE</span><% } %>
+                </td>
+                <td>
+                  <% if (p.email) { %><a href="mailto:<%= p.email %>"><%= p.email %></a><% } else { %><span class="muted">—</span><% } %>
+                </td>
+                <td><%= p.phone || '—' %></td>
+                <td><%= age !== null ? age : '—' %></td>
+                <td>
+                  <% if (p.tutorBlock) { %>
+                    <strong><%= p.tutorBlock.firstName %> <%= p.tutorBlock.lastName %></strong>
+                    <div class="muted" style="font-size:11.5px"><%= p.tutorBlock.email %> · <%= p.tutorBlock.phone %></div>
+                  <% } else { %>
+                    <span class="muted">—</span>
+                  <% } %>
+                </td>
+                <td>
+                  <a href="/admin/bookings/<%= grp.booking.id %>/edit" style="color:#7a5800;font-weight:600;text-decoration:none">
+                    #<%= grp.booking.id %> · <%= grp.booking.customerName %>
+                  </a>
+                  <div class="muted" style="font-size:11px"><%= grp.booking.plan ? grp.booking.plan.name : '' %></div>
+                </td>
+              </tr>
+          <% }) }) %>
+        </tbody>
+      </table>
+    </div>
+  <% } %>
+</div>
+
+<style>
+  .lp-time{display:inline-block;background:#1c1f26;color:#e0aa00;padding:4px 12px;border-radius:6px;font-family:'Courier New',monospace;font-weight:700;font-size:18px;margin-right:8px}
+  .lp-kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin:14px 0 18px}
+  .lp-kpi{background:#fafbfc;border:1px solid #eef0f4;border-radius:10px;padding:14px 16px}
+  .lp-kpi-lbl{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#7a8190;margin-bottom:5px}
+  .lp-kpi-val{font-family:'Fraunces',Georgia,serif;font-size:30px;font-weight:600;color:#1c1f26;line-height:1}
+
+  .chip{display:inline-block;padding:2px 8px;border-radius:11px;font-size:11px;font-weight:700}
+  .chip-am{background:#fffbe8;color:#7a5800;border:1px solid #e8d99a}
+  .chip-pm{background:#fde7d6;color:#8a4a1c;border:1px solid #e8b88a}
+  .chip-warn{background:#fff3d6;color:#7a5800}
+</style>
+
+<%- include('../partials/footer') %>
