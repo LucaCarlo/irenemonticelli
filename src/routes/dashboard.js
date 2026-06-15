@@ -21,10 +21,11 @@ router.get('/', async (req, res) => {
     mediaCount, mediaAgg,
     pageviewsForChart, bookingsForChart,
   ] = await Promise.all([
-    prisma.booking.count(),
-    prisma.booking.count({ where: { status: 'confirmed' } }),
-    prisma.booking.count({ where: { status: 'pending' } }),
-    prisma.booking.count({ where: { createdAt: { gte: last30 } } }),
+    // Esclude bozze autosalvate dai conteggi: contano solo prenotazioni "vere"
+    prisma.booking.count({ where: { isDraft: false } }),
+    prisma.booking.count({ where: { isDraft: false, status: 'confirmed', paymentStatus: 'paid' } }),
+    prisma.booking.count({ where: { isDraft: false, status: 'pending', paymentStatus: 'unpaid' } }),
+    prisma.booking.count({ where: { isDraft: false, createdAt: { gte: last30 } } }),
     prisma.booking.aggregate({ _sum: { amount: true }, where: { paymentStatus: 'paid', createdAt: { gte: last30 } } }),
     prisma.booking.aggregate({ _sum: { amount: true }, where: { paymentStatus: 'paid' } }),
     prisma.contactMessage.count({ where: { status: 'new' } }),
@@ -32,7 +33,7 @@ router.get('/', async (req, res) => {
     prisma.pageView.count({ where: { createdAt: { gte: last7 } } }),
     prisma.pageView.groupBy({ by: ['visitorId'], where: { createdAt: { gte: last7 }, visitorId: { not: '' } }, _count: { _all: true } }),
     prisma.newsletterSubscriber.count({ where: { status: 'active' } }),
-    prisma.booking.findMany({ orderBy: { id: 'desc' }, take: 6, include: { plan: { select: { name: true } }, event: { select: { title: true } } } }),
+    prisma.booking.findMany({ where: { isDraft: false }, orderBy: { id: 'desc' }, take: 6, include: { plan: { select: { name: true } }, event: { select: { title: true } } } }),
     prisma.contactMessage.findMany({ orderBy: { id: 'desc' }, take: 4 }),
     prisma.auditLog.findMany({ orderBy: { id: 'desc' }, take: 8 }),
     prisma.event.findMany({ where: { active: true }, orderBy: { startDate: 'asc' }, include: { _count: { select: { bookings: true } } }, take: 3 }),
@@ -40,7 +41,7 @@ router.get('/', async (req, res) => {
     prisma.media.count(),
     prisma.media.aggregate({ _sum: { sizeBytes: true, smallBytes: true } }),
     prisma.pageView.findMany({ where: { createdAt: { gte: last30 } }, select: { createdAt: true } }),
-    prisma.booking.findMany({ where: { createdAt: { gte: last30 } }, select: { createdAt: true } }),
+    prisma.booking.findMany({ where: { isDraft: false, createdAt: { gte: last30 } }, select: { createdAt: true } }),
   ]);
 
   const revenue30 = revenue30Arr._sum.amount || 0;

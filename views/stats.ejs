@@ -1,15 +1,27 @@
 <%- include('partials/header') %>
 
 <div class="card">
-  <div class="card-head">
-    <h2>Statistiche sito</h2>
-    <div class="head-tools">
-      <a class="btn btn-ghost btn-sm <%= days===7?'is-on':'' %>" href="?range=7">7 giorni</a>
-      <a class="btn btn-ghost btn-sm <%= days===30?'is-on':'' %>" href="?range=30">30 giorni</a>
-      <a class="btn btn-ghost btn-sm <%= days===90?'is-on':'' %>" href="?range=90">90 giorni</a>
-      <a class="btn btn-ghost btn-sm <%= days===180?'is-on':'' %>" href="?range=180">180 giorni</a>
+  <div class="card-head" style="align-items:flex-start;flex-wrap:wrap;gap:14px">
+    <h2 style="margin:0">Statistiche sito</h2>
+    <div class="st-period">
+      <a class="st-btn <%= rangeKey==='1'?'is-on':'' %>" href="?range=1">Ultimo giorno</a>
+      <a class="st-btn <%= rangeKey==='7'?'is-on':'' %>" href="?range=7">Ultimi 7 giorni</a>
+      <a class="st-btn <%= rangeKey==='30'?'is-on':'' %>" href="?range=30">Ultimi 30 giorni</a>
+      <a class="st-btn <%= rangeKey==='365'?'is-on':'' %>" href="?range=365">Ultimo anno</a>
+      <a class="st-btn <%= rangeKey==='all'?'is-on':'' %>" href="?range=all">Sempre</a>
+      <button type="button" id="st-custom-btn" class="st-btn <%= rangeKey==='custom'?'is-on':'' %>">Personalizzato</button>
     </div>
+    <form id="st-custom-form" method="get" action="" class="st-custom-form" <%= rangeKey!=='custom'?'hidden':'' %>>
+      <input type="hidden" name="range" value="custom">
+      <label>Da <input type="date" name="from" value="<%= customFrom || sinceISO %>" required></label>
+      <label>A <input type="date" name="to" value="<%= customTo || untilISO %>" required></label>
+      <button type="submit" class="st-btn is-on">Applica</button>
+    </form>
   </div>
+
+  <p class="muted" style="font-size:13px;margin:6px 0 14px">
+    Periodo: <strong style="color:#1c1f26"><%= sinceISO %></strong> → <strong style="color:#1c1f26"><%= untilISO %></strong> (<%= days %> giorn<%= days===1?'o':'i' %>)
+  </p>
 
   <div class="kpi-grid">
     <div class="kpi"><div class="kpi-lbl">Pageview</div><div class="kpi-val"><%= data.totalPageviews.toLocaleString('it-IT') %></div></div>
@@ -110,6 +122,15 @@
   </div>
 </div>
 
+<script>
+  // Toggle del form "Personalizzato"
+  (function(){
+    var btn = document.getElementById('st-custom-btn');
+    var form = document.getElementById('st-custom-form');
+    if (btn && form) btn.addEventListener('click', function(){ form.hidden = !form.hidden; });
+  })();
+</script>
+
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" defer></script>
 <script>
   window.STATS_DATA = {
@@ -165,6 +186,14 @@
   .kpi-val{font-family:'Fraunces',Georgia,serif;font-size:28px;font-weight:600;color:#1c1f26}
   .dt-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:18px;margin-top:18px}
   .is-on{background:#1c1f26;color:#fff}
+  .st-period{display:flex;flex-wrap:wrap;gap:6px}
+  .st-btn{display:inline-flex;align-items:center;padding:7px 14px;border:1px solid #eef0f4;border-radius:8px;background:#fff;color:#5a5e6a;font-size:13px;font-weight:500;text-decoration:none;cursor:pointer;font-family:inherit;transition:all .15s}
+  .st-btn:hover{border-color:#1c1f26;color:#1c1f26}
+  .st-btn.is-on{background:#1c1f26;color:#e0aa00;border-color:#1c1f26;font-weight:700}
+  .st-custom-form{display:flex;gap:10px;align-items:end;flex-wrap:wrap;width:100%;padding-top:8px;border-top:1px dashed #eef0f4}
+  .st-custom-form[hidden]{display:none !important}
+  .st-custom-form label{display:flex;flex-direction:column;gap:4px;font-size:12px;color:#7a8190}
+  .st-custom-form input[type=date]{height:34px;padding:0 10px;border:1px solid #d4d8e0;border-radius:6px;font-size:13px}
   .funnel{display:flex;flex-direction:column;gap:14px;margin-top:14px}
   .funnel-row{display:grid;grid-template-columns:240px 1fr 180px;gap:18px;align-items:center}
   .funnel-lbl{font-weight:500;color:#1c1f26}

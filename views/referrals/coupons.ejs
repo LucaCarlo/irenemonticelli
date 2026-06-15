@@ -99,8 +99,7 @@
                 <% } else { %><span class="badge badge-ok">attivo</span><% } %>
               </td>
               <td class="row-actions" style="white-space:nowrap">
-                <a class="btn-ico btn-ico-open" href="/admin/referrals/coupons/<%= c.id %>" title="Vedi dettaglio + clienti"><%- include('../partials/ico', { name:'open' }) %></a>
-                <a class="btn-ico btn-ico-edit" href="/admin/referrals/<%= c.referrer.id %>/edit" title="Modifica coupon"><%- include('../partials/ico', { name:'edit' }) %></a>
+                <a class="btn-ico btn-ico-edit" href="/admin/referrals/coupons/<%= c.id %>" title="Modifica e dettaglio"><%- include('../partials/ico', { name:'edit' }) %></a>
                 <form method="post" action="/admin/referrals/codes/<%= c.id %>/delete" onsubmit="return confirm('Eliminare il coupon <%= c.code %>?')" style="display:inline">
                   <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                   <button type="submit" class="btn-ico btn-ico-danger" title="Elimina"><%- include('../partials/ico', { name:'trash' }) %></button>

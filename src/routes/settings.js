@@ -62,34 +62,67 @@ router.post('/test-email', requirePermission('settings.edit'), async (req, res) 
 
 // ---- Statistiche sito (analytics dettagliato) ----
 router.get('/stats', requirePermission('stats.view'), async (req, res) => {
-  const range = parseInt(req.query.range || '30', 10);
-  const days = Math.max(1, Math.min(180, range));
-  const since = new Date(Date.now() - days * 86400 * 1000);
+  // Range supportati:
+  //   ?range=1|7|30|365  → ultimi N giorni
+  //   ?range=all          → da quando esistono i primi dati (calcolato dinamicamente)
+  //   ?range=custom&from=YYYY-MM-DD&to=YYYY-MM-DD  → intervallo personalizzato
+  const rangeRaw = String(req.query.range || '30').toLowerCase();
+  let since, until = new Date();
+  let days = 30;
+  let rangeKey = rangeRaw; // valore usato nella view per evidenziare il pulsante attivo
+  let customFrom = '', customTo = '';
+
+  if (rangeRaw === 'all') {
+    const oldest = await prisma.pageView.findFirst({ orderBy: { createdAt: 'asc' }, select: { createdAt: true } });
+    since = oldest ? oldest.createdAt : new Date(Date.now() - 30 * 86400 * 1000);
+    days = Math.max(1, Math.ceil((until.getTime() - since.getTime()) / 86400000));
+  } else if (rangeRaw === 'custom' && req.query.from && req.query.to) {
+    const f = new Date(String(req.query.from) + 'T00:00:00');
+    const t = new Date(String(req.query.to)   + 'T23:59:59');
+    if (!isNaN(f) && !isNaN(t) && f <= t) {
+      since = f; until = t;
+      days = Math.max(1, Math.ceil((until.getTime() - since.getTime()) / 86400000));
+      customFrom = req.query.from; customTo = req.query.to;
+    } else {
+      // fallback se date invalide
+      rangeKey = '30';
+      since = new Date(Date.now() - 30 * 86400 * 1000);
+      days = 30;
+    }
+  } else {
+    const n = parseInt(rangeRaw, 10);
+    days = Math.max(1, Math.min(1825, isFinite(n) ? n : 30));   // max 5 anni di sicurezza
+    rangeKey = String(days);
+    since = new Date(Date.now() - days * 86400 * 1000);
+  }
 
   const [
     overviewBase, totalPV, totalSessions, totalVisitors,
     bookingsTotal, bookingsConfirmed, contactMessages,
   ] = await Promise.all([
     prisma.media.aggregate({ _sum: { sizeBytes: true, smallBytes: true } }),
-    prisma.pageView.count({ where: { createdAt: { gte: since } } }),
-    prisma.pageView.groupBy({ by: ['sessionId'], where: { createdAt: { gte: since } }, _count: { _all: true } }),
-    prisma.pageView.groupBy({ by: ['visitorId'], where: { createdAt: { gte: since }, visitorId: { not: '' } }, _count: { _all: true } }),
-    prisma.booking.count({ where: { createdAt: { gte: since } } }),
-    prisma.booking.count({ where: { createdAt: { gte: since }, status: 'confirmed' } }),
-    prisma.contactMessage.count({ where: { createdAt: { gte: since } } }),
+    prisma.pageView.count({ where: { createdAt: { gte: since, lte: until } } }),
+    prisma.pageView.groupBy({ by: ['sessionId'], where: { createdAt: { gte: since, lte: until } }, _count: { _all: true } }),
+    prisma.pageView.groupBy({ by: ['visitorId'], where: { createdAt: { gte: since, lte: until }, visitorId: { not: '' } }, _count: { _all: true } }),
+    // Esclude bozze autosalvate (isDraft) dai conteggi "prenotazioni totali"
+    prisma.booking.count({ where: { createdAt: { gte: since, lte: until }, isDraft: false } }),
+    prisma.booking.count({ where: { createdAt: { gte: since, lte: until }, status: 'confirmed', paymentStatus: 'paid' } }),
+    prisma.contactMessage.count({ where: { createdAt: { gte: since, lte: until } } }),
   ]);
 
   // Pageview per giorno (per line chart)
   const allViews = await prisma.pageView.findMany({
-    where: { createdAt: { gte: since } },
+    where: { createdAt: { gte: since, lte: until } },
     select: { sessionId: true, visitorId: true, path: true, country: true, countryCode: true, city: true,
       deviceType: true, browser: true, os: true, durationMs: true, referrerHost: true, createdAt: true },
   });
 
   // Aggrega per giorno (YYYY-MM-DD)
   const byDay = {};
-  for (let i = 0; i < days; i++) {
-    const d = new Date(since.getTime() + i * 86400 * 1000);
+  const dayStart = new Date(since.getFullYear(), since.getMonth(), since.getDate());
+  for (let i = 0; i <= days; i++) {
+    const d = new Date(dayStart.getTime() + i * 86400 * 1000);
+    if (d > until) break;
     byDay[d.toISOString().slice(0, 10)] = { pv: 0, sessions: new Set(), visitors: new Set() };
   }
   const sessionPageCount = {}; // sessionId -> count
@@ -149,7 +182,9 @@ router.get('/stats', requirePermission('stats.view'), async (req, res) => {
 
   res.render('stats', {
     title: 'Statistiche',
-    days,
+    days, rangeKey, customFrom, customTo,
+    sinceISO: since.toISOString().slice(0, 10),
+    untilISO: until.toISOString().slice(0, 10),
     data: {
       // Riepilogo storage/utenti
       storageBytes: (overviewBase._sum.sizeBytes || 0) + (overviewBase._sum.smallBytes || 0),
