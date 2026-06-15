@@ -1,0 +1,168 @@
+<%- include('../partials/header') %>
+
+<%
+  function fmtEur(n){ return (Math.round(Number(n||0)*100)/100).toFixed(2).replace('.', ',') + ' €'; }
+  function fmtDateTime(d){ if(!d) return '—'; var dt=new Date(d); return isNaN(dt)?'—':dt.toLocaleString('it-IT',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}); }
+  var isExpired = code.validUntil && new Date(code.validUntil) < new Date();
+  var isExhausted = code.maxUses && code.usedCount >= code.maxUses;
+%>
+
+<div class="fs-page-head">
+  <div>
+    <h2>
+      <code class="cd-code"><%= code.code %></code>
+      <% if (!code.active) { %><span class="badge badge-off">disattivo</span>
+      <% } else if (isExpired) { %><span class="badge badge-off">scaduto</span>
+      <% } else if (isExhausted) { %><span class="badge badge-off">esaurito</span>
+      <% } else { %><span class="badge badge-ok">attivo</span><% } %>
+    </h2>
+    <p>
+      <% if (code.referrer) { %>
+        Coupon di <strong><a href="/admin/referrals/<%= code.referrer.id %>/edit"><%= code.referrer.firstName %> <%= code.referrer.lastName %></a></strong>
+        · <%= code.referrer.email %>
+      <% } %>
+      · Creato il <%= fmtDateTime(code.createdAt) %>
+    </p>
+  </div>
+  <div style="display:flex;gap:8px">
+    <a class="btn btn-ghost" href="/admin/referrals/<%= code.referrer.id %>/edit">✎ Modifica</a>
+    <a class="btn btn-ghost" href="/admin/referrals/coupons">← Lista coupon</a>
+  </div>
+</div>
+
+<!-- KPI -->
+<div class="cd-kpi-grid">
+  <div class="cd-kpi">
+    <div class="cd-kpi-lbl">Sconto cliente</div>
+    <div class="cd-kpi-val"><%= code.discountValue %><%= code.discountType==='fixed' ? '€' : '%' %></div>
+  </div>
+  <div class="cd-kpi">
+    <div class="cd-kpi-lbl">Commissione</div>
+    <div class="cd-kpi-val" style="color:#1b6b3e"><%= code.commissionPct %>%</div>
+  </div>
+  <div class="cd-kpi">
+    <div class="cd-kpi-lbl">Usi (su <%= code.maxUses || '∞' %>)</div>
+    <div class="cd-kpi-val"><%= code.usedCount %></div>
+  </div>
+  <div class="cd-kpi">
+    <div class="cd-kpi-lbl">Clic sul link</div>
+    <div class="cd-kpi-val"><%= code._count.clicks %></div>
+  </div>
+  <div class="cd-kpi">
+    <div class="cd-kpi-lbl">Fatturato generato</div>
+    <div class="cd-kpi-val" style="font-size:22px"><%= fmtEur(stats.totalRevenue) %></div>
+  </div>
+  <div class="cd-kpi">
+    <div class="cd-kpi-lbl">Sconto totale dato</div>
+    <div class="cd-kpi-val" style="font-size:22px;color:#9b2727"><%= fmtEur(stats.totalDiscount) %></div>
+  </div>
+  <div class="cd-kpi">
+    <div class="cd-kpi-lbl">Commissione totale</div>
+    <div class="cd-kpi-val" style="font-size:22px;color:#1b6b3e"><%= fmtEur(stats.totalCommission) %></div>
+  </div>
+</div>
+
+<!-- Pacchetti applicabili -->
+<div class="card">
+  <div class="card-head" style="margin-bottom:8px">
+    <h3 style="margin:0;font-size:16px">Applicabilità</h3>
+  </div>
+  <div class="bk-keyval">
+    <div><span class="bk-k">Pacchetti</span><span class="bk-v">
+      <% if (!code.plans || !code.plans.length) { %>
+        <span class="chip chip-ok">Tutti i pacchetti</span>
+      <% } else { code.plans.forEach(function(p){ %>
+        <span class="chip" style="background:#fff3d6;color:#7a5800;margin:2px"><%= p.name %></span>
+      <% }) } %>
+    </span></div>
+    <div><span class="bk-k">Scadenza</span><span class="bk-v"><%= code.validUntil ? new Date(code.validUntil).toLocaleDateString('it-IT',{day:'2-digit',month:'long',year:'numeric'}) : 'Senza scadenza' %></span></div>
+    <% if (code.internalNotes) { %>
+      <div><span class="bk-k">Note interne</span><span class="bk-v"><em><%= code.internalNotes %></em></span></div>
+    <% } %>
+  </div>
+</div>
+
+<!-- Lista clienti che hanno usato il coupon -->
+<div class="card">
+  <div class="card-head" style="margin-bottom:14px">
+    <div>
+      <h3 style="margin:0;font-size:16px">Chi ha usato questo coupon (<%= bookings.length %>)</h3>
+      <p class="muted" style="margin:4px 0 0;font-size:13px">
+        <% if (stats.paidBookings) { %><strong style="color:#1b6b3e"><%= stats.paidBookings %></strong> pagate<% } %>
+        <% if (stats.pendingBookings) { %><% if (stats.paidBookings) { %> · <% } %><strong style="color:#7a5800"><%= stats.pendingBookings %></strong> in attesa o annullate<% } %>
+      </p>
+    </div>
+  </div>
+
+  <% if (!bookings.length) { %>
+    <div style="text-align:center;padding:50px 20px">
+      <div style="font-size:42px;margin-bottom:6px">🎫</div>
+      <h3 style="margin:0 0 6px;font-size:15px">Nessun utilizzo ancora</h3>
+      <p class="muted" style="margin:0;font-size:13px">Quando un cliente userà questo coupon al checkout, lo vedrai qui.</p>
+    </div>
+  <% } else { %>
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Cliente</th>
+            <th>Email</th>
+            <th>Pacchetto</th>
+            <th>Importo</th>
+            <th>Sconto</th>
+            <th>Commissione</th>
+            <th>Stato</th>
+            <th>Data</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% bookings.forEach(function(b){ %>
+            <tr>
+              <td>
+                <strong><%= b.customerName || ((b.firstName||'') + ' ' + (b.lastName||'')) %></strong>
+              </td>
+              <td><% if (b.customerEmail) { %><a href="mailto:<%= b.customerEmail %>"><%= b.customerEmail %></a><% } else { %>—<% } %></td>
+              <td><%= b.plan ? b.plan.name : '—' %></td>
+              <td><strong><%= fmtEur(b.amount) %></strong></td>
+              <td style="color:#9b2727"><%= b.referralDiscount > 0 ? '−'+fmtEur(b.referralDiscount) : '—' %></td>
+              <td>
+                <% if (b.commission) { %>
+                  <strong style="color:#1b6b3e"><%= fmtEur(b.commission.commissionAmt) %></strong>
+                  <% if (b.commission.status === 'paid') { %><div class="muted" style="font-size:11px">pagata</div>
+                  <% } else if (b.commission.status === 'cancelled') { %><div class="muted" style="font-size:11px">annullata</div>
+                  <% } else { %><div class="muted" style="font-size:11px">in attesa</div><% } %>
+                <% } else { %>—<% } %>
+              </td>
+              <td>
+                <% if (b.status === 'confirmed' && b.paymentStatus === 'paid') { %><span class="badge badge-ok">paid</span>
+                <% } else if (b.status === 'cancelled') { %><span class="badge badge-off">cancelled</span>
+                <% } else { %><span class="badge badge-warn"><%= b.paymentStatus %></span><% } %>
+              </td>
+              <td class="muted" style="white-space:nowrap;font-size:12px"><%= fmtDateTime(b.createdAt) %></td>
+              <td class="row-actions">
+                <a class="btn-ico btn-ico-open" href="/admin/bookings/<%= b.id %>/edit" title="Apri prenotazione"><%- include('../partials/ico', { name:'open' }) %></a>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  <% } %>
+</div>
+
+<style>
+  .cd-code{background:#fffbe8;color:#7a5800;font-weight:700;padding:5px 14px;border-radius:8px;font-size:18px;letter-spacing:.05em;font-family:'Courier New',monospace;margin-right:10px}
+  .cd-kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin:14px 0 18px}
+  .cd-kpi{background:#fafbfc;border:1px solid #eef0f4;border-radius:10px;padding:14px 16px}
+  .cd-kpi-lbl{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#7a8190;margin-bottom:5px}
+  .cd-kpi-val{font-family:'Fraunces',Georgia,serif;font-size:28px;font-weight:600;color:#1c1f26;line-height:1}
+  .chip{display:inline-block;padding:2px 8px;border-radius:11px;font-size:11px;font-weight:600;background:#eef0f4;color:#5a5e6a}
+  .chip-ok{background:#dff3e6;color:#1b6b3e}
+  .bk-keyval{display:flex;flex-direction:column;gap:10px;padding-top:6px}
+  .bk-keyval > div{display:grid;grid-template-columns:160px 1fr;gap:14px;align-items:start;font-size:14px;line-height:1.55}
+  .bk-k{color:#7a8190;font-size:12px;letter-spacing:.06em;text-transform:uppercase;padding-top:2px}
+  .bk-v{color:#1c1f26;word-break:break-word}
+</style>
+
+<%- include('../partials/footer') %>

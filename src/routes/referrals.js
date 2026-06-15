@@ -587,6 +587,44 @@ router.get('/coupons', requirePermission('referrals.codes.manage'), A(async (req
   });
 }));
 
+// ============ COUPON: DETTAGLIO + lista clienti che l'hanno usato ============
+router.get('/coupons/:id(\\d+)', requirePermission('referrals.codes.manage'), A(async (req, res) => {
+  const id = parseInt(req.params.id, 10);
+  const code = await prisma.referralCode.findUnique({
+    where: { id },
+    include: {
+      referrer: true,
+      plans: { select: { id: true, slug: true, name: true } },
+      _count: { select: { bookings: true, commissions: true, clicks: true } },
+    },
+  });
+  if (!code) return res.redirect('/admin/referrals/coupons');
+
+  // Tutte le booking che hanno usato questo coupon
+  const bookings = await prisma.booking.findMany({
+    where: { referralCodeId: id },
+    include: {
+      plan: { select: { name: true, slug: true } },
+      commission: true,
+    },
+    orderBy: { createdAt: 'desc' },
+  });
+
+  // Aggregati
+  const stats = {
+    totalRevenue: bookings.filter((b) => b.paymentStatus === 'paid').reduce((s, b) => s + (b.amount || 0), 0),
+    totalDiscount: bookings.filter((b) => b.paymentStatus === 'paid').reduce((s, b) => s + (b.referralDiscount || 0), 0),
+    totalCommission: bookings.filter((b) => b.commission).reduce((s, b) => s + (b.commission.commissionAmt || 0), 0),
+    paidBookings: bookings.filter((b) => b.paymentStatus === 'paid').length,
+    pendingBookings: bookings.filter((b) => b.paymentStatus !== 'paid').length,
+  };
+
+  res.render('referrals/coupon_detail', {
+    title: 'Coupon ' + code.code,
+    code, bookings, stats,
+  });
+}));
+
 // ============ COMMISSIONI: LISTA GLOBALE ============
 router.get('/commissions', requirePermission('referrals.commissions.manage'), A(async (req, res) => {
   const dt = require('../lib/datatable');

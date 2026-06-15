@@ -57,7 +57,7 @@
           %>
             <tr class="<%= !c.active ? 'is-off' : '' %>">
               <td>
-                <code style="background:#fffbe8;color:#7a5800;font-weight:700;padding:4px 10px;border-radius:6px;font-size:13px;letter-spacing:.05em;font-family:'Courier New',monospace"><%= c.code %></code>
+                <a href="/admin/referrals/coupons/<%= c.id %>" style="text-decoration:none"><code style="background:#fffbe8;color:#7a5800;font-weight:700;padding:4px 10px;border-radius:6px;font-size:13px;letter-spacing:.05em;font-family:'Courier New',monospace"><%= c.code %></code></a>
               </td>
               <td>
                 <% if (c.referrer) { %>
@@ -83,7 +83,9 @@
               <td><%= c._count.clicks %></td>
               <td>
                 <strong><%= c.usedCount %></strong><% if (c.maxUses) { %><span class="muted">/<%= c.maxUses %></span><% } %>
-                <% if (c._count.bookings > 0) { %><div class="muted" style="font-size:11px;margin-top:2px"><%= c._count.bookings %> prenot.</div><% } %>
+                <% if (c._count.bookings > 0) { %>
+                  <div style="font-size:11px;margin-top:2px"><a href="/admin/referrals/coupons/<%= c.id %>" style="color:#7a5800;font-weight:600;text-decoration:none">👥 <%= c._count.bookings %> client<%= c._count.bookings===1?'e':'i' %> →</a></div>
+                <% } %>
               </td>
               <td>
                 <% if (c.validUntil) { %>
@@ -97,7 +99,8 @@
                 <% } else { %><span class="badge badge-ok">attivo</span><% } %>
               </td>
               <td class="row-actions" style="white-space:nowrap">
-                <a class="btn-ico" href="/admin/referrals/<%= c.referrer.id %>/edit" title="Modifica codice (vai al referrer)">✎</a>
+                <a class="btn-ico btn-ico-open" href="/admin/referrals/coupons/<%= c.id %>" title="Vedi dettaglio + clienti"><%- include('../partials/ico', { name:'open' }) %></a>
+                <a class="btn-ico btn-ico-edit" href="/admin/referrals/<%= c.referrer.id %>/edit" title="Modifica coupon"><%- include('../partials/ico', { name:'edit' }) %></a>
                 <form method="post" action="/admin/referrals/codes/<%= c.id %>/toggle" style="display:inline">
                   <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                   <button type="submit" class="btn-ico <%= c.active?'btn-ico-hide':'btn-ico-show' %>" title="<%= c.active?'Disattiva':'Riattiva' %>"><%- include('../partials/ico', { name: c.active?'eye':'eye-off' }) %></button>
