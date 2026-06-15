@@ -202,7 +202,11 @@
           <th></th>
         </tr></thead>
         <tbody>
-        <% referrer.codes.forEach(function(c){ var assignedIds = (c.plans||[]).map(function(p){return p.id;}); %>
+        <% referrer.codes.forEach(function(c){
+             var assignedIds = (c.plans||[]).map(function(p){return p.id;});
+             // Se lista vuota = "vale per tutti": mostra tutti spuntati per coerenza UX
+             var allChecked = assignedIds.length === 0;
+        %>
           <tr class="<%= c.active ? '' : 'is-off' %>">
             <td><code style="background:#fffbe8;color:#7a5800;font-weight:700;padding:3px 10px;border-radius:6px;font-size:13px;letter-spacing:.05em"><%= c.code %></code></td>
             <td><strong><%= c.discountValue %><%= c.discountType==='fixed' ? ' €' : ' %' %></strong></td>
@@ -252,12 +256,12 @@
                       <div class="plan-chips">
                         <% plans.forEach(function(p){ %>
                           <label class="plan-chip">
-                            <input type="checkbox" name="planIds" value="<%= p.id %>" <%= assignedIds.includes(p.id)?'checked':'' %>>
+                            <input type="checkbox" name="planIds" value="<%= p.id %>" <%= (allChecked || assignedIds.includes(p.id))?'checked':'' %>>
                             <span><%= p.name %></span>
                           </label>
                         <% }) %>
                       </div>
-                      <div class="field-help">Nessuno selezionato = vale per <strong>tutti</strong> i pacchetti.</div>
+                      <div class="field-help">Lasciali tutti spuntati per applicarlo ovunque, oppure deseleziona quelli su cui NON deve funzionare.</div>
                     </div>
                     <div class="field field-full">
                       <label class="field-lbl">Note interne</label>
@@ -325,12 +329,12 @@
           <div class="plan-chips">
             <% plans.forEach(function(p){ %>
               <label class="plan-chip">
-                <input type="checkbox" name="planIds" value="<%= p.id %>">
+                <input type="checkbox" name="planIds" value="<%= p.id %>" checked>
                 <span><%= p.name %></span>
               </label>
             <% }) %>
           </div>
-          <div class="field-help">Nessuno selezionato = vale per <strong>tutti</strong> i pacchetti. Spunta solo quelli su cui questo coupon deve funzionare.</div>
+          <div class="field-help">Lasciali tutti spuntati per applicarlo ovunque, oppure deseleziona quelli su cui NON deve funzionare.</div>
         </div>
         <div class="field field-full">
           <label class="field-lbl">Note interne</label>

@@ -446,6 +446,10 @@ router.post('/:id(\\d+)/codes', requirePermission('referrals.codes.manage'), A(a
   // Pacchetti su cui il coupon è applicabile (array di Plan.id). Vuoto = tutti.
   let planIds = Array.isArray(b.planIds) ? b.planIds : (b.planIds ? [b.planIds] : []);
   planIds = planIds.map((v) => parseInt(v, 10)).filter((n) => Number.isInteger(n));
+  // Se l'admin ha spuntato TUTTI i pack attivi, normalizza a [] = "vale per tutti"
+  // (così un futuro pack nuovo viene incluso automaticamente).
+  const totalActivePlans = await prisma.plan.count({ where: { active: true } });
+  if (planIds.length >= totalActivePlans) planIds = [];
   const newCode = await prisma.referralCode.create({
     data: {
       code,
@@ -480,6 +484,9 @@ router.post('/codes/:codeId(\\d+)', requirePermission('referrals.codes.manage'),
   // Pacchetti applicabili: set completo (vuoto = vale per tutti).
   let planIds = Array.isArray(b.planIds) ? b.planIds : (b.planIds ? [b.planIds] : []);
   planIds = planIds.map((v) => parseInt(v, 10)).filter((n) => Number.isInteger(n));
+  // Se l'admin ha lasciato tutti i pack attivi spuntati → normalizza a [] (vale per tutti)
+  const totalActivePlansU = await prisma.plan.count({ where: { active: true } });
+  if (planIds.length >= totalActivePlansU) planIds = [];
   await prisma.referralCode.update({
     where: { id: codeId },
     data: {
