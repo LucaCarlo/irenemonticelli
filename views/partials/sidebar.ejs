@@ -64,6 +64,11 @@
       <% if (can('newsletter.manage')) { %>
         <a class="sb-link <%= isActive('/admin/newsletter') ? 'active' : '' %>" href="/admin/newsletter"><%- include('icon',{name:'newsletter'}) %><span>Newsletter</span></a>
       <% } %>
+    </div>
+
+    <% if (can('referrals.view') || can('referrals.commissions.manage')) { %>
+    <div class="sb-group">
+      <div class="sb-group-title">Programma referral</div>
       <% if (can('referrals.view')) { %>
         <a class="sb-link <%= path === '/admin/referrals' || (path.indexOf('/admin/referrals/') === 0 && path.indexOf('/admin/referrals/commissions') !== 0) ? 'active' : '' %>" href="/admin/referrals"><%- include('icon',{name:'users'}) %><span>Referral</span></a>
       <% } %>
@@ -71,6 +76,7 @@
         <a class="sb-link <%= isActive('/admin/referrals/commissions') ? 'active' : '' %>" href="/admin/referrals/commissions"><%- include('icon',{name:'plans'}) %><span>Commissioni</span></a>
       <% } %>
     </div>
+    <% } %>
 
     <div class="sb-group">
       <div class="sb-group-title">Amministrazione</div>

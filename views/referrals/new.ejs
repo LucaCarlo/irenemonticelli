@@ -1,0 +1,63 @@
+<%- include('../partials/header') %>
+<form method="post" action="/admin/referrals" class="form fs-page" id="newReferrerForm">
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+  <div class="fs-page-head">
+    <div>
+      <h2>Nuovo referrer</h2>
+      <p>Sistema genera la password e invia email con credenziali al referrer.</p>
+    </div>
+    <a class="btn btn-ghost" href="/admin/referrals">← Torna alla lista</a>
+  </div>
+
+  <% if (errors && errors.length) { %>
+    <div class="fs-section" style="background:#fef0ec;border-color:#f3c5b9">
+      <strong style="color:#a8351c">Controlla i campi:</strong>
+      <ul style="margin:8px 0 0;padding-left:20px;color:#a8351c"><% errors.forEach(function(e){ %><li><%= e %></li><% }) %></ul>
+    </div>
+  <% } %>
+
+  <section class="fs-section">
+    <div class="fs-section-head">
+      <div class="fs-section-ico" style="background:#fdf2c9;color:#7a5800">👤</div>
+      <div>
+        <h3 class="fs-section-title">Anagrafica</h3>
+        <p class="fs-section-sub">Dati base del nuovo referrer.</p>
+      </div>
+    </div>
+    <div class="fs-grid">
+      <div class="field">
+        <label class="field-lbl">Nome *</label>
+        <input type="text" name="firstName" required value="<%= (form && form.firstName) || '' %>" placeholder="es. Maria">
+      </div>
+      <div class="field">
+        <label class="field-lbl">Cognome *</label>
+        <input type="text" name="lastName" required value="<%= (form && form.lastName) || '' %>" placeholder="es. García">
+      </div>
+      <div class="field">
+        <label class="field-lbl">Email *</label>
+        <input type="email" name="email" required value="<%= (form && form.email) || '' %>" placeholder="maria@dominio.com">
+        <div class="field-help">Username per il login + destinazione email credenziali.</div>
+      </div>
+      <div class="field">
+        <label class="field-lbl">Telefono</label>
+        <input type="text" name="phone" value="<%= (form && form.phone) || '' %>" placeholder="+34 …">
+      </div>
+      <div class="field field-full">
+        <label class="field-lbl">IBAN (per pagamento commissioni)</label>
+        <input type="text" name="iban" value="<%= (form && form.iban) || '' %>" placeholder="ES00 0000 0000 0000 0000 0000" style="font-family:Consolas,Menlo,monospace;letter-spacing:.06em">
+        <div class="field-help">Opzionale ora: lo può inserire anche il referrer dalla sua dashboard.</div>
+      </div>
+      <div class="field field-full">
+        <label class="field-lbl">Note interne</label>
+        <textarea name="internalNotes" rows="3" placeholder="Visibili solo agli amministratori, non al referrer."><%= (form && form.internalNotes) || '' %></textarea>
+      </div>
+    </div>
+  </section>
+
+  <div class="fs-actions">
+    <a class="btn btn-ghost" href="/admin/referrals">Annulla</a>
+    <button class="btn btn-primary" type="submit">✨ Crea referrer + invia email</button>
+  </div>
+</form>
+<%- include('../partials/footer') %>

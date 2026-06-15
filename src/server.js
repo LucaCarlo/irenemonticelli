@@ -146,6 +146,10 @@ app.use(
 );
 app.use('/uploads', express.static(config.DIRS.uploads, { maxAge: '30d' }));
 
+// Referral tracker: intercetta ?ref=CODE prima di tutte le pagine pubbliche
+const { refTracker } = require('./middleware/referral-tracker');
+app.use(refTracker);
+
 // Favicon condivisa (admin + sito pubblico). Browser la richiede da solo.
 app.get(['/favicon.ico', '/favicon'], async (req, res) => {
   try {

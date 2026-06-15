@@ -399,7 +399,8 @@ model Referrer {
   phone         String    @default("")
   notes         String    @default("")  // testo dal referrer al momento della richiesta
   internalNotes String    @default("")  // note interne admin
-  status        String    @default("pending") // pending | approved | disabled
+  iban          String    @default("")  // per i pagamenti delle commissioni — editabile da admin e dal referrer stesso
+  status        String    @default("approved") // approved | disabled (i referrer si creano solo da admin, partono attivi)
   passwordHash  String    @default("")        // valorizzato all'approvazione
   mustChangePw  Boolean   @default(false)
   approvedAt    DateTime?
@@ -436,11 +437,31 @@ model ReferralCode {
   internalNotes   String    @default("")
   bookings        Booking[]
   commissions     ReferralCommission[]
+  clicks          ReferralClick[]
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 
   @@index([referrerId])
   @@index([active])
+}
+
+// Click sul link tracciato `?ref=CODE` — base del funnel analytics.
+model ReferralClick {
+  id          Int          @id @default(autoincrement())
+  codeId      Int
+  code        ReferralCode @relation(fields: [codeId], references: [id], onDelete: Cascade)
+  sessionId   String       @default("")  // random session id (cookie-based, dedup visita per sessione)
+  ipHash      String       @default("")  // sha256(ip)
+  userAgent   String       @default("")
+  referrerUrl String       @default("")  // document.referrer (es. instagram.com)
+  source      String       @default("")  // "instagram" | "whatsapp" | "tiktok" | "direct" | …
+  country     String       @default("")
+  landingPath String       @default("")  // es. "/", "/reserva/pack-gold"
+  bookingId   Int?                       // se poi compra, link alla booking (chiusura funnel)
+  createdAt   DateTime     @default(now())
+
+  @@index([codeId, createdAt])
+  @@index([sessionId])
 }
 
 // Commissione generata quando un Booking viene pagato con un ReferralCode.

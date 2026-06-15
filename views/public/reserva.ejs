@@ -540,7 +540,6 @@
       <a href="/quien-soy" data-h>Quién soy</a>
       <a href="/pro-dance" data-h>Pro Dance</a>
       <a href="/contacto" data-h>Contacto</a>
-      <a href="/area-referral" class="nav-referral" data-h>Área Referidos</a>
     </div>
   </nav>
 </header>
@@ -716,7 +715,7 @@
             <h2 class="pk-block-title">¿Tienes un código de descuento?</h2>
             <p class="pk-pack-desc" style="font-size:13.5px;color:#7a8190;margin:0 0 12px">Introduce un código de afiliado/promocional (opcional).</p>
             <div class="rv-refcode-row">
-              <input type="text" name="referralCode" id="rvRefCodeInput" placeholder="Ej. MARIA20" autocomplete="off" spellcheck="false">
+              <input type="text" name="referralCode" id="rvRefCodeInput" placeholder="Ej. MARIA20" autocomplete="off" spellcheck="false" value="<%= refCookieCode || '' %>">
               <button type="button" class="rv-refcode-btn" id="rvRefCodeApply">Aplicar</button>
             </div>
             <div class="rv-refcode-status" id="rvRefCodeStatus" hidden></div>
@@ -1440,16 +1439,15 @@
     var grossPack = subtotal - discountAmount;        // lordo pacchetto post multi-discount
     var refDiscGross = 0;
     if (window.RV_REFCODE && window.RV_REFCODE.valid) {
-      var IVA = 0.21;
-      var netPack = grossPack / (1 + IVA);
-      var refDiscNet;
+      // Sconto applicato al LORDO del pacchetto (esclusi extras).
       if (window.RV_REFCODE.discountType === 'fixed') {
-        refDiscNet = parseFloat(window.RV_REFCODE.discountValue) || 0;
-        if (refDiscNet > netPack) refDiscNet = netPack;
+        refDiscGross = parseFloat(window.RV_REFCODE.discountValue) || 0;
       } else {
-        refDiscNet = netPack * (parseFloat(window.RV_REFCODE.discountValue) || 0) / 100;
+        refDiscGross = Math.round(grossPack * (parseFloat(window.RV_REFCODE.discountValue) || 0)) / 100;
       }
-      refDiscGross = Math.round(refDiscNet * (1 + IVA) * 100) / 100;
+      if (refDiscGross > grossPack) refDiscGross = grossPack;
+      if (refDiscGross < 0) refDiscGross = 0;
+      refDiscGross = Math.round(refDiscGross * 100) / 100;
     }
     var grand = grossPack - refDiscGross + (ext.sum * N);
     totalEl.textContent = (Math.round(grand*100)/100) + '€';
@@ -1788,6 +1786,11 @@
         showStatus('Error de conexión. Reintenta.', false);
       });
     });
+
+    // Auto-apply se l'input arriva pre-compilato dal cookie ref_code (?ref=… o visita precedente).
+    if (input.value && input.value.trim().length) {
+      setTimeout(function(){ btn.click(); }, 200);
+    }
   })();
 
   // ===== Init =====

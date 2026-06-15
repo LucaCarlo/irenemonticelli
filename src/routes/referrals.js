@@ -26,6 +26,7 @@ async function sendCodeCreatedEmail(referrer, code, req) {
   const proto = req.headers['x-forwarded-proto'] || req.protocol;
   const host = req.headers['x-forwarded-host'] || req.headers.host;
   const dashboardUrl = `${proto}://${host}/area-referral`;
+  const shareUrl = `${proto}://${host}/pro-dance?ref=${code.code}`;
   const siteName = s.site_name || 'Irene Monticelli';
 
   const discountLabel = code.discountType === 'fixed'
@@ -40,8 +41,11 @@ async function sendCodeCreatedEmail(referrer, code, req) {
     `Tu comisión: ${code.commissionPct}% sobre el neto\n` +
     `${code.maxUses ? `Usos máximos: ${code.maxUses}\n` : ''}` +
     `${code.validUntil ? `Válido hasta: ${new Date(code.validUntil).toLocaleDateString('es-ES')}\n` : ''}` +
-    `\nCompártelo con tu comunidad. Por cada venta usando este código, ganarás tu comisión automáticamente.\n\n` +
-    `Accede a tu panel personal para ver tus ganancias y el detalle:\n${dashboardUrl}\n\n` +
+    `\nCompártelo con tu comunidad. Tienes dos opciones:\n\n` +
+    `1) Comparte el CÓDIGO (${code.code}) — lo introducen manualmente en el checkout.\n` +
+    `2) Comparte el ENLACE personalizado — se aplica automáticamente:\n   ${shareUrl}\n\n` +
+    `Por cada venta usando tu código (o tu enlace) ganarás tu comisión automáticamente.\n` +
+    `Accede a tu panel personal para ver clics, ventas y ganancias:\n${dashboardUrl}\n\n` +
     `— ${siteName}`;
 
   const html = `
@@ -59,15 +63,20 @@ async function sendCodeCreatedEmail(referrer, code, req) {
           ${code.validUntil ? `<br>📅 <strong style="color:#1c1f26">Válido hasta:</strong> ${new Date(code.validUntil).toLocaleDateString('es-ES')}` : ''}
         </div>
       </div>
+      <div style="background:#fafbfc;border:1px solid var(--line,#e6e8ed);border-radius:12px;padding:20px;margin:22px 0">
+        <p style="font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:#7a5800;font-weight:700;margin:0 0 10px">🔗 Tu enlace personalizado</p>
+        <p style="margin:0 0 6px;font-size:13.5px;color:#5a5e6a;line-height:1.55">Si tu seguidor abre este enlace, el código se aplica automáticamente en el checkout (válido 30 días):</p>
+        <code style="display:inline-block;background:#fff;border:1px solid #ead9a8;padding:10px 14px;border-radius:8px;font-family:Manrope,monospace;font-size:13px;color:#1c1f26;word-break:break-all;user-select:all">${escapeHtml(shareUrl)}</code>
+      </div>
       <p style="font-size:14.5px;line-height:1.65;color:#5a5e6a">
-        Cada vez que alguien reserve usando tu código, se generará automáticamente una comisión en tu panel.
-        Puedes hacer un seguimiento en tiempo real de tus ganancias y solicitudes pendientes:
+        Cada vez que alguien reserve usando tu código <strong>o tu enlace</strong>, se generará automáticamente una comisión.
+        Puedes hacer un seguimiento en tiempo real de clics, ventas y ganancias:
       </p>
       <p style="margin:22px 0;text-align:center">
         <a href="${dashboardUrl}" style="display:inline-block;background:#1c1f26;color:#fff;padding:14px 28px;border-radius:8px;text-decoration:none;font-weight:600;letter-spacing:.04em">Ir a mi panel →</a>
       </p>
       <p style="font-size:12.5px;color:#7a8190;line-height:1.6;margin-top:24px">
-        💡 <em>Consejo:</em> guarda esta email para tener siempre a mano tu código.
+        💡 <em>Consejo:</em> guarda esta email para tener siempre a mano tu código y tu enlace.
       </p>
       <p style="font-size:12px;color:#888;margin-top:24px">— ${escapeHtml(siteName)}</p>
     </div>`;
@@ -79,7 +88,8 @@ async function sendCodeCreatedEmail(referrer, code, req) {
   });
 }
 
-async function sendApprovalEmail(referrer, tempPassword, req) {
+// Email inviata quando Irene crea il referrer dall'admin: include le credenziali per accedere.
+async function sendWelcomeEmail(referrer, tempPassword, req) {
   const s = await settings.all();
   const proto = req.headers['x-forwarded-proto'] || req.protocol;
   const host = req.headers['x-forwarded-host'] || req.headers.host;
@@ -87,38 +97,43 @@ async function sendApprovalEmail(referrer, tempPassword, req) {
   const siteName = s.site_name || 'Irene Monticelli';
 
   const text =
-    `Ciao ${referrer.firstName},\n\n` +
-    `La tua richiesta di adesione al programma referral di ${siteName} è stata APPROVATA.\n\n` +
-    `Accedi alla tua area riservata con queste credenziali:\n` +
+    `Hola ${referrer.firstName},\n\n` +
+    `Te damos la bienvenida al Programa de Referidos de ${siteName}.\n\n` +
+    `Irene te ha activado una cuenta personal donde podrás ver, en tiempo real, las inscripciones que generes y tus comisiones.\n\n` +
+    `Tus credenciales de acceso:\n` +
     `Email: ${referrer.email}\n` +
-    `Password: ${tempPassword}\n\n` +
-    `Pannello: ${loginUrl}\n\n` +
-    `Nell'area riservata potrai vedere i tuoi codici sconto, le iscrizioni che generi e i tuoi guadagni.\n\n` +
+    `Contraseña: ${tempPassword}\n\n` +
+    `Acceso al panel: ${loginUrl}\n\n` +
+    `En las próximas horas (o días) recibirás un segundo correo con tu(s) código(s) de descuento personal(es) listos para compartir.\n\n` +
     `— ${siteName}`;
 
   const html = `
     <div style="font-family:Arial,Helvetica,sans-serif;color:#1c1f26;max-width:560px">
-      <h2 style="color:#c8970a">Benvenuto nel programma referral!</h2>
-      <p>Ciao <strong>${escapeHtml(referrer.firstName)}</strong>,</p>
-      <p>La tua richiesta di adesione al programma referral di <strong>${escapeHtml(siteName)}</strong> è stata <strong style="color:#1b6b3e">APPROVATA</strong>.</p>
-      <div style="background:#fffbe8;border:1px solid #ead9a8;border-radius:10px;padding:18px;margin:18px 0">
-        <p style="margin:0 0 8px"><strong>Le tue credenziali di accesso:</strong></p>
-        <p style="margin:6px 0">Email: <code style="background:#fff;padding:3px 8px;border-radius:5px">${escapeHtml(referrer.email)}</code></p>
-        <p style="margin:6px 0">Password: <code style="background:#fff;padding:3px 8px;border-radius:5px;letter-spacing:.5px">${escapeHtml(tempPassword)}</code></p>
+      <h2 style="color:#c8970a;font-family:Georgia,serif;font-weight:500;font-size:26px;margin:0 0 14px">Bienvenida al Programa de Referidos</h2>
+      <p>Hola <strong>${escapeHtml(referrer.firstName)}</strong>,</p>
+      <p>Irene te ha activado una cuenta personal en el <strong>Programa de Referidos de ${escapeHtml(siteName)}</strong>. Desde tu panel privado podrás ver en tiempo real las inscripciones que generes y tus comisiones.</p>
+      <div style="background:#fffbe8;border:1px solid #ead9a8;border-radius:10px;padding:20px;margin:22px 0">
+        <p style="margin:0 0 12px;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:#7a5800;font-weight:700">Tus credenciales</p>
+        <p style="margin:8px 0">Email: <code style="background:#fff;padding:4px 10px;border-radius:5px;font-family:Manrope,monospace">${escapeHtml(referrer.email)}</code></p>
+        <p style="margin:8px 0">Contraseña: <code style="background:#fff;padding:4px 10px;border-radius:5px;font-family:Manrope,monospace;letter-spacing:.5px">${escapeHtml(tempPassword)}</code></p>
       </div>
-      <p style="margin:18px 0">
-        <a href="${loginUrl}" style="display:inline-block;background:#e0aa00;color:#1c1408;padding:12px 22px;border-radius:8px;text-decoration:none;font-weight:600">Accedi all'area riservata →</a>
+      <p style="margin:22px 0;text-align:center">
+        <a href="${loginUrl}" style="display:inline-block;background:#1c1f26;color:#fff;padding:14px 28px;border-radius:8px;text-decoration:none;font-weight:600;letter-spacing:.04em">Acceder al panel →</a>
       </p>
-      <p style="font-size:13px;color:#7a8190;line-height:1.6">Nell'area riservata vedrai i tuoi codici sconto da condividere, le iscrizioni generate e i tuoi guadagni.</p>
+      <p style="font-size:13.5px;color:#5a5e6a;line-height:1.65">Recibirás un segundo correo con tu(s) código(s) de descuento personal(es) en cuanto Irene los active.</p>
+      <p style="font-size:12.5px;color:#7a8190;line-height:1.6;margin-top:24px">💡 <em>Consejo:</em> guarda esta email para tener siempre a mano tus credenciales.</p>
       <p style="font-size:12px;color:#888;margin-top:24px">— ${escapeHtml(siteName)}</p>
     </div>`;
 
   await sendMail({
     to: referrer.email,
-    subject: `Benvenuto nel programma referral — ${siteName}`,
+    subject: `Bienvenida al Programa de Referidos · ${siteName}`,
     text, html,
   });
 }
+
+// Alias retro-compat per chiamate esistenti (reset password, ecc.).
+const sendApprovalEmail = sendWelcomeEmail;
 
 // ============ LISTA ============
 router.get('/', requirePermission('referrals.view'), A(async (req, res) => {
@@ -151,14 +166,103 @@ router.get('/', requirePermission('referrals.view'), A(async (req, res) => {
   const statusCounts = { pending: 0, approved: 0, disabled: 0 };
   counts.forEach((c) => { statusCounts[c.status] = c._count._all; });
 
+  // Aggrega click + commissioni per referrer mostrato in pagina
+  const refIds = referrers.map((r) => r.id);
+  let analyticsByRef = {};
+  if (refIds.length) {
+    const [clicksByRef, paidByRef] = await Promise.all([
+      prisma.$queryRawUnsafe(
+        `SELECT c.referrerId as referrerId, COUNT(rc.id) as clicks
+         FROM ReferralCode c
+         LEFT JOIN ReferralClick rc ON rc.codeId = c.id
+         WHERE c.referrerId IN (${refIds.join(',')})
+         GROUP BY c.referrerId`
+      ),
+      prisma.referralCommission.groupBy({
+        by: ['referrerId'],
+        where: { referrerId: { in: refIds }, status: { in: ['pending', 'paid'] } },
+        _count: { _all: true },
+      }),
+    ]);
+    refIds.forEach((id) => { analyticsByRef[id] = { clicks: 0, paid: 0, conv: 0 }; });
+    (clicksByRef || []).forEach((r) => { analyticsByRef[r.referrerId] = { ...analyticsByRef[r.referrerId], clicks: Number(r.clicks) }; });
+    (paidByRef || []).forEach((r) => {
+      analyticsByRef[r.referrerId].paid = r._count._all;
+    });
+    Object.keys(analyticsByRef).forEach((id) => {
+      const a = analyticsByRef[id];
+      a.conv = a.clicks > 0 ? +((a.paid / a.clicks) * 100).toFixed(1) : 0;
+    });
+  }
+
   const totalPages = Math.max(1, Math.ceil(total / params.perPage));
   const links = dt.pageLinks(params.page, totalPages);
 
   res.render('referrals/list', {
     title: 'Referral',
-    referrers, status, statusCounts,
+    referrers, status, statusCounts, analyticsByRef,
     params, total, totalUnfiltered, totalPages, links,
   });
+}));
+
+// ============ NUOVO REFERRER (form) ============
+router.get('/new', requirePermission('referrals.manage'), (req, res) => {
+  res.render('referrals/new', { title: 'Nuovo referrer', errors: [], form: {} });
+});
+
+// ============ NUOVO REFERRER (create) — genera password + email credenziali ============
+router.post('/', requirePermission('referrals.manage'), A(async (req, res) => {
+  const b = req.body || {};
+  const form = {
+    firstName: String(b.firstName || '').trim(),
+    lastName: String(b.lastName || '').trim(),
+    email: String(b.email || '').toLowerCase().trim(),
+    phone: String(b.phone || '').trim(),
+    iban: String(b.iban || '').trim().replace(/\s+/g, '').toUpperCase(),
+    internalNotes: String(b.internalNotes || '').trim(),
+  };
+  const errors = [];
+  if (form.firstName.length < 2) errors.push('Nome obbligatorio.');
+  if (form.lastName.length < 2) errors.push('Cognome obbligatorio.');
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) errors.push('Email non valida.');
+  if (errors.length) {
+    return res.status(400).render('referrals/new', { title: 'Nuovo referrer', errors, form });
+  }
+  const existing = await prisma.referrer.findUnique({ where: { email: form.email } });
+  if (existing) {
+    return res.status(400).render('referrals/new', {
+      title: 'Nuovo referrer',
+      errors: ['Esiste già un referrer con questa email.'],
+      form,
+    });
+  }
+  const tempPassword = genTempPassword();
+  const passwordHash = await bcrypt.hash(tempPassword, 12);
+  const created = await prisma.referrer.create({
+    data: {
+      firstName: form.firstName.slice(0, 80),
+      lastName: form.lastName.slice(0, 80),
+      email: form.email.slice(0, 200),
+      phone: form.phone.slice(0, 50),
+      iban: form.iban.slice(0, 40),
+      internalNotes: form.internalNotes.slice(0, 2000),
+      status: 'approved',
+      passwordHash,
+      mustChangePw: false,
+      approvedAt: new Date(),
+      approvedById: req.user.id,
+    },
+  });
+  let emailOk = true, emailErr = '';
+  try { await sendWelcomeEmail(created, tempPassword, req); }
+  catch (e) { emailOk = false; emailErr = e.message; }
+  await audit.log(req, 'referrer.create', { entity: 'Referrer', entityId: String(created.id), details: { emailSent: emailOk } });
+  if (emailOk) {
+    req.flash('success', `Referrer ${created.firstName} ${created.lastName} creato. Email con credenziali inviata a ${created.email}.`);
+  } else {
+    req.flash('error', `Referrer creato ma invio email fallito (${emailErr}). Password temporanea: ${tempPassword}`);
+  }
+  res.redirect('/admin/referrals');
 }));
 
 // ============ DETTAGLIO ============
@@ -172,17 +276,46 @@ router.get('/:id(\\d+)/edit', requirePermission('referrals.view'), A(async (req,
     },
   });
   if (!r) return res.redirect('/admin/referrals');
-  // Statistiche commissioni
-  const [pendingAgg, paidAgg] = await Promise.all([
+  const codeIds = r.codes.map((c) => c.id);
+
+  // Statistiche commissioni + funnel
+  const [pendingAgg, paidAgg, totalClicks, convertedClicks, sourcesData, appliedBookingsCount, clicksByCode] = await Promise.all([
     prisma.referralCommission.aggregate({ where: { referrerId: id, status: 'pending' }, _sum: { commissionAmt: true } }),
     prisma.referralCommission.aggregate({ where: { referrerId: id, status: 'paid' }, _sum: { commissionAmt: true } }),
+    codeIds.length ? prisma.referralClick.count({ where: { codeId: { in: codeIds } } }) : 0,
+    codeIds.length ? prisma.referralClick.count({ where: { codeId: { in: codeIds }, bookingId: { not: null } } }) : 0,
+    codeIds.length ? prisma.referralClick.groupBy({
+      by: ['source'], where: { codeId: { in: codeIds } },
+      _count: { _all: true }, orderBy: { _count: { source: 'desc' } }, take: 6,
+    }) : [],
+    codeIds.length ? prisma.booking.count({ where: { referralCodeId: { in: codeIds } } }) : 0,
+    codeIds.length ? prisma.referralClick.groupBy({
+      by: ['codeId'], where: { codeId: { in: codeIds } },
+      _count: { _all: true },
+    }) : [],
   ]);
+  const clicksMap = {};
+  clicksByCode.forEach((x) => { clicksMap[x.codeId] = x._count._all; });
+  r.codes.forEach((c) => { c.clicks = clicksMap[c.id] || 0; });
+
+  const totalSources = sourcesData.reduce((s, x) => s + x._count._all, 0) || 1;
+  const sources = sourcesData.map((x) => ({
+    source: x.source || 'direct',
+    count: x._count._all,
+    pct: +((x._count._all / totalSources) * 100).toFixed(1),
+  }));
+  const paidCount = paidAgg._sum.commissionAmt > 0 ? r._count.commissions : 0; // approx; below recompute
   const stats = {
     pendingAmount: pendingAgg._sum.commissionAmt || 0,
     paidAmount: paidAgg._sum.commissionAmt || 0,
     totalCommissions: r._count.commissions,
+    clicks: totalClicks,
+    convertedClicks,
+    applied: appliedBookingsCount,
+    paid: r._count.commissions,
+    conversionRate: totalClicks > 0 ? +(r._count.commissions / totalClicks * 100).toFixed(1) : 0,
   };
-  res.render('referrals/form', { title: `Referrer #${r.id}`, referrer: r, stats });
+  res.render('referrals/form', { title: `Referrer ${r.firstName} ${r.lastName}`, referrer: r, stats, sources });
 }));
 
 router.post('/:id(\\d+)', requirePermission('referrals.manage'), A(async (req, res) => {
@@ -195,6 +328,7 @@ router.post('/:id(\\d+)', requirePermission('referrals.manage'), A(async (req, r
       lastName: String(b.lastName || '').trim(),
       email: String(b.email || '').toLowerCase().trim(),
       phone: String(b.phone || '').trim(),
+      iban: String(b.iban || '').trim().replace(/\s+/g, '').toUpperCase().slice(0, 40),
       internalNotes: String(b.internalNotes || '').trim(),
     },
   });

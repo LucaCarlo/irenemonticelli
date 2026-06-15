@@ -119,12 +119,20 @@
     topBrowsers: <%- JSON.stringify(data.topBrowsers) %>,
   };
   function whenChartReady(cb){ if (window.Chart) cb(); else setTimeout(function(){ whenChartReady(cb); }, 60); }
+  // Formatter date in italiano: "2026-06-10" → "10 giu"
+  var IT_MONTHS = ['gen','feb','mar','apr','mag','giu','lug','ago','set','ott','nov','dic'];
+  function fmtItDate(isoDate){
+    if (!isoDate) return '';
+    var dt = new Date(isoDate + 'T00:00:00');
+    if (isNaN(dt.getTime())) return isoDate;
+    return dt.getDate() + ' ' + IT_MONTHS[dt.getMonth()];
+  }
   whenChartReady(function(){
     var d = window.STATS_DATA;
     var palette = ['#e0aa00','#1c1f26','#c8970a','#7a5800','#9aa1b2','#5a5e6a','#f0c04b','#3a3f4a'];
     new Chart(document.getElementById('chartSeries'), {
       type:'line',
-      data:{ labels: d.series.map(function(s){return s.date.slice(5);}),
+      data:{ labels: d.series.map(function(s){return fmtItDate(s.date);}),
         datasets:[
           { label:'Pageview', data: d.series.map(function(s){return s.pv;}), borderColor:'#e0aa00', backgroundColor:'rgba(224,170,0,.15)', tension:.35, fill:true },
           { label:'Sessioni', data: d.series.map(function(s){return s.sessions;}), borderColor:'#1c1f26', tension:.35 },

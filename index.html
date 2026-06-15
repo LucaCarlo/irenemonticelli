@@ -1585,8 +1585,16 @@
   .foot-built{
     display:inline-flex;
     align-items:center;
-    gap:8px;
-    margin-left:4px;
+    gap:12px;
+    margin-left:8px;
+  }
+  .foot-built::before{
+    content:"";
+    display:inline-block;
+    width:1px;
+    height:22px;
+    background:rgba(255,255,255,.5);
+    flex-shrink:0;
   }
   .foot-vay-logo{
     display:inline-flex;
@@ -3616,7 +3624,6 @@
       <a href="/quien-soy" data-h>Quién soy</a>
       <a href="/pro-dance" data-h data-nav="pro-dance">Pro Dance</a>
       <a href="/contacto" data-h data-nav="contatti">Contacto</a>
-      <a href="/area-referral" class="nav-referral" data-h>Área Referidos</a>
     </div>
   </nav>
 </header>
@@ -3869,7 +3876,7 @@
   <div class="foot-bottom">
     <span class="foot-credit">
       <span class="foot-credit-dynamic">© 2026 <a href="https://vay.it/" target="_blank" rel="noopener">VAY Srl</a> — Servizi ICT per PMI — P.IVA 02050680442</span>
-      <span class="foot-built">| Built by <a href="https://vay.it/" target="_blank" rel="noopener" class="foot-vay-logo" aria-label="VAY Srl"><svg id="vay-logo-1" data-name="vay-logo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 503.22 63.08">
+      <span class="foot-built">Built by <a href="https://vay.it/" target="_blank" rel="noopener" class="foot-vay-logo" aria-label="VAY Srl"><svg id="vay-logo-1" data-name="vay-logo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 503.22 63.08">
   <defs>
     <style>
       .vay-cls-1 {

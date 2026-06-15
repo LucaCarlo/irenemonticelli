@@ -64,8 +64,13 @@ router.get('/', async (req, res) => {
     const k = b.createdAt.toISOString().slice(0, 10);
     if (dayBk[k] !== undefined) dayBk[k]++;
   });
+  // Etichette giorni in italiano: es. "10 giu", "26 mag" (mese abbreviato)
+  const IT_MONTHS = ['gen','feb','mar','apr','mag','giu','lug','ago','set','ott','nov','dic'];
   const chart = {
-    labels: days.map((d) => d.slice(5)), // MM-DD
+    labels: days.map((d) => {
+      const dt = new Date(d + 'T00:00:00');
+      return `${dt.getDate()} ${IT_MONTHS[dt.getMonth()]}`;
+    }),
     pageviews: days.map((d) => dayPv[d]),
     bookings: days.map((d) => dayBk[d]),
   };

@@ -2,10 +2,12 @@
 <div class="card">
   <div class="card-head">
     <h2>Referral</h2>
-    <div class="muted" style="font-size:13px">
-      <span class="badge badge-warn"><%= statusCounts.pending %></span> in attesa ·
-      <span class="badge badge-ok"><%= statusCounts.approved %></span> attivi ·
-      <span class="badge badge-off"><%= statusCounts.disabled %></span> disattivati
+    <div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap">
+      <div class="muted" style="font-size:13px">
+        <span class="badge badge-ok"><%= statusCounts.approved %></span> attivi ·
+        <span class="badge badge-off"><%= statusCounts.disabled %></span> disattivati
+      </div>
+      <a href="/admin/referrals/new" class="btn btn-primary">+ Nuovo referrer</a>
     </div>
   </div>
 
@@ -17,8 +19,7 @@
     extraFilters: [
       { name: 'status', value: status, options: [
         { val: '', label: 'Tutti gli stati' },
-        { val: 'pending', label: 'In attesa di approvazione' },
-        { val: 'approved', label: 'Approvati / Attivi' },
+        { val: 'approved', label: 'Attivi' },
         { val: 'disabled', label: 'Disattivati' },
       ] },
     ],
@@ -34,6 +35,7 @@
             <%- include('../partials/dt-th', { label: 'Nome', sortKey: 'firstName', params, basePath: '/admin/referrals' }) %>
             <%- include('../partials/dt-th', { label: 'Email', sortKey: 'email', params, basePath: '/admin/referrals' }) %>
             <th>Telefono</th>
+            <th title="Click totali / Vendite generate / Tasso di conversione">📊 Performance</th>
             <%- include('../partials/dt-th', { label: 'Stato', sortKey: 'status', params, basePath: '/admin/referrals' }) %>
             <%- include('../partials/dt-th', { label: 'Richiesta il', sortKey: 'createdAt', params, basePath: '/admin/referrals' }) %>
             <%- include('../partials/dt-th', { label: 'Ultimo accesso', sortKey: 'lastLoginAt', params, basePath: '/admin/referrals' }) %>
@@ -49,6 +51,14 @@
               </td>
               <td><a href="mailto:<%= r.email %>"><%= r.email %></a></td>
               <td><%= r.phone || '—' %></td>
+              <td>
+                <% var a = (analyticsByRef && analyticsByRef[r.id]) || { clicks:0, paid:0, conv:0 }; %>
+                <div style="display:flex;gap:10px;align-items:center;font-size:12.5px;white-space:nowrap">
+                  <span title="Click sul link">👁 <strong><%= a.clicks %></strong></span>
+                  <span title="Vendite generate">💳 <strong style="color:#1b6b3e"><%= a.paid %></strong></span>
+                  <% if (a.clicks > 0) { %><span title="Conversione" style="color:<%= a.conv >= 5 ? '#1b6b3e' : (a.conv >= 1 ? '#7a5800' : '#8a8f9c') %>;font-weight:700"><%= a.conv %>%</span><% } %>
+                </div>
+              </td>
               <td>
                 <% if (r.status==='pending') { %><span class="badge badge-warn">In attesa</span>
                 <% } else if (r.status==='approved') { %><span class="badge badge-ok">Attivo</span>

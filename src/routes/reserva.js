@@ -119,6 +119,7 @@ router.get('/reserva/:slug', A(async (req, res) => {
     extras,
     error: req.query.e || null,
     stripePk: await publishableKey(),
+    refCookieCode: res.locals.refCookieCode || '',
   });
 }));
 
@@ -252,6 +253,9 @@ router.post('/reserva/:slug/embedded-session', A(async (req, res) => {
     customer_email: booking.customerEmail,
     line_items: lineItems,
     metadata: { bookingId: String(booking.id), planSlug: plan.slug },
+    payment_intent_data: {
+      metadata: { bookingId: String(booking.id), planSlug: plan.slug },
+    },
     return_url: `${url}/reserva/success?b=${booking.id}&cs={CHECKOUT_SESSION_ID}`,
   });
   await prisma.booking.update({ where: { id: booking.id }, data: { stripeSessionId: session.id } });
@@ -328,6 +332,9 @@ router.post('/reserva/:slug/embedded-session-v2', A(async (req, res) => {
     customer_email: booking.customerEmail,
     line_items: lineItems,
     metadata: { bookingId: String(booking.id), planSlug: plan.slug, participantsCount: String(N) },
+    payment_intent_data: {
+      metadata: { bookingId: String(booking.id), planSlug: plan.slug, participantsCount: String(N) },
+    },
     return_url: `${url}/reserva/success?b=${booking.id}&cs={CHECKOUT_SESSION_ID}`,
   });
   await prisma.booking.update({ where: { id: booking.id }, data: { stripeSessionId: session.id } });
@@ -393,6 +400,20 @@ router.post('/reserva/:slug/payment-intent', A(async (req, res) => {
   catch (e) { console.error('[reserva PI] createMultiBooking failed:', e); return res.status(500).json({ ok: false, error: 'Errore interno' }); }
   if (mb.error) return res.status(400).json({ ok: false, error: mb.error });
   const { booking, breakdown } = mb;
+
+  // Chiude il funnel: collega il click di questa sessione alla booking (se ha referralCodeId)
+  if (booking.referralCodeId) {
+    try {
+      const sessionId = (req.headers.cookie || '').match(/ref_sid=([a-f0-9]{12,})/);
+      const sid = sessionId ? sessionId[1] : '';
+      if (sid) {
+        await prisma.referralClick.updateMany({
+          where: { sessionId: sid, codeId: booking.referralCodeId, bookingId: null },
+          data: { bookingId: booking.id },
+        });
+      }
+    } catch (e) { /* non bloccare il pagamento */ }
+  }
 
   let stripe;
   try { stripe = await getStripe(); }
@@ -499,6 +520,9 @@ router.post('/reserva/:slug', A(async (req, res) => {
       },
     }],
     metadata: { bookingId: String(booking.id), planSlug: plan.slug },
+    payment_intent_data: {
+      metadata: { bookingId: String(booking.id), planSlug: plan.slug },
+    },
     success_url: `${url}/reserva/success?b=${booking.id}&cs={CHECKOUT_SESSION_ID}`,
     cancel_url: `${url}/reserva/${plan.slug}?e=${encodeURIComponent('Pago cancelado')}`,
   });

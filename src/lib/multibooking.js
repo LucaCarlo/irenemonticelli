@@ -136,8 +136,8 @@ async function resolveReferralCode(rawCode) {
 }
 
 // Applica lo sconto referral a un breakdown già calcolato (post multi-discount).
-// Restituisce { breakdown, refDiscountGross, netBaseForCommission } e aggiorna in-place
-// breakdown.total, breakdown.referralDiscount, breakdown.referralCode.
+// SCONTO al cliente: applicato al LORDO pacchetto (esclusi extras).
+// COMMISSIONE referrer: applicata al NETTO pacchetto post-sconto (no IVA, no extras).
 function applyReferralDiscount(breakdown, refCode) {
   if (!refCode) {
     breakdown.referralDiscount = 0;
@@ -145,14 +145,12 @@ function applyReferralDiscount(breakdown, refCode) {
     return breakdown;
   }
   const grossPack = round2(breakdown.subtotal - breakdown.discountAmount);  // lordo pacchetto post multi-discount
-  const netPack = round2(grossPack / (1 + RC.IVA_RATE));                     // senza IVA
-  const refDiscountNet = RC.discountForCode(refCode, netPack);
-  const refDiscountGross = round2(refDiscountNet * (1 + RC.IVA_RATE));
+  const { gross: refDiscountGross } = RC.discountAmountForCode(refCode, grossPack);
   const newGrossPack = round2(grossPack - refDiscountGross);
   const newTotal = round2(newGrossPack + breakdown.extrasTotal);
 
-  // Base per la commissione: net pacchetto POST sconto referral, senza IVA, senza extras
-  const netBaseForCommission = round2(netPack - refDiscountNet);
+  // Base per la commissione: net del pacchetto POST sconto referral (extras già fuori dal grossPack).
+  const netBaseForCommission = round2(newGrossPack / (1 + RC.IVA_RATE));
 
   breakdown.referralDiscount = refDiscountGross;
   breakdown.referralCode = { id: refCode.id, code: refCode.code, commissionPct: refCode.commissionPct, referrerId: refCode.referrerId };

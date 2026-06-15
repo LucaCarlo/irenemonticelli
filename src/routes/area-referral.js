@@ -1,21 +1,15 @@
-// Area pubblica referrer: registrazione + login + dashboard.
-// La registrazione crea un Referrer in status=pending, Irene lo approva da
-// /admin/referrals e il sistema invia email con credenziali generate.
+// Area PRIVATA referrer: login + dashboard.
+// I referrer vengono creati ESCLUSIVAMENTE da Irene dall'admin (/admin/referrals/new).
+// Non esiste registrazione pubblica: l'esistenza del programma referral è interna.
 
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const rateLimit = require('express-rate-limit');
 const prisma = require('../lib/db');
 const audit = require('../lib/audit');
-const settings = require('../lib/settings');
-const { sendMail } = require('../lib/mailer');
 
 const router = express.Router();
 const A = (fn) => (req, res, next) => Promise.resolve(fn(req, res, next)).catch(next);
-
-function escapeHtml(s) {
-  return String(s || '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-}
 
 // ---- Middleware: carica referrer dalla sessione ----
 async function loadReferrer(req, res, next) {
@@ -43,128 +37,9 @@ function requireReferrer(req, res, next) {
 
 router.use(loadReferrer);
 
-// ---- Rate limit per registrazione/login (anti-bot) ----
-const regLimiter = rateLimit({ windowMs: 60 * 60 * 1000, max: 8, standardHeaders: true, legacyHeaders: false,
-  message: 'Demasiadas solicitudes de registro. Inténtalo más tarde.' });
+// ---- Rate limit login (anti-bot) ----
 const loginLimiter = rateLimit({ windowMs: 10 * 60 * 1000, max: 20, standardHeaders: true, legacyHeaders: false,
   message: 'Demasiados intentos de acceso. Inténtalo en unos minutos.' });
-
-// ============ REGISTRAZIONE ============
-router.get('/register', (req, res) => {
-  if (req.referrer) return res.redirect('/area-referral');
-  res.render('area-referral/register', { title: 'Conviértete en referido', errors: [], form: {}, submitted: false });
-});
-
-router.post('/register', regLimiter, A(async (req, res) => {
-  const b = req.body || {};
-  const form = {
-    firstName: String(b.firstName || '').trim(),
-    lastName: String(b.lastName || '').trim(),
-    email: String(b.email || '').toLowerCase().trim(),
-    phone: String(b.phone || '').trim(),
-    notes: String(b.notes || '').trim(),
-  };
-  const errors = [];
-  if (form.firstName.length < 2) errors.push('El nombre es obligatorio.');
-  if (form.lastName.length < 2) errors.push('Los apellidos son obligatorios.');
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) errors.push('Email no válido.');
-  if (!b.privacy) errors.push('Debes aceptar la política de privacidad.');
-
-  if (errors.length) {
-    return res.status(400).render('area-referral/register', { title: 'Conviértete en referido', errors, form, submitted: false });
-  }
-
-  // Email già usata?
-  const existing = await prisma.referrer.findUnique({ where: { email: form.email } });
-  if (existing) {
-    return res.status(400).render('area-referral/register', {
-      title: 'Conviértete en referido',
-      errors: ['Ya existe una solicitud o cuenta con este email. Si has olvidado la contraseña contacta con la administración.'],
-      form, submitted: false,
-    });
-  }
-
-  await prisma.referrer.create({
-    data: {
-      firstName: form.firstName.slice(0, 80),
-      lastName: form.lastName.slice(0, 80),
-      email: form.email.slice(0, 200),
-      phone: form.phone.slice(0, 50),
-      notes: form.notes.slice(0, 2000),
-      status: 'pending',
-    },
-  });
-
-  await audit.log(req, 'referrer.register', { details: { email: form.email } });
-
-  // Email di conferma al referrer ("solicitud recibida, en espera") — best-effort
-  try {
-    const s = await settings.all();
-    const siteName = s.site_name || 'Irene Monticelli';
-    const html = `
-      <div style="font-family:Arial,Helvetica,sans-serif;color:#1c1f26;max-width:560px">
-        <h2 style="color:#c8970a;font-family:Georgia,serif;font-weight:500;font-size:26px;margin:0 0 14px">¡Hemos recibido tu solicitud!</h2>
-        <p>Hola <strong>${escapeHtml(form.firstName)}</strong>,</p>
-        <p>Gracias por querer formar parte del <strong>Programa de Referidos de ${escapeHtml(siteName)}</strong>.</p>
-        <div style="background:#fffbe8;border:1px solid #ead9a8;border-radius:10px;padding:18px;margin:18px 0">
-          <p style="margin:0 0 6px"><strong>¿Y ahora qué?</strong></p>
-          <p style="margin:6px 0;font-size:14px;line-height:1.6">
-            Irene revisará personalmente tu solicitud. En cuanto sea <strong style="color:#1b6b3e">aprobada</strong>,
-            recibirás un segundo correo con tus credenciales de acceso al panel privado.
-          </p>
-          <p style="margin:6px 0;font-size:13px;color:#7a5800">
-            ⏳ El proceso suele tardar entre 1 y 5 días laborables.
-          </p>
-        </div>
-        <p style="font-size:13.5px;color:#5a5e6a;line-height:1.6">
-          No tienes que hacer nada más por ahora. Si tienes alguna duda urgente puedes escribir a
-          <a href="mailto:info@irenemonticelli.com" style="color:#c8970a">info@irenemonticelli.com</a>.
-        </p>
-        <p style="font-size:12px;color:#888;margin-top:24px">— ${escapeHtml(siteName)}</p>
-      </div>`;
-    const text =
-      `Hola ${form.firstName},\n\n` +
-      `¡Hemos recibido tu solicitud para el Programa de Referidos de ${siteName}!\n\n` +
-      `Irene revisará personalmente tu solicitud. En cuanto sea aprobada, recibirás un segundo correo con tus credenciales de acceso al panel privado.\n\n` +
-      `El proceso suele tardar entre 1 y 5 días laborables.\n\n` +
-      `Si tienes alguna duda urgente puedes escribir a info@irenemonticelli.com.\n\n` +
-      `— ${siteName}`;
-    await sendMail({
-      to: form.email,
-      subject: `Tu solicitud al programa de referidos · ${siteName}`,
-      text, html,
-    });
-  } catch (e) {
-    console.error('[area-referral] email conferma referrer fallita:', e.message);
-  }
-
-  // Notifica admin (best-effort)
-  try {
-    const s = await settings.all();
-    const adminEmail = s.contact_email || s.smtp_from_email || '';
-    if (adminEmail) {
-      const adminUrl = `${req.headers['x-forwarded-proto'] || req.protocol}://${req.headers['x-forwarded-host'] || req.headers.host}/admin/referrals?status=pending`;
-      await sendMail({
-        to: adminEmail,
-        subject: `[Referral] Nuova richiesta da ${form.firstName} ${form.lastName}`,
-        text: `Nuova richiesta di adesione referral:\n\nNome: ${form.firstName} ${form.lastName}\nEmail: ${form.email}\nTelefono: ${form.phone}\n\nMessaggio:\n${form.notes || '(nessuno)'}\n\nApprova o rifiuta su: ${adminUrl}`,
-        html: `
-          <div style="font-family:Arial,Helvetica,sans-serif;color:#1c1f26;max-width:560px">
-            <h2 style="color:#c8970a">Nuova richiesta referral</h2>
-            <p><strong>Nome:</strong> ${escapeHtml(form.firstName)} ${escapeHtml(form.lastName)}</p>
-            <p><strong>Email:</strong> ${escapeHtml(form.email)}</p>
-            <p><strong>Telefono:</strong> ${escapeHtml(form.phone || '—')}</p>
-            ${form.notes ? `<p><strong>Messaggio:</strong></p><p style="background:#fafbfc;padding:12px;border-radius:8px;white-space:pre-wrap">${escapeHtml(form.notes)}</p>` : ''}
-            <p style="margin:18px 0"><a href="${adminUrl}" style="background:#e0aa00;color:#1c1408;padding:10px 18px;border-radius:8px;text-decoration:none;font-weight:600">Vai alle richieste pending →</a></p>
-          </div>`,
-      });
-    }
-  } catch (e) {
-    console.error('[area-referral] notifica admin fallita:', e.message);
-  }
-
-  res.render('area-referral/register', { title: 'Conviértete en referido', errors: [], form: {}, submitted: true });
-}));
 
 // ============ LOGIN ============
 router.get('/login', (req, res) => {
@@ -183,10 +58,7 @@ router.post('/login', loginLimiter, A(async (req, res) => {
   }
   if (ref.status !== 'approved') {
     await audit.log(req, 'referrer.login.failed', { details: { email, reason: 'status:' + ref.status } });
-    var msg = ref.status === 'pending'
-      ? 'Tu solicitud aún está pendiente de aprobación. Recibirás un correo cuando esté activa.'
-      : 'Tu cuenta ha sido desactivada. Contacta con la administración.';
-    return res.status(401).render('area-referral/login', { title: 'Acceso', error: msg, email });
+    return res.status(401).render('area-referral/login', { title: 'Acceso', error: 'Tu cuenta no está activa. Contacta con la administración.', email });
   }
   const ok = await bcrypt.compare(password, ref.passwordHash);
   if (!ok) {
@@ -209,10 +81,23 @@ router.post('/logout', A(async (req, res) => {
   res.redirect('/area-referral/login');
 }));
 
+// ============ AGGIORNA IBAN (dal panel del referrer stesso) ============
+router.post('/iban', requireReferrer, A(async (req, res) => {
+  const iban = String((req.body && req.body.iban) || '').trim().replace(/\s+/g, '').toUpperCase().slice(0, 40);
+  await prisma.referrer.update({ where: { id: req.referrer.id }, data: { iban } });
+  await audit.log(req, 'referrer.iban.update', { entity: 'Referrer', entityId: String(req.referrer.id) });
+  req.session.flashIbanSaved = true;
+  res.redirect('/area-referral');
+}));
+
 // ============ DASHBOARD (con dati reali) ============
 router.get('/', requireReferrer, A(async (req, res) => {
   const referrerId = req.referrer.id;
-  const [codes, pendingAgg, paidAgg, allCommissions, totalCount] = await Promise.all([
+  const codeIdsRow = await prisma.referralCode.findMany({ where: { referrerId }, select: { id: true } });
+  const codeIds = codeIdsRow.map((c) => c.id);
+
+  const [codes, pendingAgg, paidAgg, allCommissions, totalCount,
+         clicksTotal, clicksConverted, sourcesData, paidBookingsCount] = await Promise.all([
     prisma.referralCode.findMany({ where: { referrerId }, orderBy: { createdAt: 'desc' } }),
     prisma.referralCommission.aggregate({ where: { referrerId, status: 'pending' }, _sum: { commissionAmt: true }, _count: { _all: true } }),
     prisma.referralCommission.aggregate({ where: { referrerId, status: 'paid' }, _sum: { commissionAmt: true }, _count: { _all: true } }),
@@ -223,6 +108,21 @@ router.get('/', requireReferrer, A(async (req, res) => {
       include: { code: true, booking: { select: { customerName: true, amount: true, createdAt: true } } },
     }),
     prisma.referralCommission.count({ where: { referrerId } }),
+    // Funnel — clic
+    codeIds.length ? prisma.referralClick.count({ where: { codeId: { in: codeIds } } }) : 0,
+    codeIds.length ? prisma.referralClick.count({ where: { codeId: { in: codeIds }, bookingId: { not: null } } }) : 0,
+    // Fonti (top 6)
+    codeIds.length ? prisma.referralClick.groupBy({
+      by: ['source'],
+      where: { codeId: { in: codeIds } },
+      _count: { _all: true },
+      orderBy: { _count: { source: 'desc' } },
+      take: 6,
+    }) : [],
+    // Booking con codice applicato (anche se NON pagate)
+    codeIds.length ? prisma.booking.count({
+      where: { referralCodeId: { in: codeIds } },
+    }) : 0,
   ]);
 
   // Serie mensile per Chart.js (ultimi 6 mesi)
@@ -254,10 +154,34 @@ router.get('/', requireReferrer, A(async (req, res) => {
     data: months.map((m) => +monthlyTotals[m.key].toFixed(2)),
   };
 
+  const ibanSaved = !!req.session.flashIbanSaved;
+  if (ibanSaved) delete req.session.flashIbanSaved;
+
+  // URL pubblico per costruire i link di share
+  const proto = req.headers['x-forwarded-proto'] || req.protocol;
+  const host = req.headers['x-forwarded-host'] || req.headers.host;
+  const baseUrl = `${proto}://${host}`;
+
+  // KPI funnel
+  const paidCount = paidAgg._count._all;
+  const funnel = {
+    clicks: clicksTotal,
+    applied: paidBookingsCount,        // booking con codice applicato (qualsiasi stato)
+    paid: paidCount,                    // commissioni status=paid o pending (acquisti pagati)
+    conversionRate: clicksTotal > 0 ? +((paidCount + pendingAgg._count._all) / clicksTotal * 100).toFixed(1) : 0,
+  };
+  const totalSources = sourcesData.reduce((s, x) => s + x._count._all, 0) || 1;
+  const sources = sourcesData.map((x) => ({
+    source: x.source || 'direct',
+    count: x._count._all,
+    pct: +((x._count._all / totalSources) * 100).toFixed(1),
+  }));
+
   res.render('area-referral/dashboard', {
     title: 'Panel',
     referrer: req.referrer,
     codes,
+    baseUrl,
     stats: {
       totalCommissions: totalCount,
       pendingAmount: pendingAgg._sum.commissionAmt || 0,
@@ -268,6 +192,9 @@ router.get('/', requireReferrer, A(async (req, res) => {
     },
     commissions: allCommissions,
     chart,
+    funnel,
+    sources,
+    ibanSaved,
   });
 }));
 

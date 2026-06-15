@@ -49,6 +49,41 @@
   .db-code-meta{font-size:11.5px;color:var(--muted);padding-top:12px;border-top:1px dashed rgba(0,0,0,.08);
     letter-spacing:.02em;position:relative;z-index:1}
 
+  /* === Share section inside code card === */
+  .db-code-share{position:relative;z-index:1;padding:14px 0 10px;border-top:1px dashed rgba(0,0,0,.08);display:flex;flex-direction:column;gap:8px}
+  .db-share-label{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:600}
+  .db-share-row{display:flex;gap:6px;align-items:stretch}
+  .db-share-url{flex:1;min-width:0;background:#fff;border:1px solid var(--line);border-radius:8px;padding:8px 10px;
+    font-family:Manrope,monospace;font-size:11.5px;color:var(--ink-soft);outline:none;letter-spacing:.01em}
+  .db-share-url:focus{border-color:var(--yellow)}
+  .db-copy-link{background:#fff !important;color:var(--ink) !important;border:1px solid var(--line);padding:6px 10px !important;font-size:10.5px !important}
+  .db-copy-link:hover{background:var(--ink) !important;color:#fff !important}
+  .db-share-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
+  .db-share-btn{padding:6px 12px;border-radius:99px;font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;text-decoration:none;transition:.18s}
+  .db-share-wa{background:#25D366;color:#fff}
+  .db-share-wa:hover{background:#1DA851;transform:translateY(-1px)}
+  .db-share-tg{background:#0088cc;color:#fff}
+  .db-share-tg:hover{background:#006da3;transform:translateY(-1px)}
+  .db-share-mail{background:#fff;color:var(--ink);border:1px solid var(--line)}
+  .db-share-mail:hover{background:var(--ink);color:#fff;text-decoration:none}
+
+  /* === Funnel KPI === */
+  .db-funnel{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px}
+  .db-funnel-cell{background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px 20px;position:relative;text-align:center;transition:.25s}
+  .db-funnel-cell:hover{transform:translateY(-2px);box-shadow:0 14px 32px -16px rgba(0,0,0,.08)}
+  .db-funnel-cell:not(:last-child)::after{content:"→";position:absolute;right:-12px;top:50%;transform:translateY(-50%);
+    color:var(--muted);font-size:18px;font-weight:700;z-index:2;background:var(--bg);width:24px;height:24px;display:flex;align-items:center;justify-content:center}
+  .db-funnel-ico{font-size:18px;margin-bottom:6px}
+  .db-funnel-val{font-family:var(--serif);font-size:30px;font-weight:500;line-height:1;color:var(--ink)}
+  .db-funnel-lbl{font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-top:8px}
+
+  .db-sources-list{display:flex;flex-direction:column;gap:10px;margin-top:14px}
+  .db-source-row{display:flex;align-items:center;gap:10px;font-size:13.5px}
+  .db-source-name{flex:0 0 110px;font-weight:500;text-transform:capitalize}
+  .db-source-bar{flex:1;background:#f4f5f8;border-radius:99px;height:8px;overflow:hidden}
+  .db-source-bar-fill{height:100%;background:linear-gradient(90deg,var(--yellow),var(--yellow-d));border-radius:99px}
+  .db-source-count{flex:0 0 80px;text-align:right;color:var(--muted);font-size:12px}
+
   /* === KPI === */
   .db-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin-bottom:36px}
   .db-stat{background:#fff;border-radius:16px;padding:24px 26px;border:1px solid var(--line);position:relative;overflow:hidden;transition:.25s}
@@ -93,6 +128,9 @@
     .db-table th:nth-child(2),.db-table td:nth-child(2){display:none}
     .db-chart-canvas{height:200px}
     .db-section,.db-chart-card,.db-code-card{padding:20px 18px}
+    .db-funnel{grid-template-columns:1fr 1fr;gap:10px}
+    .db-funnel-cell:not(:last-child)::after{display:none}
+    .db-share-actions .db-share-btn{padding:5px 10px;font-size:10px}
   }
 </style>
 
@@ -133,17 +171,33 @@
     <% } else { %>
     <div class="db-codes-grid">
       <% codes.forEach(function(c){ %>
+        <% var shareUrl = baseUrl + '/pro-dance?ref=' + c.code; %>
         <div class="db-code-card <%= c.active ? '' : 'is-off' %>">
           <div class="db-code-top">
             <span class="db-code-value"><%= c.code %></span>
-            <button type="button" class="db-code-copy" data-code="<%= c.code %>">
+            <button type="button" class="db-code-copy" data-copy="<%= c.code %>">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-              Copiar
+              Copiar código
             </button>
           </div>
           <div class="db-code-perks">
             <div class="db-code-perks-row">🎁 <span>Descuento cliente: <strong><%= c.discountValue %><%= c.discountType==='fixed' ? ' €' : '%' %></strong></span></div>
             <div class="db-code-perks-row">💰 <span>Tu comisión: <strong style="color:#1b6b3e"><%= c.commissionPct %>%</strong> sobre el neto</span></div>
+          </div>
+          <div class="db-code-share">
+            <div class="db-share-label">🔗 Enlace para compartir</div>
+            <div class="db-share-row">
+              <input type="text" class="db-share-url" value="<%= shareUrl %>" readonly>
+              <button type="button" class="db-code-copy db-copy-link" data-copy="<%= shareUrl %>">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                Copiar
+              </button>
+            </div>
+            <div class="db-share-actions">
+              <a href="https://wa.me/?text=<%= encodeURIComponent('¡Te recomiendo Pro Dance Experience! Usa mi código ' + c.code + ' o reserva con mi enlace: ' + shareUrl) %>" target="_blank" rel="noopener" class="db-share-btn db-share-wa">WhatsApp</a>
+              <a href="https://t.me/share/url?url=<%= encodeURIComponent(shareUrl) %>&text=<%= encodeURIComponent('Usa mi código ' + c.code) %>" target="_blank" rel="noopener" class="db-share-btn db-share-tg">Telegram</a>
+              <a href="mailto:?subject=<%= encodeURIComponent('Pro Dance Experience · código ' + c.code) %>&body=<%= encodeURIComponent('Te recomiendo Irene Monticelli — usa mi código ' + c.code + ' o este enlace: ' + shareUrl) %>" class="db-share-btn db-share-mail">Email</a>
+            </div>
           </div>
           <div class="db-code-meta">
             <%= c.usedCount %> us<%= c.usedCount===1?'o':'os' %><% if (c.maxUses) { %> / <%= c.maxUses %><% } %>
@@ -180,6 +234,60 @@
     </div>
   </div>
 
+  <!-- ===== FUNNEL ANALYTICS ===== -->
+  <div class="db-section">
+    <div class="db-section-head">
+      <div>
+        <h3>Embudo de <i>conversión</i></h3>
+        <p>Cómo se convierten los clics de tu enlace en ventas reales.</p>
+      </div>
+      <% if (funnel.conversionRate > 0) { %>
+        <div style="text-align:right">
+          <div style="font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:600">Conversión</div>
+          <div style="font-family:var(--serif);font-size:32px;font-weight:500;color:var(--yellow-d);line-height:1"><%= funnel.conversionRate %>%</div>
+        </div>
+      <% } %>
+    </div>
+
+    <div class="db-funnel">
+      <div class="db-funnel-cell">
+        <div class="db-funnel-ico">👁️</div>
+        <div class="db-funnel-val"><%= funnel.clicks %></div>
+        <div class="db-funnel-lbl">Clics</div>
+      </div>
+      <div class="db-funnel-cell">
+        <div class="db-funnel-ico">🛒</div>
+        <div class="db-funnel-val"><%= funnel.applied %></div>
+        <div class="db-funnel-lbl">Aplicado</div>
+      </div>
+      <div class="db-funnel-cell">
+        <div class="db-funnel-ico">💳</div>
+        <div class="db-funnel-val"><%= funnel.paid %></div>
+        <div class="db-funnel-lbl">Pagado</div>
+      </div>
+      <div class="db-funnel-cell" style="background:linear-gradient(135deg,#fffbe8,#fff);border-color:rgba(245,197,24,.4)">
+        <div class="db-funnel-ico">💰</div>
+        <div class="db-funnel-val"><%= stats.totalEarnings.toFixed(2) %> €</div>
+        <div class="db-funnel-lbl">Ganado</div>
+      </div>
+    </div>
+
+    <% if (sources && sources.length) { %>
+      <div style="margin-top:14px">
+        <div style="font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:4px">¿Desde dónde vienen?</div>
+        <div class="db-sources-list">
+          <% sources.forEach(function(s){ %>
+            <div class="db-source-row">
+              <span class="db-source-name"><%= s.source %></span>
+              <span class="db-source-bar"><span class="db-source-bar-fill" style="width:<%= s.pct %>%"></span></span>
+              <span class="db-source-count"><%= s.count %> · <%= s.pct %>%</span>
+            </div>
+          <% }) %>
+        </div>
+      </div>
+    <% } %>
+  </div>
+
   <!-- ===== CHART ===== -->
   <div class="db-chart-card">
     <div class="db-chart-head">
@@ -191,6 +299,31 @@
     <div class="db-chart-canvas">
       <canvas id="dbChart"></canvas>
     </div>
+  </div>
+
+  <!-- ===== IBAN (datos de pago) ===== -->
+  <div class="db-section">
+    <div class="db-section-head">
+      <div>
+        <h3>Datos de <i>pago</i></h3>
+        <p>Necesario para recibir las comisiones por transferencia.</p>
+      </div>
+    </div>
+    <% if (typeof ibanSaved !== 'undefined' && ibanSaved) { %>
+      <div style="background:#e7f3ec;border:1px solid #aedabe;color:#1b6b3e;padding:10px 14px;border-radius:8px;margin-bottom:14px;font-size:13.5px">✓ IBAN guardado correctamente.</div>
+    <% } %>
+    <form method="post" action="/area-referral/iban" style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <input type="text" name="iban" value="<%= referrer.iban || '' %>" placeholder="ES00 0000 0000 0000 0000 0000"
+        style="flex:1;min-width:280px;padding:14px 16px;border:1.5px solid var(--line);border-radius:10px;background:#fff;
+        font-family:Manrope,Consolas,monospace;font-size:14.5px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--ink);outline:none;transition:border-color .2s">
+      <button type="submit" style="padding:14px 26px;background:var(--ink);color:#fff;border:0;border-radius:10px;font-family:inherit;font-size:13.5px;font-weight:600;letter-spacing:.04em;cursor:pointer;text-transform:uppercase;transition:.2s">
+        Guardar IBAN
+      </button>
+    </form>
+    <p style="font-size:12.5px;color:var(--muted);margin:10px 0 0;line-height:1.5">
+      <% if (referrer.iban) { %>Actualizado. Puedes modificarlo en cualquier momento.<% } else { %>Sin tu IBAN no podremos abonarte las comisiones.<% } %>
+    </p>
   </div>
 
   <!-- ===== DETTAGLIO COMMISSIONI ===== -->
@@ -237,17 +370,16 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <script>
 (function(){
-  // Copy code to clipboard
+  // Copy to clipboard (codice o link)
   document.querySelectorAll('.db-code-copy').forEach(function(btn){
     btn.addEventListener('click', function(){
-      var c = btn.getAttribute('data-code');
+      var c = btn.getAttribute('data-copy') || btn.getAttribute('data-code');
       navigator.clipboard.writeText(c).then(function(){
         var orig = btn.innerHTML;
         btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Copiado';
         btn.classList.add('copied');
         setTimeout(function(){ btn.innerHTML = orig; btn.classList.remove('copied'); }, 1800);
       }).catch(function(){
-        // fallback
         var ta = document.createElement('textarea');
         ta.value = c; document.body.appendChild(ta); ta.select();
         try { document.execCommand('copy'); } catch(e){}

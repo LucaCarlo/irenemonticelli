@@ -1,6 +1,7 @@
 const express = require('express');
 const prisma = require('../lib/db');
 const { requirePermission } = require('../middleware/rbac');
+const audit = require('../lib/audit');
 
 const router = express.Router();
 const A = (fn) => (req, res, next) => Promise.resolve(fn(req, res, next)).catch(next);
@@ -200,8 +201,19 @@ router.post('/:id(\\d+)', A(async (req, res) => {
 }));
 
 router.post('/:id(\\d+)/status', A(async (req, res) => {
+  const id = +req.params.id;
   const s = STATUSES.includes(req.body.status) ? req.body.status : 'pending';
-  await prisma.booking.update({ where: { id: +req.params.id }, data: { status: s } });
+  const before = await prisma.booking.findUnique({
+    where: { id },
+    select: { status: true, paymentStatus: true, customerEmail: true, amount: true },
+  });
+  await prisma.booking.update({ where: { id }, data: { status: s } });
+  if (before && before.status !== s) {
+    audit.log(req, 'booking.status.change', {
+      entity: 'booking', entityId: String(id),
+      details: { from: before.status, to: s, paymentStatus: before.paymentStatus, customerEmail: before.customerEmail, amount: before.amount },
+    }).catch(() => {});
+  }
   req.flash('success', 'Stato prenotazione aggiornato.');
   res.redirect('/admin/bookings');
 }));

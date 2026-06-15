@@ -7,6 +7,28 @@ const { sendBookingConfirmation } = require('../lib/bookingmail');
 const RC = require('../lib/referral-calc');
 const settings = require('../lib/settings');
 const { sendMail } = require('../lib/mailer');
+const audit = require('../lib/audit');
+
+// Risolve un bookingId a partire dall'evento Stripe, anche se metadata.bookingId manca.
+// Per checkout.session.completed: fallback su stripeSessionId.
+// Per payment_intent.*: fallback su stripePaymentIntent.
+async function resolveBookingId(obj, kind) {
+  let id = parseInt(obj && obj.metadata && obj.metadata.bookingId, 10);
+  if (id) return id;
+  try {
+    if (kind === 'session' && obj && obj.id) {
+      const b = await prisma.booking.findFirst({ where: { stripeSessionId: obj.id }, select: { id: true } });
+      if (b) return b.id;
+    }
+    if (kind === 'pi' && obj && obj.id) {
+      const b = await prisma.booking.findFirst({ where: { stripePaymentIntent: obj.id }, select: { id: true } });
+      if (b) return b.id;
+    }
+  } catch (e) {
+    console.error('[stripe-webhook] resolveBookingId lookup error', e.message);
+  }
+  return null;
+}
 
 const router = express.Router();
 
@@ -102,10 +124,15 @@ router.post('/stripe/webhook', express.raw({ type: '*/*' }), async (req, res) =>
     return res.status(400).send(`Webhook Error: ${e.message}`);
   }
 
+  // Audit log: registra ogni evento ricevuto (best-effort)
+  const fakeReq = { headers: req.headers, ip: req.ip, user: null };
+  let resolvedBookingId = null;
+
   try {
     if (event.type === 'checkout.session.completed') {
       const s = event.data.object;
-      const bookingId = parseInt(s.metadata && s.metadata.bookingId, 10);
+      const bookingId = await resolveBookingId(s, 'session');
+      resolvedBookingId = bookingId;
       if (bookingId) {
         await prisma.booking.update({
           where: { id: bookingId },
@@ -121,10 +148,13 @@ router.post('/stripe/webhook', express.raw({ type: '*/*' }), async (req, res) =>
         // Email di conferma con riepilogo (non bloccare il webhook se SMTP off)
         try { await sendBookingConfirmation(bookingId); }
         catch (e) { console.error('[booking-mail] invio fallito:', e.message); }
+      } else {
+        console.warn('[stripe-webhook] checkout.session.completed: bookingId non risolto', s.id);
       }
     } else if (event.type === 'payment_intent.succeeded') {
       const pi = event.data.object;
-      const bookingId = parseInt(pi.metadata && pi.metadata.bookingId, 10);
+      const bookingId = await resolveBookingId(pi, 'pi');
+      resolvedBookingId = bookingId;
       if (bookingId) {
         await prisma.booking.update({
           where: { id: bookingId },
@@ -138,23 +168,39 @@ router.post('/stripe/webhook', express.raw({ type: '*/*' }), async (req, res) =>
         await createCommissionIfNeeded(bookingId).catch((e) => console.error('[commission] create fallita:', e.message));
         try { await sendBookingConfirmation(bookingId); }
         catch (e) { console.error('[booking-mail] invio fallito:', e.message); }
+      } else {
+        console.warn('[stripe-webhook] payment_intent.succeeded: bookingId non risolto', pi.id);
       }
     } else if (event.type === 'checkout.session.expired') {
       const s = event.data.object;
-      const bookingId = parseInt(s.metadata && s.metadata.bookingId, 10);
+      const bookingId = await resolveBookingId(s, 'session');
+      resolvedBookingId = bookingId;
       if (bookingId) {
         await prisma.booking.update({ where: { id: bookingId }, data: { paymentStatus: 'failed' } }).catch(() => {});
       }
     } else if (event.type === 'payment_intent.payment_failed') {
       const pi = event.data.object;
-      const bookingId = parseInt(pi.metadata && pi.metadata.bookingId, 10);
+      const bookingId = await resolveBookingId(pi, 'pi');
+      resolvedBookingId = bookingId;
       if (bookingId) {
         await prisma.booking.update({ where: { id: bookingId }, data: { paymentStatus: 'failed' } }).catch(() => {});
       }
     }
   } catch (e) {
     console.error('[stripe-webhook] handler error', e.message);
+    audit.log(fakeReq, 'stripe.webhook.error', {
+      entity: 'stripeEvent', entityId: (event && event.id) || '',
+      details: { type: event && event.type, error: e.message, bookingId: resolvedBookingId },
+    }).catch(() => {});
+    return res.json({ received: true });
   }
+
+  // Audit success
+  audit.log(fakeReq, 'stripe.webhook.received', {
+    entity: 'stripeEvent', entityId: (event && event.id) || '',
+    details: { type: event && event.type, bookingId: resolvedBookingId },
+  }).catch(() => {});
+
   res.json({ received: true });
 });
 

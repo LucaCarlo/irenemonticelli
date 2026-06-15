@@ -4,11 +4,10 @@
 
   <div class="fs-page-head">
     <div>
-      <h2>Referrer #<%= referrer.id %></h2>
+      <h2>Referral <%= referrer.firstName %> <%= referrer.lastName %></h2>
       <p>
-        Stato:
-        <% if (referrer.status==='pending') { %><strong style="color:#7a5800">In attesa di approvazione</strong>
-        <% } else if (referrer.status==='approved') { %><strong style="color:#1b6b3e">Attivo</strong>
+        <%= referrer.email %> ·
+        <% if (referrer.status==='approved') { %><strong style="color:#1b6b3e">Attivo</strong>
         <% } else { %><strong style="color:#8a2a1c">Disattivato</strong><% } %>
         · Registrato il <%= new Date(referrer.createdAt).toLocaleDateString('it-IT',{day:'2-digit',month:'long',year:'numeric'}) %>
       </p>
@@ -42,6 +41,11 @@
         <label class="field-lbl">Telefono</label>
         <input type="text" name="phone" value="<%= referrer.phone %>">
       </div>
+      <div class="field field-full">
+        <label class="field-lbl">IBAN (per pagamento commissioni)</label>
+        <input type="text" name="iban" value="<%= referrer.iban %>" placeholder="ES00 0000 0000 0000 0000 0000" style="font-family:Consolas,Menlo,monospace;letter-spacing:.06em">
+        <div class="field-help">Il referrer può modificarlo anche dalla sua dashboard.</div>
+      </div>
     </div>
   </section>
 
@@ -69,11 +73,28 @@
     <textarea name="internalNotes" rows="4" placeholder="Aggiungi note private…"><%= referrer.internalNotes %></textarea>
   </section>
 
-  <div class="fs-actions">
-    <a class="btn btn-ghost" href="/admin/referrals">Annulla</a>
-    <button class="btn btn-primary" type="submit">💾 Salva modifiche</button>
-  </div>
 </form>
+
+<!-- Barra azioni fissa in basso (sempre visibile, anche scrollando nelle sezioni codici/stats) -->
+<div class="ref-fixed-actions">
+  <a class="btn btn-ghost" href="/admin/referrals">Annulla</a>
+  <button class="btn btn-primary" type="submit" form="referrerForm">💾 Salva modifiche</button>
+</div>
+<style>
+  .ref-fixed-actions{
+    position:fixed; bottom:0; left:var(--sb-w); right:0; z-index:30;
+    background:rgba(255,255,255,.96); backdrop-filter:blur(8px);
+    border-top:1px solid var(--line); box-shadow:0 -8px 24px -10px rgba(0,0,0,.08);
+    padding:14px 30px;
+    display:flex; gap:12px; justify-content:flex-end; align-items:center;
+  }
+  .ref-fixed-actions .btn{min-width:140px; justify-content:center}
+  /* Spazio sotto per non coprire il contenuto (sotto codici/stats) */
+  .ref-fixed-pad{height:110px}
+  @media (max-width:880px){
+    .ref-fixed-actions{left:0; padding:12px 16px}
+  }
+</style>
 
 <!-- ========== STATISTICHE ========== -->
 <% if (referrer.status === 'approved' && stats) { %>
@@ -103,6 +124,58 @@
 </div>
 <% } %>
 
+<!-- ========== ANALYTICS LINK (FUNNEL + SOURCES) ========== -->
+<% if (referrer.status === 'approved' && stats) { %>
+<div class="fs-section" style="margin-top:24px">
+  <div class="fs-section-head">
+    <div class="fs-section-ico" style="background:#e3f0ff;color:#0d5290">📊</div>
+    <div>
+      <h3 class="fs-section-title">Analytics link</h3>
+      <p class="fs-section-sub">Funnel di conversione del link tracciato <code>?ref=CODE</code> condiviso dal referrer.</p>
+    </div>
+  </div>
+
+  <!-- Funnel KPI -->
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px">
+    <div style="background:#fafbfc;border:1px solid var(--line);border-radius:10px;padding:14px 16px;text-align:center">
+      <div style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:700">👁 Clic</div>
+      <div style="font-family:Georgia,serif;font-size:26px;margin-top:6px;color:var(--ink)"><%= stats.clicks %></div>
+    </div>
+    <div style="background:#fafbfc;border:1px solid var(--line);border-radius:10px;padding:14px 16px;text-align:center">
+      <div style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:700">🛒 Applicato</div>
+      <div style="font-family:Georgia,serif;font-size:26px;margin-top:6px;color:var(--ink)"><%= stats.applied %></div>
+    </div>
+    <div style="background:#e7f3ec;border:1px solid #aedabe;border-radius:10px;padding:14px 16px;text-align:center">
+      <div style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#1b6b3e;font-weight:700">💳 Pagato</div>
+      <div style="font-family:Georgia,serif;font-size:26px;margin-top:6px;color:#1b6b3e"><%= stats.paid %></div>
+    </div>
+    <div style="background:#fffbe8;border:1px solid #ead9a8;border-radius:10px;padding:14px 16px;text-align:center">
+      <div style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#7a5800;font-weight:700">📈 Conv. rate</div>
+      <div style="font-family:Georgia,serif;font-size:26px;margin-top:6px;color:var(--ink)"><%= stats.conversionRate %>%</div>
+    </div>
+  </div>
+
+  <% if (sources && sources.length) { %>
+    <div style="margin-top:14px">
+      <div style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:700;margin-bottom:10px">Fonti del traffico</div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <% sources.forEach(function(s){ %>
+          <div style="display:flex;align-items:center;gap:10px;font-size:13.5px">
+            <span style="flex:0 0 110px;font-weight:600;text-transform:capitalize"><%= s.source %></span>
+            <span style="flex:1;background:#f4f5f8;border-radius:99px;height:8px;overflow:hidden">
+              <span style="display:block;height:100%;background:linear-gradient(90deg,#F5C518,#c8970a);width:<%= s.pct %>%;border-radius:99px"></span>
+            </span>
+            <span style="flex:0 0 80px;text-align:right;color:var(--muted);font-size:12px"><%= s.count %> · <%= s.pct %>%</span>
+          </div>
+        <% }) %>
+      </div>
+    </div>
+  <% } else if (stats.clicks === 0) { %>
+    <p class="muted" style="padding:16px;background:#fafbfc;border-radius:8px;margin:8px 0 0;font-size:13.5px">Nessun click registrato ancora. Quando le persone apriranno il link <code>https://irenemonticelli.com/pro-dance?ref=CODE</code> i dati appariranno qui.</p>
+  <% } %>
+</div>
+<% } %>
+
 <!-- ========== CODICI SCONTO ========== -->
 <% if (referrer.status === 'approved') { %>
 <div class="fs-section" style="margin-top:24px">
@@ -121,6 +194,7 @@
           <th>Codice</th>
           <th>Sconto cliente</th>
           <th>Commissione %</th>
+          <th>Clic link</th>
           <th>Usi</th>
           <th>Scadenza</th>
           <th>Stato</th>
@@ -132,6 +206,7 @@
             <td><code style="background:#fffbe8;color:#7a5800;font-weight:700;padding:3px 10px;border-radius:6px;font-size:13px;letter-spacing:.05em"><%= c.code %></code></td>
             <td><strong><%= c.discountValue %><%= c.discountType==='fixed' ? ' €' : ' %' %></strong></td>
             <td><strong style="color:#1b6b3e"><%= c.commissionPct %> %</strong></td>
+            <td>👁 <strong><%= c.clicks || 0 %></strong></td>
             <td><%= c.usedCount %><%= c.maxUses ? ' / '+c.maxUses : '' %></td>
             <td><%= c.validUntil ? new Date(c.validUntil).toLocaleDateString('it-IT') : '—' %></td>
             <td><% if (c.active) { %><span class="badge badge-ok">attivo</span><% } else { %><span class="badge badge-off">disattivo</span><% } %></td>
@@ -201,4 +276,7 @@
   </details>
 </div>
 <% } %>
+
+<!-- Spazio sotto le sezioni per non far coprire dall'action bar fissa -->
+<div class="ref-fixed-pad"></div>
 <%- include('../partials/footer') %>
