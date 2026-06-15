@@ -1,0 +1,130 @@
+<%- include('../partials/header') %>
+
+<div class="card">
+  <div class="card-head">
+    <div>
+      <h2>Coupon</h2>
+      <p class="muted" style="margin:4px 0 0;font-size:13.5px">Tutti i codici sconto associati ai referral, in un'unica vista.</p>
+    </div>
+    <a class="btn btn-ghost" href="/admin/referrals">← Referral</a>
+  </div>
+
+  <!-- KPI -->
+  <div class="cp-kpi-grid">
+    <div class="cp-kpi"><div class="cp-kpi-lbl">Coupon totali</div><div class="cp-kpi-val"><%= kpi.totalCodes %></div></div>
+    <div class="cp-kpi"><div class="cp-kpi-lbl">Attivi</div><div class="cp-kpi-val" style="color:#1b6b3e"><%= kpi.activeCodes %></div></div>
+    <div class="cp-kpi"><div class="cp-kpi-lbl">Disattivati</div><div class="cp-kpi-val" style="color:#9b2727"><%= kpi.totalCodes - kpi.activeCodes %></div></div>
+    <div class="cp-kpi"><div class="cp-kpi-lbl">Usi totali</div><div class="cp-kpi-val"><%= kpi.totalUses %></div></div>
+  </div>
+
+  <%- include('../partials/dt-toolbar', {
+    params, total, totalUnfiltered,
+    entitySingular: 'coupon', entityPlural: 'coupon',
+    basePath: '/admin/referrals/coupons',
+    searchPlaceholder: 'Cerca per codice, referrer o email…',
+    extraFilters: [
+      { name: 'status', value: status, options: [
+        { val: '', label: 'Tutti gli stati' },
+        { val: 'active', label: 'Attivi' },
+        { val: 'inactive', label: 'Disattivati' },
+      ] },
+    ],
+  }) %>
+
+  <% if (!codes.length) { %>
+    <p class="muted" style="padding:50px 20px;text-align:center">Nessun coupon trovato.</p>
+  <% } else { %>
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr>
+            <%- include('../partials/dt-th', { label: 'Codice', sortKey: 'code', params, basePath: '/admin/referrals/coupons' }) %>
+            <th>Referral</th>
+            <%- include('../partials/dt-th', { label: 'Sconto', sortKey: 'discountValue', params, basePath: '/admin/referrals/coupons' }) %>
+            <%- include('../partials/dt-th', { label: 'Commiss.', sortKey: 'commissionPct', params, basePath: '/admin/referrals/coupons' }) %>
+            <th>Pacchetti</th>
+            <th title="Click totali">👁</th>
+            <%- include('../partials/dt-th', { label: 'Usi', sortKey: 'usedCount', params, basePath: '/admin/referrals/coupons' }) %>
+            <th>Scadenza</th>
+            <%- include('../partials/dt-th', { label: 'Stato', sortKey: 'active', params, basePath: '/admin/referrals/coupons' }) %>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% codes.forEach(function(c){
+               var isExpired = c.validUntil && new Date(c.validUntil) < new Date();
+               var isExhausted = c.maxUses && c.usedCount >= c.maxUses;
+          %>
+            <tr class="<%= !c.active ? 'is-off' : '' %>">
+              <td>
+                <code style="background:#fffbe8;color:#7a5800;font-weight:700;padding:4px 10px;border-radius:6px;font-size:13px;letter-spacing:.05em;font-family:'Courier New',monospace"><%= c.code %></code>
+              </td>
+              <td>
+                <% if (c.referrer) { %>
+                  <a href="/admin/referrals/<%= c.referrer.id %>/edit" style="color:#1c1f26;text-decoration:none">
+                    <strong><%= c.referrer.firstName %> <%= c.referrer.lastName %></strong>
+                    <div class="muted" style="font-size:11.5px;margin-top:2px"><%= c.referrer.email %></div>
+                  </a>
+                <% } else { %>
+                  <span class="muted">—</span>
+                <% } %>
+              </td>
+              <td><strong><%= c.discountValue %><%= c.discountType==='fixed' ? '€' : '%' %></strong></td>
+              <td><strong style="color:#1b6b3e"><%= c.commissionPct %>%</strong></td>
+              <td>
+                <% if (!c.plans || !c.plans.length) { %>
+                  <span class="chip chip-ok">Tutti</span>
+                <% } else { %>
+                  <% c.plans.forEach(function(p){ %>
+                    <span class="chip" style="background:#fff3d6;color:#7a5800;margin:1px"><%= p.name %></span>
+                  <% }) %>
+                <% } %>
+              </td>
+              <td><%= c._count.clicks %></td>
+              <td>
+                <strong><%= c.usedCount %></strong><% if (c.maxUses) { %><span class="muted">/<%= c.maxUses %></span><% } %>
+                <% if (c._count.bookings > 0) { %><div class="muted" style="font-size:11px;margin-top:2px"><%= c._count.bookings %> prenot.</div><% } %>
+              </td>
+              <td>
+                <% if (c.validUntil) { %>
+                  <span class="<%= isExpired ? 'cp-expired' : '' %>"><%= new Date(c.validUntil).toLocaleDateString('it-IT',{day:'2-digit',month:'short',year:'numeric'}) %></span>
+                <% } else { %>—<% } %>
+              </td>
+              <td>
+                <% if (!c.active) { %><span class="badge badge-off">disattivo</span>
+                <% } else if (isExpired) { %><span class="badge badge-off">scaduto</span>
+                <% } else if (isExhausted) { %><span class="badge badge-off">esaurito</span>
+                <% } else { %><span class="badge badge-ok">attivo</span><% } %>
+              </td>
+              <td class="row-actions" style="white-space:nowrap">
+                <a class="btn-ico" href="/admin/referrals/<%= c.referrer.id %>/edit" title="Modifica codice (vai al referrer)">✎</a>
+                <form method="post" action="/admin/referrals/codes/<%= c.id %>/toggle" style="display:inline">
+                  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                  <button type="submit" class="btn-ico <%= c.active?'btn-ico-hide':'btn-ico-show' %>" title="<%= c.active?'Disattiva':'Riattiva' %>"><%- include('../partials/ico', { name: c.active?'eye':'eye-off' }) %></button>
+                </form>
+                <form method="post" action="/admin/referrals/codes/<%= c.id %>/delete" onsubmit="return confirm('Eliminare il coupon <%= c.code %>?')" style="display:inline">
+                  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                  <button type="submit" class="btn-ico btn-ico-danger" title="Elimina"><%- include('../partials/ico', { name:'trash' }) %></button>
+                </form>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+    <%- include('../partials/dt-pagination', { links, params, basePath: '/admin/referrals/coupons' }) %>
+  <% } %>
+</div>
+
+<style>
+  .cp-kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin:14px 0 18px}
+  .cp-kpi{background:#fafbfc;border:1px solid #eef0f4;border-radius:10px;padding:14px 16px}
+  .cp-kpi-lbl{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#7a8190;margin-bottom:5px}
+  .cp-kpi-val{font-family:'Fraunces',Georgia,serif;font-size:26px;font-weight:600;color:#1c1f26;line-height:1}
+  .cp-expired{color:#9b2727;font-weight:600}
+  tr.is-off{opacity:.55}
+  .chip{display:inline-block;padding:2px 8px;border-radius:11px;font-size:11px;font-weight:600;background:#eef0f4;color:#5a5e6a}
+  .chip-ok{background:#dff3e6;color:#1b6b3e}
+</style>
+
+<%- include('../partials/footer') %>

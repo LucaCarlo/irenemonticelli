@@ -73,15 +73,40 @@
           <div class="cal-event-body">
             <% if (!items.length) { %>
               <div class="cal-event-empty">Nessuna prenotazione</div>
-            <% } else { %>
-              <% items.forEach(function(b){ %>
+            <% } else {
+                 // Riordina per: mattina prima della tarde, poi per orario, poi per nome
+                 items.sort(function(x,y){
+                   var sx = x.segment==='AM'?0:(x.segment==='PM'?2:1);
+                   var sy = y.segment==='AM'?0:(y.segment==='PM'?2:1);
+                   if (sx !== sy) return sx - sy;
+                   var tx = (x.slots && x.slots[0]) || '99:99';
+                   var ty = (y.slots && y.slots[0]) || '99:99';
+                   return tx.localeCompare(ty) || (x.booking.customerName||'').localeCompare(y.booking.customerName||'');
+                 });
+            %>
+              <% items.forEach(function(it){ var b = it.booking; %>
                 <a class="cal-event-card" href="/admin/bookings/<%= b.id %>/edit">
                   <div class="cal-event-card-head">
                     <strong><%= b.customerName %></strong>
                     <span class="cal-status cal-status-<%= b.status %>"><%= b.status %></span>
                   </div>
+                  <!-- Orari / fascia / pack-row -->
+                  <div class="cal-event-card-slots">
+                    <% if (it.mode==='single_lessons' && it.slots && it.slots.length) { %>
+                      <% it.slots.forEach(function(t){ %><span class="cal-slot"><%= t %></span><% }) %>
+                    <% } else if (it.mode==='red' && it.segment==='AM') { %>
+                      <span class="cal-segment cal-seg-am">☀️ Mañana</span>
+                    <% } else if (it.mode==='red' && it.segment==='PM') { %>
+                      <span class="cal-segment cal-seg-pm">🌇 Tarde</span>
+                    <% } else if (it.mode==='red') { %>
+                      <span class="cal-segment cal-seg-warn">⚠️ fascia da impostare</span>
+                    <% } else { %>
+                      <span class="cal-segment cal-seg-all">📅 Tutto il giorno</span>
+                    <% } %>
+                  </div>
                   <div class="cal-event-card-sub">
                     <%= b.plan ? b.plan.name : '—' %>
+                    <% if ((b.participantsCount||1) > 1) { %> · <strong><%= b.participantsCount %> pax</strong><% } %>
                     <% if (b.amount) { %> · <strong><%= b.amount %>€</strong><% } %>
                   </div>
                   <div class="cal-event-card-meta"><%= b.customerEmail %></div>
@@ -110,9 +135,18 @@
             <span><%= day %></span>
             <% if(items.length){ %><span class="cal-badge"><%= items.length %></span><% } %>
           </div>
-          <% items.slice(0,5).forEach(function(b){ %>
-            <a class="cal-ev" href="/admin/bookings/<%= b.id %>/edit" title="<%= b.customerName %>">
-              <span class="cal-status-dot cal-status-<%= b.status %>"></span><%= b.customerName %>
+          <% items.slice(0,5).forEach(function(it){ var b = it.booking;
+               var slotLabel = '';
+               if (it.mode==='single_lessons' && it.slots && it.slots.length) slotLabel = it.slots.join(',');
+               else if (it.mode==='red' && it.segment==='AM') slotLabel = 'AM';
+               else if (it.mode==='red' && it.segment==='PM') slotLabel = 'PM';
+               else if (it.mode==='red') slotLabel = '⚠';
+               else slotLabel = '◯';
+          %>
+            <a class="cal-ev" href="/admin/bookings/<%= b.id %>/edit" title="<%= b.customerName %> · <%= b.plan?b.plan.name:'' %><%= slotLabel?(' · '+slotLabel):'' %>">
+              <span class="cal-status-dot cal-status-<%= b.status %>"></span>
+              <span class="cal-ev-time"><%= slotLabel %></span>
+              <span class="cal-ev-name"><%= b.customerName %></span>
             </a>
           <% }) %>
           <% if(items.length>5){ %><div class="muted" style="font-size:11px">+<%= items.length-5 %> altre</div><% } %>
@@ -159,6 +193,17 @@
   .cal-event-card-head strong{font-size:14px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .cal-event-card-sub{font-size:12.5px;color:#5a5e6a;margin-bottom:2px}
   .cal-event-card-meta{font-size:11px;color:#9aa1b2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .cal-event-card-slots{display:flex;flex-wrap:wrap;gap:4px;margin:4px 0 6px}
+  .cal-slot{font-size:11px;font-weight:700;padding:3px 8px;border-radius:4px;background:#1c1f26;color:#e0aa00;font-family:'Courier New',monospace;letter-spacing:.04em}
+  .cal-segment{font-size:11px;font-weight:700;padding:3px 8px;border-radius:4px}
+  .cal-seg-am{background:#fffbe8;color:#7a5800;border:1px solid #e8d99a}
+  .cal-seg-pm{background:#fde7d6;color:#8a4a1c;border:1px solid #e8b88a}
+  .cal-seg-all{background:#e7f3ec;color:#1b6b3e;border:1px solid #aedabe}
+  .cal-seg-warn{background:#ffe1dc;color:#8a2a1c;border:1px solid #f0a8a0}
+
+  .cal-ev-time{font-size:9.5px;background:#1c1f26;color:#e0aa00;padding:1px 5px;border-radius:3px;font-family:'Courier New',monospace;font-weight:700;flex-shrink:0;letter-spacing:.02em}
+  .cal-ev-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
   .cal-status{font-size:9.5px;padding:2px 6px;border-radius:99px;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
   .cal-status-confirmed{background:#d6f3df;color:#1b6b3e}
   .cal-status-pending{background:#fff3d6;color:#7a5800}

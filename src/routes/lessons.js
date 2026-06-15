@@ -119,6 +119,35 @@ router.post('/reorder', express.json(), A(async (req, res) => {
   res.json({ ok: true, updated: items.length });
 }));
 
+// GET partecipanti di una lezione (JSON, on-demand per UI espandibile).
+router.get('/:id(\\d+)/participants', A(async (req, res) => {
+  const lessonId = parseInt(req.params.id, 10);
+  const lesson = await prisma.lesson.findUnique({ where: { id: lessonId } });
+  if (!lesson) return res.status(404).json({ ok: false, error: 'not found' });
+  const data = await LC.computeEventParticipants(lesson.eventId);
+  const list = (data.participantsById.get(lessonId) || []).map((row) => ({
+    participantId: row.participant.id,
+    firstName: row.participant.firstName,
+    lastName: row.participant.lastName,
+    email: row.participant.email || '',
+    phone: row.participant.phone || '',
+    isMinor: !!row.participant.isMinor,
+    tutor: row.participant.tutorBlock ? {
+      firstName: row.participant.tutorBlock.firstName,
+      lastName: row.participant.tutorBlock.lastName,
+      email: row.participant.tutorBlock.email,
+      phone: row.participant.tutorBlock.phone,
+    } : null,
+    booking: {
+      id: row.booking.id,
+      customerName: row.booking.customerName,
+      plan: row.booking.plan ? row.booking.plan.name : '',
+      planMode: row.booking.plan ? row.booking.plan.bookingMode : '',
+    },
+  }));
+  res.json({ ok: true, lessonId, count: list.length, participants: list });
+}));
+
 router.post('/:id(\\d+)/delete', A(async (req, res) => {
   const id = parseInt(req.params.id, 10);
   const r = await prisma.lesson.findUnique({ where: { id } });

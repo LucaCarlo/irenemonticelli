@@ -81,6 +81,49 @@ function resolveRequestedLessonIds({ plan, event, allLessons, selection }) {
   return out;
 }
 
+// Carica le lessons di un evento + tutte le booking confermate+pagate.
+// Ritorna anche un dettaglio per-lezione: lista partecipanti (con tutorBlock se minore).
+// Ritorna { event, lessons, occupancy, byId, participantsById:Map<lessonId, [{participant, booking}]> }.
+async function computeEventParticipants(eventId) {
+  const event = await prisma.event.findUnique({
+    where: { id: eventId },
+    include: { lessons: true },
+  });
+  if (!event) return { event: null, lessons: [], participantsById: new Map() };
+
+  const lessons = event.lessons || [];
+  const participantsById = new Map(lessons.map((L) => [L.id, []]));
+
+  const bookings = await prisma.booking.findMany({
+    where: { eventId, status: 'confirmed', paymentStatus: 'paid' },
+    include: {
+      plan: true,
+      participants: { include: { tutorBlock: true }, orderBy: { sort: 'asc' } },
+    },
+  });
+
+  bookings.forEach((b) => {
+    if (!b.plan) return;
+    let items = {};
+    try { items = b.itemsJson ? JSON.parse(b.itemsJson) : {}; } catch (_) {}
+    const selection = (b.plan.bookingMode === 'single_lessons')
+      ? { lessons: items.lessons || [] }
+      : (b.plan.bookingMode === 'red')
+        ? { days: items.days || {} }
+        : {};
+    const requested = resolveRequestedLessonIds({ plan: b.plan, event, allLessons: lessons, selection });
+    // Partecipanti effettivi: se la booking ne ha registrati, uso quelli; altrimenti il pagante (booking legacy)
+    const peeps = (b.participants && b.participants.length)
+      ? b.participants
+      : [{ id: 0, firstName: b.firstName || b.customerName.split(' ')[0] || b.customerName, lastName: b.lastName || (b.customerName.split(' ').slice(1).join(' ')||''), email: b.customerEmail, phone: b.phone, isMinor: b.isMinor, tutorBlock: null }];
+    requested.forEach((lid) => {
+      peeps.forEach((p) => participantsById.get(lid).push({ participant: p, booking: b }));
+    });
+  });
+
+  return { event, lessons, participantsById };
+}
+
 // Carica le lessons di un evento + tutte le booking confermate+pagate dello stesso evento
 // (con planId e itemsJson) e calcola la occupancy attuale per ogni lesson.id.
 // Ritorna { lessons:[...], occupancy:Map<lessonId, count>, byId:Map<lessonId, lesson> }.
@@ -205,6 +248,7 @@ module.exports = {
   buildIsoForDayIndexMap,
   resolveRequestedLessonIds,
   computeEventOccupancy,
+  computeEventParticipants,
   getEventCapacityStatus,
   assertCapacity,
 };

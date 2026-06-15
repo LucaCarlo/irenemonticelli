@@ -83,6 +83,9 @@
             </label>
           </div>
           <div class="lesson-acts">
+            <% if (!l.isPause) { %>
+              <button type="button" class="btn btn-ghost btn-sm lesson-part-btn" data-id="<%= l.id %>" title="Vedi partecipanti">👥 <%= l._occupied %></button>
+            <% } %>
             <button form="lf-<%= l.id %>" class="btn btn-primary btn-sm" title="Salva">💾</button>
             <button form="lf-del-<%= l.id %>" class="btn btn-danger btn-sm" title="Elimina">×</button>
             <form id="lf-<%= l.id %>" method="post" action="/admin/lessons/<%= l.id %>" style="display:none">
@@ -130,6 +133,20 @@
       <button class="btn btn-primary">+ Aggiungi lezione</button>
     </div>
   </form>
+</div>
+
+<!-- Modal partecipanti (popolato via fetch on-demand) -->
+<div class="lp-modal" id="lpModal" hidden>
+  <div class="lp-modal-backdrop"></div>
+  <div class="lp-modal-panel">
+    <div class="lp-modal-head">
+      <h3 id="lpTitle">Partecipanti</h3>
+      <button type="button" class="btn-ico" id="lpClose" title="Chiudi">×</button>
+    </div>
+    <div class="lp-modal-body" id="lpBody">
+      <div class="muted" style="text-align:center;padding:30px">Caricamento…</div>
+    </div>
+  </div>
 </div>
 
 <div class="lesson-saver" id="lessonSaver" hidden>
@@ -199,6 +216,26 @@
     .lesson-grip{padding:0}
     .lesson-new-form{grid-template-columns:1fr 1fr}
   }
+
+  /* Modal partecipanti */
+  .lp-modal{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center}
+  .lp-modal-backdrop{position:absolute;inset:0;background:rgba(28,31,38,.55);backdrop-filter:blur(2px)}
+  .lp-modal-panel{position:relative;background:#fff;border-radius:14px;box-shadow:0 24px 60px rgba(0,0,0,.3);width:min(720px,92vw);max-height:85vh;display:flex;flex-direction:column;animation:lpIn .2s ease}
+  @keyframes lpIn{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:none}}
+  .lp-modal-head{display:flex;justify-content:space-between;align-items:center;padding:18px 24px;border-bottom:1px solid #eef0f4}
+  .lp-modal-head h3{margin:0;font-size:18px}
+  .lp-modal-body{padding:18px 24px;overflow:auto;flex:1}
+  .lp-count{font-size:13px;color:#5a5e6a;margin:0 0 16px}
+  .lp-grp{background:#fafbfc;border:1px solid #eef0f4;border-radius:10px;padding:12px 14px;margin-bottom:10px}
+  .lp-grp-head{font-size:13px;margin-bottom:8px;padding-bottom:8px;border-bottom:1px dashed #eef0f4}
+  .lp-grp-head a{color:#7a5800;font-weight:600;text-decoration:none}
+  .lp-grp-head a:hover{text-decoration:underline}
+  .lp-list{list-style:none;margin:0;padding:0}
+  .lp-list li{padding:6px 0;font-size:13.5px;line-height:1.55;border-bottom:1px dotted #eef0f4}
+  .lp-list li:last-child{border-bottom:0}
+  .lp-tutor{margin-top:3px;font-size:12px;color:#5a5e6a;padding-left:12px}
+  .chip{display:inline-block;padding:2px 7px;border-radius:11px;font-size:11px;font-weight:700}
+  .chip-warn{background:#fff3d6;color:#7a5800}
 </style>
 
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
@@ -252,6 +289,58 @@
       onEnd: persist,
     });
   });
+
+  /* ====== MODAL PARTECIPANTI ====== */
+  var modal = document.getElementById('lpModal');
+  var lpBody = document.getElementById('lpBody');
+  var lpTitle = document.getElementById('lpTitle');
+  function escapeHtml(s){ return String(s||'').replace(/[&<>"]/g, function(c){return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c];}); }
+  function openModal(lessonId, btn){
+    modal.hidden = false;
+    document.body.style.overflow = 'hidden';
+    var row = btn.closest('.lesson-row');
+    var time = row ? (row.querySelector('input[name=time]')||{}).value : '';
+    var title = row ? (row.querySelector('input[name=title]')||{}).value : '';
+    lpTitle.textContent = (time||'') + ' · ' + (title||'Lezione');
+    lpBody.innerHTML = '<div class="muted" style="text-align:center;padding:30px">Caricamento…</div>';
+    fetch('/admin/lessons/' + lessonId + '/participants', { credentials:'same-origin' })
+      .then(function(r){ return r.json(); })
+      .then(function(j){
+        if (!j.ok) { lpBody.innerHTML = '<p class="muted">Errore: '+escapeHtml(j.error||'')+'</p>'; return; }
+        if (!j.participants.length) { lpBody.innerHTML = '<p class="muted" style="text-align:center;padding:30px">Nessun partecipante iscritto.</p>'; return; }
+        var byBooking = {};
+        j.participants.forEach(function(p){
+          var k = p.booking.id;
+          if (!byBooking[k]) byBooking[k] = { booking: p.booking, list: [] };
+          byBooking[k].list.push(p);
+        });
+        var html = '<p class="lp-count"><strong>'+j.count+'</strong> persone iscritte in <strong>'+Object.keys(byBooking).length+'</strong> prenotazioni</p>';
+        Object.values(byBooking).forEach(function(grp){
+          html += '<div class="lp-grp">';
+          html += '<div class="lp-grp-head"><a href="/admin/bookings/'+grp.booking.id+'/edit">Prenotazione #'+grp.booking.id+' · '+escapeHtml(grp.booking.customerName)+'</a> <span class="muted">— '+escapeHtml(grp.booking.plan)+'</span></div>';
+          html += '<ul class="lp-list">';
+          grp.list.forEach(function(p){
+            html += '<li>';
+            html += '<strong>'+escapeHtml(p.firstName)+' '+escapeHtml(p.lastName)+'</strong>';
+            if (p.isMinor) html += ' <span class="chip chip-warn">MINORE</span>';
+            if (p.email) html += ' · <a href="mailto:'+escapeHtml(p.email)+'">'+escapeHtml(p.email)+'</a>';
+            if (p.phone) html += ' · '+escapeHtml(p.phone);
+            if (p.tutor) html += '<div class="lp-tutor">↳ Tutor: '+escapeHtml(p.tutor.firstName)+' '+escapeHtml(p.tutor.lastName)+' — '+escapeHtml(p.tutor.email)+' — '+escapeHtml(p.tutor.phone)+'</div>';
+            html += '</li>';
+          });
+          html += '</ul></div>';
+        });
+        lpBody.innerHTML = html;
+      })
+      .catch(function(){ lpBody.innerHTML = '<p class="muted">Errore di rete.</p>'; });
+  }
+  function closeModal(){ modal.hidden = true; document.body.style.overflow = ''; }
+  document.addEventListener('click', function(e){
+    var btn = e.target.closest('.lesson-part-btn');
+    if (btn) { openModal(parseInt(btn.dataset.id, 10), btn); return; }
+    if (e.target.id === 'lpClose' || e.target.classList.contains('lp-modal-backdrop')) closeModal();
+  });
+  document.addEventListener('keydown', function(e){ if (e.key === 'Escape') closeModal(); });
 })();
 </script>
 <%- include('../partials/footer') %>

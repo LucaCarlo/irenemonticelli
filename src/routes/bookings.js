@@ -84,43 +84,50 @@ router.get('/calendar', A(async (req, res) => {
     }
   }
 
-  // Helper: ritorna gli ISO date in cui la prenotazione effettivamente si svolge.
-  // - Pack Single: le date delle lezioni selezionate (itemsJson.lessons[].day)
-  // - Pack Red: i giorni selezionati (itemsJson.days = {iso: 'AM'|'PM'})
-  // - Pack Gold/Junior/altri: tutti i giorni dell'evento (start..end)
-  function eventDatesOfBooking(b) {
-    const out = new Set();
+  // Helper: per ogni ISO date in cui la booking si svolge, ritorna anche gli SLOT specifici del giorno.
+  // Output: [{ iso, slots: ['9:30',...], segment: 'AM'|'PM'|'ALL', mode }]
+  function bookingOccurrences(b) {
     let items = {};
     try { items = JSON.parse(b.itemsJson || '{}') || {}; } catch {}
     const mode = b.plan ? b.plan.bookingMode : '';
+    const map = new Map(); // iso → { slots:Set, segment }
+
     if (mode === 'single_lessons' && Array.isArray(items.lessons)) {
-      items.lessons.forEach((l) => { if (l && l.day) out.add(String(l.day).slice(0, 10)); });
+      items.lessons.forEach((l) => {
+        if (!l || !l.day) return;
+        const iso = String(l.day).slice(0, 10);
+        if (!map.has(iso)) map.set(iso, { slots: new Set(), segment: null });
+        if (l.slot) map.get(iso).slots.add(String(l.slot));
+      });
     } else if (mode === 'red' && items.days && typeof items.days === 'object') {
-      Object.keys(items.days).forEach((iso) => out.add(String(iso).slice(0, 10)));
+      Object.keys(items.days).forEach((iso) => {
+        map.set(String(iso).slice(0, 10), { slots: new Set(), segment: items.days[iso] });
+      });
     } else if (b.event && b.event.startDate && b.event.endDate) {
-      // Gold/Junior/etc → full event range
       const sd = new Date(b.event.startDate);
       const ed = new Date(b.event.endDate);
       const cur = new Date(sd.getFullYear(), sd.getMonth(), sd.getDate());
       while (cur <= ed) {
-        out.add(cur.toISOString().slice(0, 10));
+        map.set(cur.toISOString().slice(0, 10), { slots: new Set(), segment: 'ALL' });
         cur.setDate(cur.getDate() + 1);
       }
     }
-    return Array.from(out);
+    return Array.from(map.entries()).map(([iso, v]) => ({
+      iso, slots: Array.from(v.slots).sort(), segment: v.segment, mode,
+    }));
   }
 
-  // Raggruppamento per data evento
+  // Raggruppamento per data evento — ogni elemento è una "occorrenza" della booking quel giorno
   const byDay = {};
   const byIso = {};
   bookings.forEach((b) => {
-    const dates = eventDatesOfBooking(b);
-    dates.forEach((iso) => {
-      (byIso[iso] = byIso[iso] || []).push(b);
-      // In vista mensile: includo solo i giorni che cadono nel mese visualizzato
-      const dt = new Date(iso + 'T00:00:00');
+    const occs = bookingOccurrences(b);
+    occs.forEach((occ) => {
+      const cell = { booking: b, slots: occ.slots, segment: occ.segment, mode: occ.mode };
+      (byIso[occ.iso] = byIso[occ.iso] || []).push(cell);
+      const dt = new Date(occ.iso + 'T00:00:00');
       if (dt.getFullYear() === y && (dt.getMonth() + 1) === m) {
-        (byDay[dt.getDate()] = byDay[dt.getDate()] || []).push(b);
+        (byDay[dt.getDate()] = byDay[dt.getDate()] || []).push(cell);
       }
     });
   });

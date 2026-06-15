@@ -529,6 +529,64 @@ router.post('/codes/:codeId(\\d+)/delete', requirePermission('referrals.codes.ma
   res.redirect(`/admin/referrals/${c.referrerId}/edit`);
 }));
 
+// ============ COUPON: LISTA GLOBALE (tutti i ReferralCode con relativo referrer) ============
+router.get('/coupons', requirePermission('referrals.codes.manage'), A(async (req, res) => {
+  const dt = require('../lib/datatable');
+  const params = dt.parseParams(req, {
+    defaultSort: 'createdAt',
+    allowedSorts: ['code', 'discountValue', 'commissionPct', 'usedCount', 'active', 'createdAt'],
+  });
+  const status = String(req.query.status || '').trim(); // all | active | inactive | exhausted | expired
+
+  // Costruzione where
+  const where = {};
+  if (status === 'active') where.active = true;
+  if (status === 'inactive') where.active = false;
+  if (params.q) {
+    where.OR = [
+      { code: { contains: params.q.toUpperCase() } },
+      { referrer: { firstName: { contains: params.q, mode: 'insensitive' } } },
+      { referrer: { lastName: { contains: params.q, mode: 'insensitive' } } },
+      { referrer: { email: { contains: params.q, mode: 'insensitive' } } },
+    ];
+  }
+
+  const orderBy = {}; orderBy[params.sort] = params.dir;
+  const [totalUnfiltered, total, codes, allPlans] = await Promise.all([
+    prisma.referralCode.count(),
+    prisma.referralCode.count({ where }),
+    prisma.referralCode.findMany({
+      where,
+      include: {
+        referrer: { select: { id: true, firstName: true, lastName: true, email: true, status: true } },
+        plans: { select: { id: true, slug: true, name: true } },
+        _count: { select: { bookings: true, commissions: true, clicks: true } },
+      },
+      orderBy,
+      skip: params.skip,
+      take: params.take,
+    }),
+    prisma.plan.count({ where: { active: true } }),
+  ]);
+
+  // KPI aggregati su tutti i coupon (non solo paginati)
+  const kpi = await prisma.referralCode.aggregate({
+    _count: { _all: true },
+    _sum: { usedCount: true },
+  });
+  const activeCount = await prisma.referralCode.count({ where: { active: true } });
+
+  const totalPages = Math.max(1, Math.ceil(total / params.perPage));
+  const links = dt.pageLinks(params.page, totalPages);
+  params._extra = { status };
+
+  res.render('referrals/coupons', {
+    title: 'Coupon',
+    codes, status, params, total, totalUnfiltered, totalPages, links,
+    allPlans, kpi: { totalCodes: kpi._count._all, activeCodes: activeCount, totalUses: kpi._sum.usedCount || 0 },
+  });
+}));
+
 // ============ COMMISSIONI: LISTA GLOBALE ============
 router.get('/commissions', requirePermission('referrals.commissions.manage'), A(async (req, res) => {
   const dt = require('../lib/datatable');
