@@ -160,6 +160,9 @@ model Booking {
   // Token random per deep-link "Riprendi pagamento" → /reserva/resume/<token>
   // Generato alla creazione di una booking pending; null/empty su quelle gia' confermate.
   resumeToken   String?  @unique
+  // Marca le booking che sono solo BOZZE autosalvate (cliente non ha mai cliccato Confirmar):
+  // appaiono in carrelli abbandonati con tipo "bozza", non occupano posti.
+  isDraft       Boolean  @default(false)
   notes         String   @default("")
   // Dati fatturazione del pagante (opzionali — se compilati genera factura formale)
   billingAddress  String  @default("")

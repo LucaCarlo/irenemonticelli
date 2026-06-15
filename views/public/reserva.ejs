@@ -2130,13 +2130,47 @@ window.RV_RESUME = <%- resumeData ? JSON.stringify(resumeData) : 'null' %>;
       } catch (_) {}
     }
 
+    // Autosave SERVER-SIDE: appena il pagante ha nome + email valida, mandiamo una
+    // bozza al server. Apparira' in /admin/abandoned-carts come "💾 Bozza salvata".
+    // Throttle a 5s minimo tra chiamate per non sovraccaricare il server.
+    var lastServerSave = 0;
+    var serverDraftId = null;
+    var serverDraftToken = null;
+    function persistToServer() {
+      var P = null;
+      try { P = buildPayload(); } catch (e) { return; }
+      if (!P || !P.payer) return;
+      var fn = String(P.payer.firstName || '').trim();
+      var em = String(P.payer.email || '').trim();
+      // Min: nome >=2 e email che ha l'aspetto di una mail (contiene @ e .)
+      if (fn.length < 2 || em.length < 5 || em.indexOf('@') < 1 || em.indexOf('.') < 0) return;
+      var now = Date.now();
+      if (now - lastServerSave < 5000) return;  // throttle 5s
+      lastServerSave = now;
+      var body = Object.assign({}, P);
+      if (serverDraftToken) body.resumeToken = serverDraftToken;
+      fetch('/reserva/' + <%- JSON.stringify(plan.slug) %> + '/draft', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify(body),
+      }).then(function(r){ return r.json(); }).then(function(j){
+        if (j && j.ok) {
+          serverDraftId = j.bookingId;
+          serverDraftToken = j.resumeToken;
+          console.log('[draft] server saved booking #' + j.bookingId);
+        }
+      }).catch(function(){});
+    }
+
     // Eventi che triggerano salvataggio
-    form.addEventListener('input',  function(){ clearTimeout(saveTimer); saveTimer = setTimeout(persist, 800); });
-    form.addEventListener('change', function(){ clearTimeout(saveTimer); saveTimer = setTimeout(persist, 200); });
+    function persistBoth(){ persist(); persistToServer(); }
+    form.addEventListener('input',  function(){ clearTimeout(saveTimer); saveTimer = setTimeout(persistBoth, 800); });
+    form.addEventListener('change', function(){ clearTimeout(saveTimer); saveTimer = setTimeout(persistBoth, 200); });
     // Anche click su pulsanti dinamici (AM/PM, +/- partecipanti, scelta lezioni)
-    form.addEventListener('click',  function(){ clearTimeout(saveTimer); saveTimer = setTimeout(persist, 400); });
-    // Fallback periodico (2s) per stati che non scattano eventi DOM standard
-    setInterval(persist, 2000);
+    form.addEventListener('click',  function(){ clearTimeout(saveTimer); saveTimer = setTimeout(persistBoth, 400); });
+    // Fallback periodico (2s locale, 5s server con throttle interno)
+    setInterval(persistBoth, 2000);
 
     window.RV_DRAFT_KEY = DRAFT_KEY;
   })();

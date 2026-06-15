@@ -436,6 +436,113 @@ router.post('/reserva/validate-code', express.json(), A(async (req, res) => {
   });
 }));
 
+// ---- AUTOSAVE SERVER-SIDE: bozza pre-pagamento ----
+// Crea o aggiorna una Booking marcata isDraft=true con i dati che il cliente
+// sta compilando. Apparira' in /admin/abandoned-carts come "Bozza salvata".
+router.post('/reserva/:slug/draft', express.json(), A(async (req, res) => {
+  const sSet = await settings.all();
+  const enabled = (sSet.bookings_enabled === '1' || sSet.bookings_enabled === 'true');
+  if (!enabled) return res.json({ ok: false });
+
+  const plan = await prisma.plan.findUnique({ where: { slug: req.params.slug } });
+  if (!plan) return res.json({ ok: false, error: 'plan not found' });
+
+  const body = req.body || {};
+  const payer = (body.payer && typeof body.payer === 'object') ? body.payer : {};
+  const fn = String(payer.firstName || '').trim().slice(0, 100);
+  const ln = String(payer.lastName  || '').trim().slice(0, 100);
+  const em = String(payer.email     || '').trim().slice(0, 200).toLowerCase();
+  const ph = String(payer.phone     || '').trim().slice(0, 60);
+
+  // Soglia minima per salvare lato server: nome+email validi.
+  if (!fn || em.length < 5 || em.indexOf('@') < 1) {
+    return res.json({ ok: false, error: 'minimum data not reached' });
+  }
+
+  // Snapshot extras per la lista admin (id + name + price)
+  let extrasSnap = [];
+  try {
+    if (Array.isArray(body.extras) && body.extras.length) {
+      const ids = body.extras.map((x) => parseInt(x, 10)).filter(Boolean);
+      if (ids.length) {
+        const xs = await prisma.bookingExtra.findMany({ where: { id: { in: ids } }, select: { id: true, name: true, price: true } });
+        extrasSnap = xs.map((x) => ({ id: x.id, name: x.name, price: x.price, mandatory: false }));
+      }
+    }
+  } catch (_) {}
+
+  // itemsJson: lessons (single) o days (red)
+  let itemsJson = '{}';
+  try {
+    if (plan.bookingMode === 'single_lessons' && Array.isArray(body.lessons)) {
+      itemsJson = JSON.stringify({ lessons: body.lessons, count: body.classesPerParticipant || body.lessons.length });
+    } else if (plan.bookingMode === 'red' && body.days && typeof body.days === 'object') {
+      itemsJson = JSON.stringify({ days: body.days });
+    }
+  } catch (_) {}
+
+  // Cerca bozza esistente: priorità a resumeToken (mandato dal client), poi email+planId
+  const tokenIn = String(body.resumeToken || '').trim();
+  let existing = null;
+  if (tokenIn) {
+    existing = await prisma.booking.findUnique({ where: { resumeToken: tokenIn } });
+    if (existing && (existing.paymentStatus === 'paid' || existing.paymentStatus === 'refunded' || existing.status === 'cancelled')) {
+      existing = null; // non riusare booking gia' completate
+    }
+  }
+  if (!existing) {
+    existing = await prisma.booking.findFirst({
+      where: {
+        planId: plan.id,
+        customerEmail: em,
+        isDraft: true,
+        status: 'pending',
+      },
+      orderBy: { updatedAt: 'desc' },
+    });
+  }
+
+  const participantsCount = Math.max(1, Math.min(20, parseInt(body.participants && body.participants.length, 10) || 1));
+  const classesPerParticipant = parseInt(body.classesPerParticipant, 10) || 1;
+
+  const data = {
+    customerName: (fn + ' ' + ln).trim(),
+    firstName: fn,
+    lastName: ln,
+    customerEmail: em,
+    phone: ph,
+    planId: plan.id,
+    eventId: plan.eventId || null,
+    itemsJson,
+    extrasJson: JSON.stringify(extrasSnap),
+    participantsCount,
+    classesPerParticipant,
+    referralCodeSnap: String(body.referralCode || '').trim().toUpperCase().slice(0, 60),
+    isDraft: true,
+    status: 'pending',
+    paymentStatus: 'unpaid',
+    notes: '[autosave bozza]',
+  };
+
+  let booking;
+  if (existing) {
+    booking = await prisma.booking.update({ where: { id: existing.id }, data });
+  } else {
+    data.resumeToken = require('crypto').randomBytes(16).toString('hex');
+    booking = await prisma.booking.create({ data });
+  }
+
+  // Setta cookie rv_resume così la pillola "Continuar reserva" funziona anche per le bozze
+  res.cookie('rv_resume', booking.resumeToken, {
+    maxAge: 24 * 60 * 60 * 1000,  // 24h come il localStorage
+    httpOnly: false,
+    sameSite: 'lax',
+    path: '/',
+  });
+
+  res.json({ ok: true, bookingId: booking.id, resumeToken: booking.resumeToken });
+}));
+
 router.post('/reserva/:slug/payment-intent', A(async (req, res) => {
   const s = await settings.all();
   const enabled = (s.bookings_enabled === '1' || s.bookings_enabled === 'true');

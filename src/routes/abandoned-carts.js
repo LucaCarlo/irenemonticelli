@@ -14,6 +14,7 @@ const A = (fn) => (req, res, next) => Promise.resolve(fn(req, res, next)).catch(
 router.use(requirePermission('bookings.manage'));
 
 function classify(b) {
+  if (b.isDraft && b.status === 'pending') return 'draft';
   if (b.status === 'cancelled') return 'cancelled';
   if (b.paymentStatus === 'refunded') return 'refunded';
   if (b.paymentStatus === 'failed') return 'payment_error';
@@ -36,7 +37,8 @@ router.get('/', A(async (req, res) => {
   let where = baseWhere;
   if (filter === 'refunded') where = { ...baseWhere, paymentStatus: 'refunded' };
   else if (filter === 'payment_error') where = { ...baseWhere, paymentStatus: 'failed' };
-  else if (filter === 'abandoned') where = { ...baseWhere, paymentStatus: 'unpaid', status: 'pending' };
+  else if (filter === 'draft') where = { ...baseWhere, isDraft: true, status: 'pending' };
+  else if (filter === 'abandoned') where = { ...baseWhere, paymentStatus: 'unpaid', status: 'pending', isDraft: false };
   else if (filter === 'cancelled') where = { ...baseWhere, status: 'cancelled' };
 
   if (params.q) where.OR = [
@@ -47,11 +49,12 @@ router.get('/', A(async (req, res) => {
   const orderBy = {}; orderBy[params.sort] = params.dir;
 
   // Conteggi per i filtri/tab
-  const [allCount, refundedCount, paymentErrorCount, abandonedCount, cancelledCount, total, totalUnfiltered, items] = await Promise.all([
+  const [allCount, refundedCount, paymentErrorCount, draftCount, abandonedCount, cancelledCount, total, totalUnfiltered, items] = await Promise.all([
     prisma.booking.count({ where: baseWhere }),
     prisma.booking.count({ where: { ...baseWhere, paymentStatus: 'refunded' } }),
     prisma.booking.count({ where: { ...baseWhere, paymentStatus: 'failed' } }),
-    prisma.booking.count({ where: { ...baseWhere, paymentStatus: 'unpaid', status: 'pending' } }),
+    prisma.booking.count({ where: { ...baseWhere, isDraft: true, status: 'pending' } }),
+    prisma.booking.count({ where: { ...baseWhere, paymentStatus: 'unpaid', status: 'pending', isDraft: false } }),
     prisma.booking.count({ where: { ...baseWhere, status: 'cancelled' } }),
     prisma.booking.count({ where }),
     prisma.booking.count({ where: baseWhere }),
@@ -73,7 +76,7 @@ router.get('/', A(async (req, res) => {
   res.render('bookings/abandoned', {
     title: 'Carrelli abbandonati',
     items, filter, params, total, totalUnfiltered, totalPages, links,
-    counts: { all: allCount, refunded: refundedCount, payment_error: paymentErrorCount, abandoned: abandonedCount, cancelled: cancelledCount },
+    counts: { all: allCount, refunded: refundedCount, payment_error: paymentErrorCount, draft: draftCount, abandoned: abandonedCount, cancelled: cancelledCount },
   });
 }));
 
