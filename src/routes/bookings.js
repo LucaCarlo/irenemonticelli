@@ -311,6 +311,39 @@ router.post('/:id(\\d+)', A(async (req, res) => {
   res.redirect('/admin/bookings');
 }));
 
+// POST: aggiorna la selezione mañana/tarde per ogni giorno (solo pack RED).
+// Body: day_<YYYY-MM-DD>=AM|PM, uno per ogni giorno dell'evento.
+router.post('/:id(\\d+)/red-days', A(async (req, res) => {
+  const id = +req.params.id;
+  const b = await prisma.booking.findUnique({ where: { id }, include: { plan: true } });
+  if (!b || !b.plan || b.plan.bookingMode !== 'red') {
+    req.flash('error', 'Operación válida solo para Pack RED.');
+    return res.redirect('/admin/bookings/' + id + '/edit');
+  }
+  // Estrae tutti i campi day_<iso> dal body
+  const days = {};
+  Object.keys(req.body || {}).forEach((k) => {
+    if (!k.startsWith('day_')) return;
+    const iso = k.slice(4);
+    const v = String(req.body[k] || '').toUpperCase().trim();
+    if ((v === 'AM' || v === 'PM') && /^\d{4}-\d{2}-\d{2}$/.test(iso)) days[iso] = v;
+  });
+  if (!Object.keys(days).length) {
+    req.flash('error', 'Selecciona Mañana o Tarde para al menos un día.');
+    return res.redirect('/admin/bookings/' + id + '/edit');
+  }
+  // Conserva eventuali altri campi presenti in itemsJson (per sicurezza)
+  let items = {};
+  try { items = b.itemsJson ? JSON.parse(b.itemsJson) : {}; } catch (_) {}
+  items.days = days;
+  await prisma.booking.update({ where: { id }, data: { itemsJson: JSON.stringify(items) } });
+  audit.log(req, 'booking.red_days.update', {
+    entity: 'booking', entityId: String(id), details: { days },
+  }).catch(() => {});
+  req.flash('success', 'Fasce Mañana/Tarde aggiornate.');
+  res.redirect('/admin/bookings/' + id + '/edit');
+}));
+
 router.post('/:id(\\d+)/status', A(async (req, res) => {
   const id = +req.params.id;
   const s = STATUSES.includes(req.body.status) ? req.body.status : 'pending';
