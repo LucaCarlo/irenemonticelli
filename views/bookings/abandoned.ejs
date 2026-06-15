@@ -4,7 +4,6 @@
   function fmtEur(n){ return (Math.round(Number(n||0)*100)/100).toFixed(2).replace('.', ',') + ' €'; }
   function fmtDateTime(d){ if(!d) return '—'; var dt=new Date(d); return isNaN(dt)?'—':dt.toLocaleString('it-IT',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}); }
   var KIND_LBL = {
-    draft:         { lbl: 'Bozza salvata', cls: 'kind-draft',         ico: '💾' },
     refunded:      { lbl: 'Rimborsato',    cls: 'kind-refunded',      ico: '↩️' },
     payment_error: { lbl: 'Errore pagamento', cls: 'kind-error',      ico: '⚠️' },
     abandoned:     { lbl: 'Abbandonato',  cls: 'kind-abandoned',     ico: '🚪' },
@@ -30,7 +29,6 @@
     extraFilters: [
       { name: 'kind', value: filter, options: [
         { val: '', label: 'Tutti i tipi (' + counts.all + ')' },
-        { val: 'draft',         label: '💾 Bozze salvate (' + counts.draft + ')' },
         { val: 'abandoned',     label: '🚪 Checkout abbandonato (' + counts.abandoned + ')' },
         { val: 'payment_error', label: '⚠️ Errore pagamento (' + counts.payment_error + ')' },
         { val: 'refunded',      label: '↩️ Rimborsate (' + counts.refunded + ')' },
@@ -81,8 +79,6 @@
                   <span class="muted">Rimborso elaborato</span>
                 <% } else if (b._kind === 'abandoned') { %>
                   <span class="muted">Cliente uscito senza completare</span>
-                <% } else if (b._kind === 'draft') { %>
-                  <span class="muted">Bozza in compilazione (mai cliccato Confirmar)</span>
                 <% } else { %>
                   <span class="muted">—</span>
                 <% } %>
@@ -105,7 +101,6 @@
 
 <style>
   .ac-kind{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:8px;font-size:12px;font-weight:700;white-space:nowrap}
-  .ac-kind.kind-draft{background:#e3f0ff;color:#0d5290;border:1px solid #b3d4f0}
   .ac-kind.kind-refunded{background:#e3e7f0;color:#3a3f50}
   .ac-kind.kind-error{background:#fef0ec;color:#a8351c;border:1px solid #f3c5b9}
   .ac-kind.kind-abandoned{background:#fff3d6;color:#7a5800;border:1px solid #f0c04b}
