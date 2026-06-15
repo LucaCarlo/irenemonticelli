@@ -1945,13 +1945,19 @@ window.RV_RESUME = <%- resumeData ? JSON.stringify(resumeData) : 'null' %>;
     if (!window.RV_RESUME) {
       try {
         var raw = localStorage.getItem(DRAFT_KEY);
+        console.log('[draft] localStorage key=', DRAFT_KEY, 'found=', !!raw);
         if (raw) {
           var d = JSON.parse(raw);
           if (d && d.savedAt && (Date.now() - d.savedAt) < TTL_MS) {
-            // Restore solo se ci sono dati significativi (almeno un input compilato)
             if (d.values && Object.keys(d.values).length > 0) {
+              var restoredCount = 0;
               Object.keys(d.values).forEach(function(name){
-                var els = form.querySelectorAll('[name="' + CSS.escape(name) + '"]');
+                // Selettore manuale (no CSS.escape per compatibilità + log nome non trovati)
+                var els = form.querySelectorAll('[name="' + name.replace(/"/g, '\\"') + '"]');
+                if (els.length === 0) {
+                  console.warn('[draft] field not found in form:', name);
+                  return;
+                }
                 els.forEach(function(el){
                   if (el.type === 'checkbox' || el.type === 'radio') {
                     if (Array.isArray(d.values[name])) {
@@ -1962,15 +1968,36 @@ window.RV_RESUME = <%- resumeData ? JSON.stringify(resumeData) : 'null' %>;
                   } else {
                     el.value = d.values[name];
                   }
+                  // Dispatch input event così altri listener si aggiornano (es. validators)
+                  el.dispatchEvent(new Event('input', { bubbles: true }));
+                  el.dispatchEvent(new Event('change', { bubbles: true }));
+                  restoredCount++;
                 });
               });
-              // Banner discreto
+              console.log('[draft] restored', restoredCount, 'fields from', Object.keys(d.values).length, 'saved');
+
+              // Banner ben visibile in cima al form
               var bn = document.createElement('div');
-              bn.style.cssText = 'margin:10px 0;padding:10px 14px;background:#e7f3ec;border:1px solid #aedabe;border-radius:8px;font-size:13px;color:#1b6b3e;display:flex;align-items:center;justify-content:space-between;gap:10px';
-              bn.innerHTML = '<span>✓ Hemos recuperado los datos que habías introducido. <small style="color:#5a5e6a">Puedes seguir donde lo dejaste.</small></span>'
-                + '<button type="button" style="background:none;border:0;color:#1b6b3e;cursor:pointer;font-weight:600;font-size:13px">Limpiar y empezar de cero</button>';
+              bn.id = 'rv-draft-banner';
+              bn.setAttribute('style',
+                'margin:14px 0 18px !important;padding:16px 20px !important;'
+                + 'background:linear-gradient(135deg,#e8f7ee,#f4fbf6) !important;'
+                + 'border:2px solid #1b6b3e !important;border-radius:12px !important;'
+                + 'font-size:14.5px !important;color:#1b6b3e !important;'
+                + 'display:flex !important;align-items:center !important;'
+                + 'justify-content:space-between !important;gap:14px !important;'
+                + 'box-shadow:0 4px 14px rgba(27,107,62,.15) !important;'
+                + 'font-family:"Manrope",system-ui,sans-serif !important;');
+              bn.innerHTML = ''
+                + '<span style="display:flex;align-items:center;gap:10px;flex:1">'
+                +   '<span style="font-size:24px">✓</span>'
+                +   '<span><strong style="color:#0f4e2c">¡Te recordamos!</strong> Hemos recuperado los datos que ya habías introducido. '
+                +     '<span style="color:#5a5e6a;font-size:13px">Continúa donde lo dejaste.</span>'
+                +   '</span>'
+                + '</span>'
+                + '<button type="button" id="rv-draft-reset" style="background:#fff;border:1.5px solid #1b6b3e;color:#1b6b3e;cursor:pointer;font-weight:600;font-size:12.5px;padding:7px 14px;border-radius:6px;white-space:nowrap;font-family:inherit">Empezar de cero</button>';
               form.insertBefore(bn, form.firstChild);
-              bn.querySelector('button').addEventListener('click', function(){
+              document.getElementById('rv-draft-reset').addEventListener('click', function(){
                 if (!confirm('¿Quieres borrar todos los datos guardados y empezar de cero?')) return;
                 try { localStorage.removeItem(DRAFT_KEY); } catch(_) {}
                 window.location.reload();
@@ -1978,11 +2005,13 @@ window.RV_RESUME = <%- resumeData ? JSON.stringify(resumeData) : 'null' %>;
               if (typeof sync === 'function') sync();
             }
           } else {
-            // Bozza scaduta
+            console.log('[draft] expired or invalid');
             try { localStorage.removeItem(DRAFT_KEY); } catch(_) {}
           }
         }
       } catch (e) { console.warn('[draft] restore failed:', e); }
+    } else {
+      console.log('[draft] skipped: server resume in progress');
     }
 
     // Salva on input/change con debounce

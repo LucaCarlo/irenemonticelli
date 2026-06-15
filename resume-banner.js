@@ -48,7 +48,11 @@
   function showPill(href, status, label, tooltip){
     if (document.getElementById('rv-resume-pill')) return;
     var nav = document.querySelector('header.site .nav-links');
-    if (!nav) return;
+    if (!nav) {
+      console.warn('[resume-banner] cannot show pill: header.site .nav-links not found');
+      return;
+    }
+    console.log('[resume-banner] showing pill:', label, '→', href);
     injectStyle();
     var a = document.createElement('a');
     a.id = 'rv-resume-pill';
@@ -65,9 +69,12 @@
     try {
       var TTL = 24 * 60 * 60 * 1000;
       var newest = null;
-      for (var i = 0; i < localStorage.length; i++) {
+      var totalKeys = localStorage.length;
+      var draftKeys = [];
+      for (var i = 0; i < totalKeys; i++) {
         var k = localStorage.key(i);
         if (!k || k.indexOf('rv_draft_') !== 0) continue;
+        draftKeys.push(k);
         var raw = localStorage.getItem(k);
         if (!raw) continue;
         var d; try { d = JSON.parse(raw); } catch (_) { continue; }
@@ -80,8 +87,9 @@
           newest = { slug: k.replace('rv_draft_', ''), data: d };
         }
       }
+      console.log('[resume-banner] localStorage scan:', draftKeys.length, 'draft keys', draftKeys, '→ newest:', newest ? newest.slug : 'none');
       return newest;
-    } catch (_) { return null; }
+    } catch (e) { console.warn('[resume-banner] scan error:', e); return null; }
   }
 
   // 1) Priorità al cookie server (booking creata)
