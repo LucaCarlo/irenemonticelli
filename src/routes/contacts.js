@@ -111,4 +111,54 @@ router.get('/', canSee, A(async (req, res) => {
   });
 }));
 
+// Modifica nome/telefono di un contatto unificato → salvo (o creo) il record NewsletterSubscriber.
+// Per booking/contacts non posso modificare singolarmente (sono record storici); il subscriber è il "profilo" editabile.
+router.get('/email/:email/edit', canSee, A(async (req, res) => {
+  const email = String(req.params.email || '').toLowerCase();
+  if (!email) return res.redirect('/admin/contacts');
+  // Recupero info da tutte le fonti per popolare la pagina
+  const [sub, lastBooking, lastMsg] = await Promise.all([
+    prisma.newsletterSubscriber.findUnique({ where: { email } }),
+    prisma.booking.findFirst({ where: { customerEmail: email }, orderBy: { createdAt: 'desc' }, select: { customerName: true, firstName: true, lastName: true, phone: true } }),
+    prisma.contactMessage.findFirst({ where: { email }, orderBy: { createdAt: 'desc' }, select: { name: true } }),
+  ]);
+  const profile = {
+    email,
+    name: (sub && sub.name) || (lastBooking && (lastBooking.customerName || ((lastBooking.firstName||'') + ' ' + (lastBooking.lastName||'')).trim())) || (lastMsg && lastMsg.name) || '',
+    phone: (lastBooking && lastBooking.phone) || '',
+    inNewsletter: !!sub,
+    subscriberStatus: sub ? sub.status : null,
+  };
+  res.render('contacts/edit', { title: 'Modifica utente — ' + email, profile });
+}));
+
+router.post('/email/:email/edit', canSee, A(async (req, res) => {
+  const email = String(req.params.email || '').toLowerCase();
+  if (!email) return res.redirect('/admin/contacts');
+  const name = String(req.body.name || '').trim().slice(0, 120);
+  const status = ['active', 'unsubscribed', 'bounced'].includes(req.body.status) ? req.body.status : 'active';
+  const sub = await prisma.newsletterSubscriber.findUnique({ where: { email } });
+  if (sub) {
+    await prisma.newsletterSubscriber.update({ where: { email }, data: { name, status } });
+  } else {
+    const crypto = require('crypto');
+    await prisma.newsletterSubscriber.create({
+      data: { email, name, source: 'manual', status, unsubscribeToken: crypto.randomBytes(16).toString('hex') },
+    });
+  }
+  req.flash('success', 'Profilo aggiornato.');
+  res.redirect('/admin/contacts');
+}));
+
+// Elimina: cancella subscriber + tutti i contact messages dell'email.
+// Le booking restano (sono record finanziari).
+router.post('/email/:email/delete', canSee, A(async (req, res) => {
+  const email = String(req.params.email || '').toLowerCase();
+  if (!email) return res.redirect('/admin/contacts');
+  await prisma.newsletterSubscriber.deleteMany({ where: { email } }).catch(() => {});
+  await prisma.contactMessage.deleteMany({ where: { email } }).catch(() => {});
+  req.flash('success', 'Utente eliminato (booking eventuali conservate).');
+  res.redirect('/admin/contacts');
+}));
+
 module.exports = router;

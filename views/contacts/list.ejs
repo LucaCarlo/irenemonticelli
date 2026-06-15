@@ -34,7 +34,7 @@
             <%- include('../partials/dt-th', { label: 'Telefono', sortKey: 'phone', params: params, basePath: '/admin/contacts' }) %>
             <th>Fonti</th>
             <%- include('../partials/dt-th', { label: 'Ultima attività', sortKey: 'lastSeen', params: params, basePath: '/admin/contacts' }) %>
-            <th>Attività</th>
+            <th></th>
           </tr>
         </thead>
         <tbody>
@@ -49,9 +49,12 @@
                 <% if (c.sources.includes('newsletter')) { %> <span class="badge badge-role">Newsletter</span><% } %>
               </td>
               <td><%= new Date(c.lastSeen).toLocaleDateString('it-IT',{day:'2-digit',month:'short',year:'numeric'}) %></td>
-              <td style="font-size:12.5px;color:var(--muted)">
-                <% var pcs = []; if (c.bookingsCount) pcs.push(c.bookingsCount + ' pren.'); if (c.messagesCount) pcs.push(c.messagesCount + ' msg'); if (c.newsletter) pcs.push('iscritto'); %>
-                <%= pcs.join(' · ') || '—' %>
+              <td class="row-actions">
+                <a class="btn-ico btn-ico-edit" href="/admin/contacts/email/<%= encodeURIComponent(c.email) %>/edit" title="Modifica"><%- include('../partials/ico', { name:'edit' }) %></a>
+                <form method="post" action="/admin/contacts/email/<%= encodeURIComponent(c.email) %>/delete" onsubmit="return confirm('Eliminare questo utente? Le sue prenotazioni resteranno conservate.')" style="display:inline">
+                  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                  <button type="submit" class="btn-ico btn-ico-danger" title="Elimina"><%- include('../partials/ico', { name:'trash' }) %></button>
+                </form>
               </td>
             </tr>
           <% }) %>

@@ -1,0 +1,58 @@
+<%- include('../partials/header') %>
+
+<div class="fs-page-head">
+  <div>
+    <h2>Modifica utente</h2>
+    <p><strong style="color:#1c1f26"><%= profile.email %></strong></p>
+  </div>
+  <a class="btn btn-ghost" href="/admin/contacts">← Torna agli utenti</a>
+</div>
+
+<form method="post" action="/admin/contacts/email/<%= encodeURIComponent(profile.email) %>/edit" class="form fs-page">
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+  <section class="fs-section">
+    <div class="fs-section-head">
+      <div class="fs-section-ico" style="background:#fdf2c9;color:#7a5800">👤</div>
+      <div>
+        <h3 class="fs-section-title">Dati profilo</h3>
+        <p class="fs-section-sub">Nome e stato dell'iscrizione newsletter. Eventuali prenotazioni e messaggi del cliente vengono conservati.</p>
+      </div>
+    </div>
+    <div class="fs-grid">
+      <div class="field field-full">
+        <label class="field-lbl">Email</label>
+        <input type="email" value="<%= profile.email %>" disabled readonly>
+        <div class="field-help">L'email è la chiave del profilo, non modificabile da qui.</div>
+      </div>
+      <div class="field field-full">
+        <label class="field-lbl">Nome completo</label>
+        <input type="text" name="name" value="<%= profile.name %>" placeholder="es. Maria Garcia">
+      </div>
+      <% if (profile.phone) { %>
+        <div class="field field-full">
+          <label class="field-lbl">Telefono <span class="muted">(non modificabile, viene dai dati booking)</span></label>
+          <input type="text" value="<%= profile.phone %>" disabled readonly>
+        </div>
+      <% } %>
+      <div class="field field-full">
+        <label class="field-lbl">Iscrizione newsletter</label>
+        <select name="status">
+          <option value="active" <%= profile.subscriberStatus==='active'||(!profile.subscriberStatus)?'selected':'' %>>✓ Attivo (riceve newsletter)</option>
+          <option value="unsubscribed" <%= profile.subscriberStatus==='unsubscribed'?'selected':'' %>>✕ Disiscritto</option>
+          <option value="bounced" <%= profile.subscriberStatus==='bounced'?'selected':'' %>>⚠ Bounced (email non valida)</option>
+        </select>
+        <% if (!profile.inNewsletter) { %>
+          <div class="field-help">Salvando creerai automaticamente un'iscrizione newsletter manuale.</div>
+        <% } %>
+      </div>
+    </div>
+  </section>
+
+  <div class="fs-actions">
+    <a class="btn btn-ghost" href="/admin/contacts">Annulla</a>
+    <button type="submit" class="btn btn-primary">💾 Salva</button>
+  </div>
+</form>
+
+<%- include('../partials/footer') %>
