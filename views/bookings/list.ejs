@@ -24,7 +24,6 @@
   <div class="table-wrap">
   <table class="table">
     <thead><tr>
-      <th>#</th>
       <%- include('../partials/dt-th', { label:'Pagata il', sortKey:'createdAt', params, basePath:'/admin/bookings' }) %>
       <%- include('../partials/dt-th', { label:'Cliente', sortKey:'customerName', params, basePath:'/admin/bookings' }) %>
       <th>Contatti</th>
@@ -37,7 +36,6 @@
     <% bookings.forEach(function(b){ %>
       <% var d = new Date(b.createdAt); var dt = d.toLocaleDateString('it-IT',{day:'2-digit',month:'short',year:'numeric'}); var tm = d.toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'}); %>
       <tr>
-        <td class="muted" style="font-size:12px;font-family:monospace">#<%= b.id %></td>
         <td style="white-space:nowrap"><strong><%= dt %></strong><div class="muted" style="font-size:12px"><%= tm %></div></td>
         <td><%= b.customerName %></td>
         <td style="font-size:12.5px"><%= b.customerEmail %><br><%= b.phone %></td>

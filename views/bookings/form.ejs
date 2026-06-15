@@ -19,19 +19,27 @@
   }
 %>
 
-<% if (booking) { %>
+<% if (booking) {
+  // Carrello = non confirmato + pagato. Tutto il resto = Prenotazione.
+  var isAbandoned = !(booking.status === 'confirmed' && booking.paymentStatus === 'paid');
+  var labelKind = isAbandoned ? 'Carrello' : 'Prenotazione';
+  var clientLabel = (booking.customerName || ((booking.firstName||'') + ' ' + (booking.lastName||'')).trim() || booking.customerEmail || '#' + booking.id);
+  var backHref = isAbandoned ? '/admin/abandoned-carts' : '/admin/bookings';
+  var backLbl = isAbandoned ? '← Torna ai carrelli abbandonati' : '← Torna alle prenotazioni';
+%>
 
 <div class="fs-page-head">
   <div>
-    <h2>Prenotazione #<%= booking.id %> · <%- badgeForStatus(booking.status) %> <%- badgeForPayment(booking.paymentStatus) %></h2>
+    <h2><%= labelKind %> di <%= clientLabel %> · <%- badgeForStatus(booking.status) %> <%- badgeForPayment(booking.paymentStatus) %></h2>
     <p>
-      Creata il <strong style="color:#1c1f26"><%= fmtDateTime(booking.createdAt) %></strong>
+      Creat<%= isAbandoned ? 'o' : 'a' %> il <strong style="color:#1c1f26"><%= fmtDateTime(booking.createdAt) %></strong>
       <% if (booking.updatedAt && new Date(booking.updatedAt).getTime() !== new Date(booking.createdAt).getTime()) { %>
         · Ultima modifica: <%= fmtDateTime(booking.updatedAt) %>
       <% } %>
+      <span class="muted" style="font-size:12.5px">· id #<%= booking.id %></span>
     </p>
   </div>
-  <a class="btn btn-ghost" href="/admin/bookings">← Torna alle prenotazioni</a>
+  <a class="btn btn-ghost" href="<%= backHref %>"><%= backLbl %></a>
 </div>
 
 <!-- TOP BAR riepilogo: totale + pack + partecipanti -->

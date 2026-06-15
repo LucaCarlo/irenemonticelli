@@ -285,7 +285,7 @@ router.get('/:id(\\d+)/edit', A(async (req, res) => {
   const totalMatches = Math.abs(computedTotal - total) < 0.02;
 
   res.render('bookings/form', {
-    title: 'Prenotazione #' + booking.id,
+    title: ((booking.status === 'confirmed' && booking.paymentStatus === 'paid') ? 'Prenotazione' : 'Carrello') + ' di ' + (booking.customerName || booking.customerEmail || '#'+booking.id),
     booking, plans, events, STATUSES,
     items, extras, lessonsResolved, lessonsAuto, auditEntries,
     breakdown: { subtotal, discountAmount, referralDiscount, extrasTotal, total, totalNet, totalIva, computedTotal, totalMatches, ivaRate: IVA_RATE },
