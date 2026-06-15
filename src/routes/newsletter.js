@@ -50,13 +50,33 @@ router.get('/:id(\\d+)/edit', A(async (req, res) => {
   res.render('newsletter/compose', { title: 'Modifica campagna', campaign: c, audCounts });
 }));
 
+// Normalizza l'audience: ora accetta tag CSV (es. "booking,contact"), legacy 'all'/'bookings'/'contacts'.
+function normalizeAudience(b) {
+  // Multi-checkbox dal form: array di sources scelti
+  let tags = Array.isArray(b.audienceTags) ? b.audienceTags : (b.audienceTags ? [b.audienceTags] : []);
+  if (!tags.length && b.audience) {
+    // Compatibilità con vecchio dropdown / select da lista bozze
+    if (Array.isArray(b.audience)) tags = b.audience;
+    else if (typeof b.audience === 'string' && b.audience.indexOf(',') >= 0) tags = b.audience.split(',');
+    else tags = [b.audience];
+  }
+  tags = tags.map((t) => String(t).trim().toLowerCase()).filter(Boolean);
+  // Se selezionati TUTTI i source o nessuno o 'all', usa 'all'
+  const ALLOWED = ['booking', 'contact', 'manual'];
+  if (!tags.length || tags.includes('all')) return 'all';
+  // Filtra solo i sources noti
+  const filtered = tags.filter((t) => ALLOWED.includes(t) || t === 'bookings' || t === 'contacts');
+  if (!filtered.length) return 'all';
+  return filtered.join(',');
+}
+
 router.post('/', A(async (req, res) => {
   const b = req.body;
   const data = {
     subject: (b.subject || '').trim().slice(0, 200),
     preheader: (b.preheader || '').trim().slice(0, 200),
     htmlBody: (b.htmlBody || '').trim(),
-    audience: (b.audience === 'bookings' || b.audience === 'contacts') ? b.audience : 'all',
+    audience: normalizeAudience(b),
     status: 'draft',
   };
   if (!data.subject) { req.flash('error', 'Oggetto obbligatorio.'); return res.redirect('/admin/newsletter/new'); }
@@ -75,7 +95,7 @@ router.post('/:id(\\d+)', A(async (req, res) => {
       subject: (b.subject || '').trim().slice(0, 200),
       preheader: (b.preheader || '').trim().slice(0, 200),
       htmlBody: (b.htmlBody || '').trim(),
-      audience: (b.audience === 'bookings' || b.audience === 'contacts') ? b.audience : 'all',
+      audience: normalizeAudience(b),
     },
   });
   await audit.log(req, 'newsletter.update', { entity: 'NewsletterCampaign', entityId: String(id) });
@@ -122,10 +142,9 @@ router.post('/:id(\\d+)/test', A(async (req, res) => {
 router.post('/:id(\\d+)/send', A(async (req, res) => {
   const id = parseInt(req.params.id, 10);
   try {
-    // Se il form invia un'audience, la salvo sulla campagna prima di inviare
-    const aud = req.body.audience;
-    if (aud === 'all' || aud === 'bookings' || aud === 'contacts') {
-      await prisma.newsletterCampaign.update({ where: { id }, data: { audience: aud } });
+    // Se il form invia un'audience (tag o multi-tag), la salvo sulla campagna prima di inviare
+    if (req.body.audience || req.body.audienceTags) {
+      await prisma.newsletterCampaign.update({ where: { id }, data: { audience: normalizeAudience(req.body) } });
     }
     const r = await nlLib.sendCampaign(id, baseUrl(req));
     await audit.log(req, 'newsletter.send', { entity: 'NewsletterCampaign', entityId: String(id), details: r });

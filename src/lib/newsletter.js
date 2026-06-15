@@ -108,10 +108,22 @@ async function sendCampaign(campaignId, baseUrl) {
   if (!c) throw new Error('Campagna non trovata');
   if (c.status === 'sent' || c.status === 'sending') throw new Error('Campagna già in invio / inviata');
 
-  // Audience
+  // Audience: ora supporta tag multipli CSV (es. "booking,contact"). Valori legacy:
+  //   'all' o vuoto → tutti gli iscritti attivi
+  //   'bookings'    → solo source=booking (legacy)
+  //   'contacts'    → solo source=contact (legacy)
   let where = { status: 'active' };
-  if (c.audience === 'bookings') where.source = 'booking';
-  else if (c.audience === 'contacts') where.source = 'contact';
+  const rawAud = String(c.audience || '').trim().toLowerCase();
+  if (rawAud && rawAud !== 'all') {
+    if (rawAud === 'bookings') where.source = 'booking';
+    else if (rawAud === 'contacts') where.source = 'contact';
+    else {
+      const tags = rawAud.split(',').map((t) => t.trim()).filter(Boolean);
+      // Mappatura legacy: bookings → booking, contacts → contact
+      const sources = tags.map((t) => (t === 'bookings' ? 'booking' : t === 'contacts' ? 'contact' : t));
+      if (sources.length) where.source = { in: sources };
+    }
+  }
   const recipients = await prisma.newsletterSubscriber.findMany({ where });
 
   await prisma.newsletterCampaign.update({

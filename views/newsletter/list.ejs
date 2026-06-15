@@ -57,21 +57,35 @@
         </tr>
       </thead>
       <tbody>
-        <% drafts.forEach(function(c){ %>
+        <% drafts.forEach(function(c){
+             // Parse audience (legacy + multi-tag)
+             var rawAud = String(c.audience || 'all').toLowerCase();
+             var tags;
+             if (!rawAud || rawAud === 'all') tags = ['booking','contact','manual'];
+             else if (rawAud === 'bookings') tags = ['booking'];
+             else if (rawAud === 'contacts') tags = ['contact'];
+             else tags = rawAud.split(',').map(function(t){ t=t.trim(); return t==='bookings'?'booking':t==='contacts'?'contact':t; }).filter(Boolean);
+             var TAG_META = {
+               booking: { ico: '🎟', lbl: 'Prenotazione' },
+               contact: { ico: '✉️', lbl: 'Contatti' },
+               manual:  { ico: '📝', lbl: 'Manuali' },
+             };
+        %>
           <tr>
             <td>
               <strong><%= c.subject %></strong>
               <% if (c.preheader) { %><div class="muted" style="font-size:12px;margin-top:3px;max-width:520px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"><%= c.preheader %></div><% } %>
             </td>
             <td>
+              <div class="nl-tag-pills">
+                <% tags.forEach(function(t){ var m = TAG_META[t] || { ico:'•', lbl:t }; %>
+                  <span class="nl-tag-pill nl-tag-<%= t %>"><%= m.ico %> <%= m.lbl %></span>
+                <% }) %>
+              </div>
+              <a href="/admin/newsletter/<%= c.id %>/edit" class="muted" style="font-size:11.5px;text-decoration:none">✎ cambia destinatari</a>
               <form method="post" action="/admin/newsletter/<%= c.id %>/send" id="sendf-<%= c.id %>"
-                    onsubmit="return confirm('Inviare ora la campagna ai destinatari selezionati?')">
+                    onsubmit="return confirm('Inviare ora la campagna ai destinatari selezionati?')" style="display:none">
                 <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-                <select name="audience" class="nl-aud-sel">
-                  <option value="all" <%= c.audience==='all'?'selected':'' %>>📣 Tutti gli iscritti (<%= subStats.active %>)</option>
-                  <option value="bookings" <%= c.audience==='bookings'?'selected':'' %>>🎟 Solo chi ha prenotato</option>
-                  <option value="contacts" <%= c.audience==='contacts'?'selected':'' %>>✉️ Solo form contatti</option>
-                </select>
               </form>
             </td>
             <td class="muted" style="white-space:nowrap;font-size:12.5px"><%= fmtDateTime(c.createdAt) %></td>
@@ -113,13 +127,31 @@
         </tr>
       </thead>
       <tbody>
-        <% sent.forEach(function(c){ %>
+        <% sent.forEach(function(c){
+             var rawAud = String(c.audience || 'all').toLowerCase();
+             var tags;
+             if (!rawAud || rawAud === 'all') tags = ['booking','contact','manual'];
+             else if (rawAud === 'bookings') tags = ['booking'];
+             else if (rawAud === 'contacts') tags = ['contact'];
+             else tags = rawAud.split(',').map(function(t){ t=t.trim(); return t==='bookings'?'booking':t==='contacts'?'contact':t; }).filter(Boolean);
+             var TAG_META = {
+               booking: { ico: '🎟', lbl: 'Prenotaz.' },
+               contact: { ico: '✉️', lbl: 'Contatti' },
+               manual:  { ico: '📝', lbl: 'Manuali' },
+             };
+        %>
           <tr>
             <td>
               <strong><%= c.subject %></strong>
               <% if (c.preheader) { %><div class="muted" style="font-size:12px;margin-top:3px;max-width:520px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"><%= c.preheader %></div><% } %>
             </td>
-            <td><span class="src src-<%= c.audience || 'all' %>"><%= c.audience || 'all' %></span></td>
+            <td>
+              <div class="nl-tag-pills">
+                <% tags.forEach(function(t){ var m = TAG_META[t] || { ico:'•', lbl:t }; %>
+                  <span class="nl-tag-pill nl-tag-<%= t %>"><%= m.ico %></span>
+                <% }) %>
+              </div>
+            </td>
             <td>
               <strong style="color:#1b6b3e"><%= c.successCount %></strong><span class="muted">/<%= c.totalRecipients %></span>
               <% if (c.failureCount) { %><div class="muted" style="font-size:11px;color:#8a2a1c"><%= c.failureCount %> falliti</div><% } %>
@@ -148,17 +180,11 @@
   .nl-kpi-lbl{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#7a8190;margin-bottom:5px}
   .nl-kpi-val{font-family:'Fraunces',Georgia,serif;font-size:28px;font-weight:600;color:#1c1f26;line-height:1}
 
-  .nl-aud-sel{
-    width:100%;height:38px;padding:0 32px 0 12px;
-    border:1px solid var(--line, #dde0e4);border-radius:8px;background:#fff;
-    font-family:inherit;font-size:13.5px;color:#1c1f26;
-    appearance:none;-webkit-appearance:none;
-    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path fill='%237a8190' d='M0 0l5 6 5-6z'/></svg>");
-    background-repeat:no-repeat;background-position:right 12px center;
-    cursor:pointer;transition:border-color .15s
-  }
-  .nl-aud-sel:hover{border-color:#1c1f26}
-  .nl-aud-sel:focus{outline:2px solid #e0aa00;border-color:#e0aa00}
+  .nl-tag-pills{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:4px}
+  .nl-tag-pill{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:11.5px;font-weight:700;letter-spacing:.02em;border:1px solid transparent}
+  .nl-tag-pill.nl-tag-booking{background:#d6f3df;color:#1b6b3e;border-color:#aedabe}
+  .nl-tag-pill.nl-tag-contact{background:#e3f0ff;color:#0d5290;border-color:#b3d4f0}
+  .nl-tag-pill.nl-tag-manual{background:#fff3d6;color:#7a5800;border-color:#e8d99a}
 
   .btn-ico-send{color:#1b6b3e;border:1px solid #aedabe;background:#e7f3ec}
   .btn-ico-send:hover{background:#1b6b3e;color:#fff}

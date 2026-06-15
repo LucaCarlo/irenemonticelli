@@ -26,51 +26,97 @@
 
     <div class="field">
       <label class="field-lbl">A chi mandare questa newsletter?</label>
-      <% var cur = (campaign && campaign.audience) ? campaign.audience : 'all'; %>
-      <div class="aud-grid">
-        <label class="aud-card <%= cur==='all'?'is-on':'' %>">
-          <input type="radio" name="audience" value="all" <%= cur==='all'?'checked':'' %>>
-          <div class="aud-card-ico">📣</div>
-          <div class="aud-card-body">
-            <div class="aud-card-title">Tutti gli iscritti</div>
-            <div class="aud-card-desc">Tutte le persone attive nella lista newsletter, qualunque sia l'origine.</div>
-            <div class="aud-card-num"><%= audCounts.all %> destinatari</div>
-          </div>
+      <%
+        // Parse audience: può essere 'all', 'bookings'/'contacts' (legacy single) o CSV "booking,contact"
+        var rawAud = campaign && campaign.audience ? String(campaign.audience).toLowerCase() : 'all';
+        var selectedTags;
+        if (!rawAud || rawAud === 'all') selectedTags = ['booking','contact','manual'];
+        else if (rawAud === 'bookings') selectedTags = ['booking'];
+        else if (rawAud === 'contacts') selectedTags = ['contact'];
+        else selectedTags = rawAud.split(',').map(function(t){ t=t.trim(); return t==='bookings'?'booking':t==='contacts'?'contact':t; }).filter(Boolean);
+        function isSel(tag){ return selectedTags.indexOf(tag) !== -1; }
+      %>
+
+      <p class="muted" style="font-size:13px;margin:6px 0 12px">Seleziona uno o più <strong>tag</strong>. La newsletter verrà inviata a tutti gli iscritti che hanno almeno uno dei tag scelti.</p>
+
+      <div class="tag-grid">
+        <label class="tag-chip <%= isSel('booking')?'is-on':'' %>" data-tag="booking">
+          <input type="checkbox" name="audienceTags" value="booking" <%= isSel('booking')?'checked':'' %>>
+          <span class="tag-chip-emoji">🎟</span>
+          <span class="tag-chip-body">
+            <span class="tag-chip-title">Prenotazione</span>
+            <span class="tag-chip-desc">Clienti che hanno prenotato un pack</span>
+          </span>
+          <span class="tag-chip-num"><%= audCounts.bookings %></span>
         </label>
-        <label class="aud-card <%= cur==='bookings'?'is-on':'' %>">
-          <input type="radio" name="audience" value="bookings" <%= cur==='bookings'?'checked':'' %>>
-          <div class="aud-card-ico">🎟</div>
-          <div class="aud-card-body">
-            <div class="aud-card-title">Solo chi ha prenotato</div>
-            <div class="aud-card-desc">Clienti che hanno effettuato almeno una prenotazione (e dato consenso dati).</div>
-            <div class="aud-card-num"><%= audCounts.bookings %> destinatari</div>
-          </div>
+
+        <label class="tag-chip <%= isSel('contact')?'is-on':'' %>" data-tag="contact">
+          <input type="checkbox" name="audienceTags" value="contact" <%= isSel('contact')?'checked':'' %>>
+          <span class="tag-chip-emoji">✉️</span>
+          <span class="tag-chip-body">
+            <span class="tag-chip-title">Contatti</span>
+            <span class="tag-chip-desc">Chi ha scritto dal form contatti</span>
+          </span>
+          <span class="tag-chip-num"><%= audCounts.contacts %></span>
         </label>
-        <label class="aud-card <%= cur==='contacts'?'is-on':'' %>">
-          <input type="radio" name="audience" value="contacts" <%= cur==='contacts'?'checked':'' %>>
-          <div class="aud-card-ico">✉️</div>
-          <div class="aud-card-body">
-            <div class="aud-card-title">Solo form contatti</div>
-            <div class="aud-card-desc">Persone che hanno scritto attraverso il form di contatto del sito.</div>
-            <div class="aud-card-num"><%= audCounts.contacts %> destinatari</div>
-          </div>
+
+        <label class="tag-chip <%= isSel('manual')?'is-on':'' %>" data-tag="manual">
+          <input type="checkbox" name="audienceTags" value="manual" <%= isSel('manual')?'checked':'' %>>
+          <span class="tag-chip-emoji">📝</span>
+          <span class="tag-chip-body">
+            <span class="tag-chip-title">Manuali / Newsletter</span>
+            <span class="tag-chip-desc">Iscritti diretti + referrer approvati</span>
+          </span>
+          <span class="tag-chip-num"><%= audCounts.all - audCounts.bookings - audCounts.contacts %></span>
         </label>
+      </div>
+
+      <div class="aud-summary">
+        <span class="muted">Destinatari totali stimati:</span>
+        <strong id="audTotal"><%= audCounts.all %></strong> persone
       </div>
     </div>
 
     <style>
-      .aud-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:6px}
-      .aud-card{display:flex;gap:12px;padding:16px 18px;border:2px solid #eef0f4;border-radius:12px;background:#fff;cursor:pointer;transition:all .15s;position:relative}
-      .aud-card:hover{border-color:#1c1f26}
-      .aud-card.is-on,.aud-card:has(input:checked){background:#fffbe8;border-color:#e0aa00;box-shadow:0 4px 14px rgba(224,170,0,.15)}
-      .aud-card input{position:absolute;opacity:0;pointer-events:none}
-      .aud-card-ico{font-size:28px;flex-shrink:0;line-height:1}
-      .aud-card-body{flex:1;min-width:0}
-      .aud-card-title{font-weight:700;font-size:14.5px;color:#1c1f26;margin-bottom:3px}
-      .aud-card-desc{font-size:12.5px;color:#5a5e6a;line-height:1.45;margin-bottom:8px}
-      .aud-card-num{display:inline-block;background:#1c1f26;color:#e0aa00;padding:3px 10px;border-radius:99px;font-size:11.5px;font-weight:700;letter-spacing:.04em}
-      .aud-card.is-on .aud-card-num,.aud-card:has(input:checked) .aud-card-num{background:#e0aa00;color:#1c1408}
+      .tag-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-bottom:14px}
+      .tag-chip{display:flex;align-items:center;gap:10px;padding:12px 14px;border:2px solid #eef0f4;border-radius:10px;background:#fff;cursor:pointer;transition:all .15s;position:relative}
+      .tag-chip:hover{border-color:#1c1f26}
+      .tag-chip.is-on{background:#fffbe8;border-color:#e0aa00;box-shadow:0 4px 14px rgba(224,170,0,.12)}
+      .tag-chip input{position:absolute;opacity:0;pointer-events:none}
+      .tag-chip-emoji{font-size:22px;flex-shrink:0;line-height:1}
+      .tag-chip-body{flex:1;min-width:0;display:flex;flex-direction:column;line-height:1.3}
+      .tag-chip-title{font-weight:700;font-size:13.5px;color:#1c1f26}
+      .tag-chip-desc{font-size:11.5px;color:#7a8190;margin-top:2px}
+      .tag-chip-num{flex-shrink:0;background:#1c1f26;color:#e0aa00;padding:3px 10px;border-radius:99px;font-size:12px;font-weight:700;letter-spacing:.04em;min-width:34px;text-align:center}
+      .tag-chip.is-on .tag-chip-num{background:#e0aa00;color:#1c1408}
+
+      .aud-summary{background:#f7faf7;border:1px solid #cbe6d3;border-radius:8px;padding:10px 14px;font-size:13.5px;color:#1b6b3e}
+      .aud-summary strong{font-family:'Fraunces',Georgia,serif;font-size:22px;color:#0f4e2c;margin:0 4px}
     </style>
+
+    <script>
+    (function(){
+      var COUNTS = { booking: <%= audCounts.bookings %>, contact: <%= audCounts.contacts %>, manual: <%= audCounts.all - audCounts.bookings - audCounts.contacts %> };
+      var chips = document.querySelectorAll('.tag-chip');
+      var totalEl = document.getElementById('audTotal');
+      function recalc(){
+        var sum = 0;
+        chips.forEach(function(ch){
+          var inp = ch.querySelector('input');
+          if (inp.checked) {
+            ch.classList.add('is-on');
+            sum += COUNTS[ch.dataset.tag] || 0;
+          } else {
+            ch.classList.remove('is-on');
+          }
+        });
+        totalEl.textContent = sum;
+        totalEl.style.color = sum === 0 ? '#9b2727' : '#0f4e2c';
+      }
+      chips.forEach(function(ch){ ch.querySelector('input').addEventListener('change', recalc); });
+      recalc();
+    })();
+    </script>
 
     <div class="field">
       <label class="field-lbl">Contenuto email</label>
