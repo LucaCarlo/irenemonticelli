@@ -44,6 +44,10 @@
           </td>
           <td class="row-actions">
             <a class="btn-ico btn-ico-open" href="/admin/messages/<%= m.id %>" title="Apri messaggio"><%- include('../partials/ico', { name:'mail-open' }) %></a>
+            <form method="post" action="/admin/messages/<%= m.id %>/delete" onsubmit="return confirm('Eliminare definitivamente questo messaggio?')" style="display:inline">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+              <button type="submit" class="btn-ico btn-ico-danger" title="Elimina"><%- include('../partials/ico', { name:'trash' }) %></button>
+            </form>
           </td>
         </tr>
       <% }) %>

@@ -147,10 +147,13 @@ router.get('/subscribers', A(async (req, res) => {
     { name: { contains: params.q, mode: 'insensitive' } },
   ];
   const orderBy = {}; orderBy[params.sort] = params.dir;
-  const [totalUnfiltered, total, subs] = await Promise.all([
+  const [totalUnfiltered, total, subs, activeC, unsubC, bouncedC] = await Promise.all([
     prisma.newsletterSubscriber.count(),
     prisma.newsletterSubscriber.count({ where }),
     prisma.newsletterSubscriber.findMany({ where, orderBy, skip: params.skip, take: params.take }),
+    prisma.newsletterSubscriber.count({ where: { status: 'active' } }),
+    prisma.newsletterSubscriber.count({ where: { status: 'unsubscribed' } }),
+    prisma.newsletterSubscriber.count({ where: { status: 'bounced' } }),
   ]);
   const totalPages = Math.max(1, Math.ceil(total / params.perPage));
   const links = dt.pageLinks(params.page, totalPages);
@@ -158,6 +161,7 @@ router.get('/subscribers', A(async (req, res) => {
     title: 'Iscritti newsletter',
     subs, status, source,
     params, total, totalUnfiltered, totalPages, links,
+    counts: { active: activeC, unsubscribed: unsubC, bounced: bouncedC },
   });
 }));
 

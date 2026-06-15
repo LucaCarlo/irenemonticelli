@@ -2,23 +2,30 @@
 
 <div class="card">
   <div class="card-head">
-    <h2>Iscritti newsletter</h2>
-    <div class="head-tools">
-      <a class="btn btn-ghost" href="/admin/newsletter">← Campagne</a>
-      <form method="post" action="/admin/newsletter/subscribers/import" style="display:inline">
+    <div>
+      <h2 style="margin:0">Iscritti</h2>
+      <p class="muted" style="margin:4px 0 0;font-size:13.5px">Tutti gli iscritti newsletter — manuali, da prenotazione, da form contatti.</p>
+    </div>
+    <div class="head-tools" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <div class="view-switcher" style="display:inline-flex;border:1px solid #dde0e4;border-radius:8px;overflow:hidden">
+        <a class="btn btn-sm btn-ghost" href="/admin/newsletter" style="border:0;border-radius:0;padding:8px 14px">Campagne</a>
+        <a class="btn btn-sm" href="/admin/newsletter/subscribers" style="border:0;border-radius:0;background:#1c1f26;color:#e0aa00;border-left:1px solid #dde0e4;padding:8px 14px">Iscritti</a>
+      </div>
+      <form method="post" action="/admin/newsletter/subscribers/import" style="display:inline;margin:0">
         <input type="hidden" name="_csrf" value="<%= csrfToken %>">
         <button class="btn btn-ghost" type="submit" title="Aggiunge automaticamente gli email dei clienti che hanno prenotato con consenso dati">⤓ Importa da prenotazioni</button>
       </form>
+      <button type="button" class="btn btn-primary" id="openNewSubBtn">+ Nuovo iscritto</button>
     </div>
   </div>
 
-  <h3 style="margin-top:0">+ Aggiungi iscritto manualmente</h3>
-  <form method="post" action="/admin/newsletter/subscribers" style="display:flex;gap:10px;align-items:end;margin-bottom:24px;flex-wrap:wrap">
-    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-    <div class="field" style="flex:1;min-width:240px"><label class="field-lbl">Email</label><input type="email" name="email" required placeholder="nome@dominio.com"></div>
-    <div class="field" style="flex:1;min-width:200px"><label class="field-lbl">Nome (opzionale)</label><input type="text" name="name" placeholder="Maria Garcia"></div>
-    <button class="btn btn-primary">Aggiungi</button>
-  </form>
+  <!-- KPI -->
+  <div class="sub-kpi-grid">
+    <div class="sub-kpi"><div class="sub-kpi-lbl">Totali</div><div class="sub-kpi-val"><%= totalUnfiltered %></div></div>
+    <div class="sub-kpi"><div class="sub-kpi-lbl">Attivi</div><div class="sub-kpi-val" style="color:#1b6b3e"><%= counts.active %></div></div>
+    <div class="sub-kpi"><div class="sub-kpi-lbl">Disiscritti</div><div class="sub-kpi-val" style="color:#5a5e6a"><%= counts.unsubscribed %></div></div>
+    <div class="sub-kpi"><div class="sub-kpi-lbl">Bounced</div><div class="sub-kpi-val" style="color:#9b2727"><%= counts.bounced %></div></div>
+  </div>
 
   <%- include('../partials/dt-toolbar', {
     params, total, totalUnfiltered,
@@ -28,21 +35,25 @@
     extraFilters:[
       { name:'status', value: status, options:[
         { val:'', label:'Tutti gli stati' },
-        { val:'active', label:'Attivi' },
-        { val:'unsubscribed', label:'Disiscritti' },
-        { val:'bounced', label:'Bounced' },
+        { val:'active', label:'Attivi ('+counts.active+')' },
+        { val:'unsubscribed', label:'Disiscritti ('+counts.unsubscribed+')' },
+        { val:'bounced', label:'Bounced ('+counts.bounced+')' },
       ] },
       { name:'source', value: source, options:[
         { val:'', label:'Tutte le origini' },
-        { val:'booking', label:'Prenotazione' },
-        { val:'contact', label:'Form contatti' },
+        { val:'booking', label:'Da prenotazione' },
+        { val:'contact', label:'Da form contatti' },
         { val:'manual', label:'Manuale' },
       ] },
     ],
   }) %>
 
   <% if (!subs.length) { %>
-    <p class="muted" style="padding:20px 0">Nessun iscritto.</p>
+    <div style="text-align:center;padding:50px 20px">
+      <div style="font-size:42px;margin-bottom:6px">📭</div>
+      <h3 style="margin:0 0 6px;font-size:15px">Nessun iscritto</h3>
+      <p class="muted" style="margin:0;font-size:13px">Inizia aggiungendo iscritti manualmente o importandoli dalle prenotazioni.</p>
+    </div>
   <% } else { %>
   <div class="table-wrap">
   <table class="table">
@@ -58,14 +69,14 @@
     <tbody>
       <% subs.forEach(function(s){ %>
         <tr class="<%= s.status!=='active'?'is-off':'' %>">
-          <td><%= s.email %></td>
+          <td><strong><%= s.email %></strong></td>
           <td><%= s.name || '—' %></td>
           <td><span class="src src-<%= s.source %>"><%= s.source %></span></td>
           <td><span class="badge badge-<%= s.status %>"><%= s.status %></span></td>
-          <td><%= new Date(s.createdAt).toLocaleDateString('it-IT') %></td>
-          <td><%= s.lastSentAt ? new Date(s.lastSentAt).toLocaleDateString('it-IT') : '—' %></td>
+          <td style="white-space:nowrap;font-size:12.5px"><%= new Date(s.createdAt).toLocaleDateString('it-IT',{day:'2-digit',month:'short',year:'numeric'}) %></td>
+          <td style="white-space:nowrap;font-size:12.5px"><%= s.lastSentAt ? new Date(s.lastSentAt).toLocaleDateString('it-IT',{day:'2-digit',month:'short',year:'numeric'}) : '—' %></td>
           <td class="row-actions">
-            <form method="post" action="/admin/newsletter/subscribers/<%= s.id %>/delete" onsubmit="return confirm('Eliminare questo iscritto?')">
+            <form method="post" action="/admin/newsletter/subscribers/<%= s.id %>/delete" onsubmit="return confirm('Eliminare questo iscritto?')" style="display:inline">
               <input type="hidden" name="_csrf" value="<%= csrfToken %>">
               <button type="submit" class="btn-ico btn-ico-danger" title="Elimina"><%- include('../partials/ico', { name:'trash' }) %></button>
             </form>
@@ -79,15 +90,66 @@
   <% } %>
 </div>
 
+<!-- Modal "Nuovo iscritto" -->
+<div class="sub-modal" id="newSubModal" hidden>
+  <div class="sub-modal-backdrop" data-close></div>
+  <div class="sub-modal-panel">
+    <div class="sub-modal-head">
+      <h3 style="margin:0">+ Nuovo iscritto</h3>
+      <button type="button" class="btn-ico" data-close title="Chiudi">×</button>
+    </div>
+    <form method="post" action="/admin/newsletter/subscribers" class="form" style="padding:20px 24px 24px">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <div class="fs-grid">
+        <div class="field field-full">
+          <label class="field-lbl">Email *</label>
+          <input type="email" name="email" required placeholder="nome@dominio.com" autofocus>
+        </div>
+        <div class="field field-full">
+          <label class="field-lbl">Nome (opzionale)</label>
+          <input type="text" name="name" placeholder="Maria Garcia">
+        </div>
+      </div>
+      <div class="fs-actions" style="margin-top:16px">
+        <button type="button" class="btn btn-ghost" data-close>Annulla</button>
+        <button type="submit" class="btn btn-primary">+ Aggiungi iscritto</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+(function(){
+  var modal = document.getElementById('newSubModal');
+  var openBtn = document.getElementById('openNewSubBtn');
+  function show(){ modal.hidden = false; document.body.style.overflow='hidden'; var inp = modal.querySelector('input[name=email]'); if (inp) inp.focus(); }
+  function hide(){ modal.hidden = true; document.body.style.overflow=''; }
+  if (openBtn) openBtn.addEventListener('click', show);
+  modal.addEventListener('click', function(e){ if (e.target.hasAttribute('data-close')) hide(); });
+  document.addEventListener('keydown', function(e){ if (e.key === 'Escape' && !modal.hidden) hide(); });
+})();
+</script>
+
 <style>
+  .sub-kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin:14px 0 18px}
+  .sub-kpi{background:#fafbfc;border:1px solid #eef0f4;border-radius:10px;padding:12px 14px}
+  .sub-kpi-lbl{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#7a8190;margin-bottom:4px}
+  .sub-kpi-val{font-family:'Fraunces',Georgia,serif;font-size:26px;font-weight:600;color:#1c1f26;line-height:1}
+
   tr.is-off{opacity:.55}
-  .src{display:inline-block;padding:2px 8px;border-radius:99px;font-size:11px;background:#eef0f4;color:#5a5e6a}
+  .src{display:inline-block;padding:2px 8px;border-radius:99px;font-size:11px;background:#eef0f4;color:#5a5e6a;text-transform:uppercase;letter-spacing:.04em;font-weight:600}
   .src-booking{background:#d6f3df;color:#1b6b3e}
   .src-contact{background:#e3f0ff;color:#0d5290}
   .src-manual{background:#fff3d6;color:#7a5800}
-  .badge{display:inline-block;padding:2px 8px;border-radius:99px;font-size:11px;font-weight:600;text-transform:uppercase}
+  .badge{display:inline-block;padding:2px 8px;border-radius:99px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em}
   .badge-active{background:#d6f3df;color:#1b6b3e}
   .badge-unsubscribed{background:#eef0f4;color:#5a5e6a}
   .badge-bounced{background:#ffe1dc;color:#8a2a1c}
+
+  .sub-modal{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center}
+  .sub-modal-backdrop{position:absolute;inset:0;background:rgba(28,31,38,.55);backdrop-filter:blur(2px)}
+  .sub-modal-panel{position:relative;background:#fff;border-radius:14px;box-shadow:0 24px 60px rgba(0,0,0,.3);width:min(480px,92vw);animation:smIn .2s ease}
+  @keyframes smIn{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:none}}
+  .sub-modal-head{display:flex;justify-content:space-between;align-items:center;padding:18px 24px;border-bottom:1px solid #eef0f4}
 </style>
 <%- include('../partials/footer') %>
