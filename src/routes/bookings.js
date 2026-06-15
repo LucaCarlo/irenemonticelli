@@ -286,6 +286,7 @@ router.get('/:id(\\d+)/edit', A(async (req, res) => {
 
   res.render('bookings/form', {
     title: ((booking.status === 'confirmed' && booking.paymentStatus === 'paid') ? 'Prenotazione' : 'Carrello') + ' di ' + (booking.customerName || booking.customerEmail || '#'+booking.id),
+    activeSection: (booking.status === 'confirmed' && booking.paymentStatus === 'paid') ? 'bookings' : 'abandoned-carts',
     booking, plans, events, STATUSES,
     items, extras, lessonsResolved, lessonsAuto, auditEntries,
     breakdown: { subtotal, discountAmount, referralDiscount, extrasTotal, total, totalNet, totalIva, computedTotal, totalMatches, ivaRate: IVA_RATE },

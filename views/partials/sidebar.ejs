@@ -47,8 +47,15 @@
         <a class="sb-link <%= isActive('/admin/extras') ? 'active' : '' %>" href="/admin/extras"><%- include('icon',{name:'plans'}) %><span>Extras / Suplementi</span></a>
       <% } %>
       <% if (can('bookings.manage')) { %>
-        <a class="sb-link <%= path.indexOf('/admin/bookings')===0 ? 'active' : '' %>" href="/admin/bookings"><%- include('icon',{name:'bookings'}) %><span>Prenotazioni</span></a>
-        <a class="sb-link <%= path.indexOf('/admin/abandoned-carts')===0 ? 'active' : '' %>" href="/admin/abandoned-carts"><%- include('icon',{name:'messages'}) %><span>Carrelli abbandonati</span></a>
+        <%
+          // Override esplicito (passato dal controller per la pagina edit di una booking),
+          // così cliccando "modifica" da carrelli abbandonati si evidenzia la voce giusta.
+          var section = typeof activeSection !== 'undefined' ? activeSection : '';
+          var bookingsActive = section === 'bookings' || (!section && path.indexOf('/admin/bookings')===0);
+          var cartsActive    = section === 'abandoned-carts' || (!section && path.indexOf('/admin/abandoned-carts')===0);
+        %>
+        <a class="sb-link <%= bookingsActive ? 'active' : '' %>" href="/admin/bookings"><%- include('icon',{name:'bookings'}) %><span>Prenotazioni</span></a>
+        <a class="sb-link <%= cartsActive ? 'active' : '' %>" href="/admin/abandoned-carts"><%- include('icon',{name:'messages'}) %><span>Carrelli abbandonati</span></a>
       <% } else { %>
         <span class="sb-link disabled"><%- include('icon',{name:'bookings'}) %><span>Prenotazioni</span><em class="soon">presto</em></span>
       <% } %>
