@@ -169,13 +169,84 @@ router.post('/', A(async (req, res) => {
 }));
 
 router.get('/:id(\\d+)/edit', A(async (req, res) => {
-  const booking = await prisma.booking.findUnique({ where: { id: +req.params.id } });
+  const id = +req.params.id;
+  const booking = await prisma.booking.findUnique({
+    where: { id },
+    include: {
+      plan: true,
+      event: true,
+      participants: { orderBy: { sort: 'asc' }, include: { tutorBlock: true } },
+      tutorBlocks: { include: { participants: true } },
+      referralCode: { include: { referrer: true } },
+      commission: true,
+    },
+  });
   if (!booking) return res.redirect('/admin/bookings');
+
   const [plans, events] = await Promise.all([
     prisma.plan.findMany({ orderBy: { sort: 'asc' } }),
     prisma.event.findMany({ orderBy: { sort: 'asc' } }),
   ]);
-  res.render('bookings/form', { title: 'Modifica prenotazione', booking, plans, events, STATUSES });
+
+  // Parsing JSON sicuro
+  let items = {}, extras = [];
+  try { items = booking.itemsJson ? JSON.parse(booking.itemsJson) : {}; } catch (_) {}
+  try { extras = booking.extrasJson ? JSON.parse(booking.extrasJson) : []; } catch (_) {}
+  if (!Array.isArray(extras)) extras = [];
+
+  // Risolvi i titoli delle lezioni single_lessons (match day+slot → Lesson) se Event ha lessons.
+  // items.lessons = [{day:'2026-07-29', slot:'9:30'}, ...]
+  let lessonsResolved = [];
+  if (items && Array.isArray(items.lessons) && items.lessons.length && booking.eventId) {
+    const ev = await prisma.event.findUnique({
+      where: { id: booking.eventId },
+      include: { lessons: { include: { professor: true } } },
+    });
+    const allLessons = (ev && ev.lessons) || [];
+    // Map per dayIndex → ISO date. Calcoliamo da event.startDate + dayIndex-1.
+    function isoForDayIndex(dayIdx) {
+      if (!ev || !ev.startDate) return null;
+      const dt = new Date(ev.startDate);
+      dt.setDate(dt.getDate() + (dayIdx - 1));
+      return dt.toISOString().slice(0, 10);
+    }
+    lessonsResolved = items.lessons.map((sel) => {
+      const matches = allLessons.filter((L) => {
+        const iso = isoForDayIndex(L.dayIndex);
+        return iso === sel.day && L.time === sel.slot;
+      });
+      return { day: sel.day, slot: sel.slot, lesson: matches[0] || null };
+    });
+  }
+
+  // Audit log per questa booking (ultimi 25)
+  let auditEntries = [];
+  try {
+    auditEntries = await prisma.auditLog.findMany({
+      where: { entity: 'booking', entityId: String(id) },
+      orderBy: { createdAt: 'desc' },
+      take: 25,
+    });
+  } catch (_) {}
+
+  // Calcoli derivati (IVA, netto)
+  const IVA_RATE = 0.21;
+  const subtotal = booking.subtotal || 0;
+  const discountAmount = booking.discountAmount || 0;
+  const referralDiscount = booking.referralDiscount || 0;
+  const extrasTotal = booking.extrasTotal || 0;
+  const total = booking.amount || 0;
+  const totalNet = +(total / (1 + IVA_RATE)).toFixed(2);
+  const totalIva = +(total - totalNet).toFixed(2);
+  const computedTotal = +(subtotal - discountAmount - referralDiscount + extrasTotal).toFixed(2);
+  const totalMatches = Math.abs(computedTotal - total) < 0.02;
+
+  res.render('bookings/form', {
+    title: 'Prenotazione #' + booking.id,
+    booking, plans, events, STATUSES,
+    items, extras, lessonsResolved, auditEntries,
+    breakdown: { subtotal, discountAmount, referralDiscount, extrasTotal, total, totalNet, totalIva, computedTotal, totalMatches, ivaRate: IVA_RATE },
+  });
 }));
 
 router.post('/:id(\\d+)', A(async (req, res) => {

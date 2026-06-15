@@ -308,6 +308,9 @@ model Lesson {
   professor   Professor? @relation(fields: [professorId], references: [id], onDelete: SetNull)
   isAfternoon Boolean    @default(false)
   isPause     Boolean    @default(false) // es. Lunch time
+  // Capacità massima partecipanti (NB: si conta per persone, non per booking).
+  // 0 = illimitata. Default 100 = limite generoso per Spazio Danza.
+  capacity    Int        @default(100)
   sort        Int        @default(0)
   active      Boolean    @default(true)
   createdAt   DateTime   @default(now())

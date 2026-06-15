@@ -63,6 +63,15 @@
               <option value="1" <%= l.isAfternoon?'selected':'' %>>Tarde</option>
             </select>
           </div>
+          <div class="lesson-cap">
+            <input form="lf-<%= l.id %>" type="number" name="capacity" min="0" max="9999" value="<%= l.capacity %>" title="Capacità massima (0 = illimitata)" class="lesson-cap-input">
+            <% if (!l.isPause && l.capacity > 0) { %>
+              <div class="lesson-cap-bar" title="<%= l._occupied %>/<%= l.capacity %> posti occupati">
+                <div class="lesson-cap-fill <%= l._full ? 'is-full' : (l._occupied/l.capacity > 0.7 ? 'is-warn' : '') %>" style="width:<%= Math.min(100, Math.round((l._occupied/l.capacity)*100)) %>%"></div>
+                <span class="lesson-cap-txt"><%= l._occupied %>/<%= l.capacity %></span>
+              </div>
+            <% } %>
+          </div>
           <div class="lesson-flags">
             <label class="lesson-chip" title="Pausa (es. Lunch time)">
               <input form="lf-<%= l.id %>" type="checkbox" name="isPause" value="1" <%= l.isPause?'checked':'' %>>
@@ -110,6 +119,10 @@
       <label class="field-lbl">Fascia</label>
       <select name="isAfternoon"><option value="">Mañana</option><option value="1">Tarde</option></select>
     </div>
+    <div class="field">
+      <label class="field-lbl">Capacità (0 = illimitata)</label>
+      <input type="number" name="capacity" value="100" min="0" max="9999">
+    </div>
     <div class="field" style="display:flex;align-items:center;padding-top:24px">
       <label class="switch"><input type="checkbox" name="isPause" value="1"><span>È una pausa</span></label>
     </div>
@@ -136,7 +149,7 @@
 
   .lessons-list{display:flex;flex-direction:column;gap:8px}
 
-  .lesson-row{display:grid;grid-template-columns:30px 95px 1.4fr 1.1fr 110px auto auto;gap:10px;align-items:center;
+  .lesson-row{display:grid;grid-template-columns:30px 95px 1.4fr 1.1fr 110px 120px auto auto;gap:10px;align-items:center;
     background:#fff;border:1px solid var(--line);border-radius:10px;padding:8px 10px;transition:border-color .2s, box-shadow .2s, transform .15s}
   .lesson-row:hover{border-color:#d8c98c;box-shadow:0 3px 14px rgba(0,0,0,.04)}
   .lesson-row.is-pause{background:linear-gradient(135deg,#fbf6e6 0%,#fff 50%);border-color:#e8d99a}
@@ -154,6 +167,14 @@
   .lesson-row input[type=text]:focus,.lesson-row select:focus{outline:2px solid var(--brand);border-color:var(--brand)}
   .lesson-time input{font-weight:600;text-align:center}
   .lesson-title input{font-weight:600}
+
+  .lesson-cap{display:flex;flex-direction:column;gap:4px;align-items:stretch}
+  .lesson-cap-input{width:100%;text-align:center;font-weight:600}
+  .lesson-cap-bar{position:relative;height:14px;background:#eef0f4;border-radius:4px;overflow:hidden}
+  .lesson-cap-fill{height:100%;background:linear-gradient(90deg,#9ad1ae,#1b6b3e);transition:width .25s}
+  .lesson-cap-fill.is-warn{background:linear-gradient(90deg,#f0c04b,#c8970a)}
+  .lesson-cap-fill.is-full{background:linear-gradient(90deg,#e88080,#9b2727)}
+  .lesson-cap-txt{position:absolute;top:0;left:0;right:0;text-align:center;font-size:10.5px;font-weight:600;color:#1c1f26;line-height:14px;letter-spacing:.02em}
 
   .lesson-flags{display:flex;flex-direction:column;gap:3px;align-items:flex-start}
   .lesson-chip{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;color:var(--muted);cursor:pointer;user-select:none;padding:2px 4px;border-radius:5px}
@@ -174,7 +195,7 @@
 
   @media(max-width:900px){
     .lesson-row{grid-template-columns:24px 80px 1fr;grid-auto-rows:auto;gap:8px}
-    .lesson-prof,.lesson-slot,.lesson-flags,.lesson-acts{grid-column:1 / -1}
+    .lesson-prof,.lesson-slot,.lesson-cap,.lesson-flags,.lesson-acts{grid-column:1 / -1}
     .lesson-grip{padding:0}
     .lesson-new-form{grid-template-columns:1fr 1fr}
   }

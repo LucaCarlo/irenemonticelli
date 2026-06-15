@@ -22,6 +22,7 @@
 const prisma = require('./db');
 const B = require('./booking');
 const RC = require('./referral-calc');
+const LC = require('./lesson-capacity');
 
 const MAX_PARTICIPANTS = 20;
 
@@ -293,6 +294,23 @@ async function createMultiBooking(plan, body) {
   const refRes = await resolveReferralCode(body.referralCode);
   if (body.referralCode && refRes.error) return { error: refRes.error };
   applyReferralDiscount(breakdown, refRes.code);
+
+  // ---- CAPACITÀ LEZIONI (anti overbook) ----
+  // Controllo PRIMA della transazione: rifiuta se non c'è disponibilità per N partecipanti.
+  if (plan.eventId) {
+    const selection = (plan.bookingMode === 'single_lessons')
+      ? { lessons }
+      : (plan.bookingMode === 'red')
+        ? { days: (body.days || {}) }
+        : {};
+    const cap = await LC.assertCapacity({
+      eventId: plan.eventId,
+      plan,
+      selection,
+      requestedCount: breakdown.N,
+    });
+    if (!cap.ok) return { error: cap.error, fullLessons: cap.fullLessons };
+  }
 
   // ---- TRANSAZIONE ----
   const result = await prisma.$transaction(async (tx) => {

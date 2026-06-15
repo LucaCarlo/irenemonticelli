@@ -1,127 +1,537 @@
 <%- include('../partials/header') %>
-<form method="post" action="<%= booking ? '/admin/bookings/'+booking.id : '/admin/bookings' %>" class="form fs-page" id="bookingForm">
-  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
 
-  <div class="fs-page-head">
-    <div>
-      <h2><%= booking ? 'Prenotazione #'+booking.id : 'Nuova prenotazione' %></h2>
-      <% if (booking) { %>
-        <p>
-          Prenotata il <strong style="color:#1c1f26"><%= new Date(booking.createdAt).toLocaleString('it-IT',{day:'2-digit',month:'long',year:'numeric',hour:'2-digit',minute:'2-digit'}) %></strong>
-          <% if (booking.updatedAt && new Date(booking.updatedAt).getTime() !== new Date(booking.createdAt).getTime()) { %>
-            · Ultima modifica: <%= new Date(booking.updatedAt).toLocaleString('it-IT') %>
-          <% } %>
-        </p>
-      <% } else { %>
-        <p>Crea manualmente una prenotazione (utile per registrare bonifici o casi speciali).</p>
+<%
+  // Helpers locali EJS
+  function fmtEur(n){ return (Math.round(Number(n||0)*100)/100).toFixed(2).replace('.', ',') + ' €'; }
+  function fmtDate(d){ if(!d) return '—'; var dt = new Date(d); return isNaN(dt) ? '—' : dt.toLocaleDateString('it-IT',{day:'2-digit',month:'long',year:'numeric'}); }
+  function fmtDateTime(d){ if(!d) return '—'; var dt = new Date(d); return isNaN(dt) ? '—' : dt.toLocaleString('it-IT',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}); }
+  function ageOf(birth){ if(!birth) return null; var dt=new Date(birth); var t=new Date(); var a=t.getFullYear()-dt.getFullYear(); if(t.getMonth()<dt.getMonth()||(t.getMonth()===dt.getMonth()&&t.getDate()<dt.getDate())) a--; return a; }
+  function badgeForStatus(s){
+    if(s==='confirmed') return '<span class="badge badge-ok">confirmed</span>';
+    if(s==='cancelled') return '<span class="badge badge-off">cancelled</span>';
+    return '<span class="badge badge-warn">pending</span>';
+  }
+  function badgeForPayment(s){
+    if(s==='paid') return '<span class="badge badge-ok">paid</span>';
+    if(s==='failed') return '<span class="badge badge-off">failed</span>';
+    if(s==='refunded') return '<span class="badge badge-off">refunded</span>';
+    return '<span class="badge badge-warn">unpaid</span>';
+  }
+%>
+
+<% if (booking) { %>
+
+<div class="fs-page-head">
+  <div>
+    <h2>Prenotazione #<%= booking.id %> · <%- badgeForStatus(booking.status) %> <%- badgeForPayment(booking.paymentStatus) %></h2>
+    <p>
+      Creata il <strong style="color:#1c1f26"><%= fmtDateTime(booking.createdAt) %></strong>
+      <% if (booking.updatedAt && new Date(booking.updatedAt).getTime() !== new Date(booking.createdAt).getTime()) { %>
+        · Ultima modifica: <%= fmtDateTime(booking.updatedAt) %>
+      <% } %>
+    </p>
+  </div>
+  <a class="btn btn-ghost" href="/admin/bookings">← Torna alle prenotazioni</a>
+</div>
+
+<!-- TOP BAR riepilogo: totale + pack + partecipanti -->
+<div class="bk-topbar">
+  <div class="bk-topbar-card bk-topbar-amount">
+    <div class="bk-topbar-lbl">Totale pagato</div>
+    <div class="bk-topbar-val"><%= fmtEur(booking.amount) %></div>
+    <div class="bk-topbar-sub">
+      <% if (booking.method) { %>via <strong><%= booking.method %></strong> · <% } %>
+      <%- badgeForPayment(booking.paymentStatus) %>
+    </div>
+  </div>
+  <div class="bk-topbar-card">
+    <div class="bk-topbar-lbl">Pacchetto</div>
+    <div class="bk-topbar-val" style="font-size:22px"><%= booking.plan ? booking.plan.name : '—' %></div>
+    <div class="bk-topbar-sub">
+      <% if (booking.event) { %><%= booking.event.title %><% } %>
+      <% if (booking.dateLabel) { %> · <%= booking.dateLabel %><% } %>
+    </div>
+  </div>
+  <div class="bk-topbar-card">
+    <div class="bk-topbar-lbl">Partecipanti</div>
+    <div class="bk-topbar-val" style="font-size:22px"><%= booking.participantsCount || 1 %> <span class="muted" style="font-size:14px">persone</span></div>
+    <div class="bk-topbar-sub">
+      <% if (booking.classesPerParticipant && booking.plan && booking.plan.bookingMode === 'single_lessons') { %>
+        <%= booking.classesPerParticipant %> classi a testa
       <% } %>
     </div>
-    <a class="btn btn-ghost" href="/admin/bookings">← Torna alle prenotazioni</a>
+  </div>
+  <% if (booking.referralCodeSnap) { %>
+  <div class="bk-topbar-card" style="background:#fffbe8;border-color:#f5d878">
+    <div class="bk-topbar-lbl" style="color:#7a5800">Codice referral</div>
+    <div class="bk-topbar-val" style="font-size:20px;font-family:'Courier New',monospace;color:#7a5800"><%= booking.referralCodeSnap %></div>
+    <div class="bk-topbar-sub">
+      <% if (booking.referralCode && booking.referralCode.referrer) { %>
+        <%= booking.referralCode.referrer.firstName %> <%= booking.referralCode.referrer.lastName %>
+      <% } %>
+      <% if (booking.referralDiscount) { %> · −<%= fmtEur(booking.referralDiscount) %><% } %>
+    </div>
+  </div>
+  <% } %>
+</div>
+
+<!-- GRID a 2 colonne: sinistra info, destra economico + audit -->
+<div class="bk-grid">
+
+  <!-- COL SINISTRA -->
+  <div class="bk-col">
+
+    <!-- Pagante -->
+    <section class="fs-section">
+      <div class="fs-section-head">
+        <div class="fs-section-ico" style="background:#fdf2c9;color:#7a5800">👤</div>
+        <div>
+          <h3 class="fs-section-title">Pagante</h3>
+          <p class="fs-section-sub">Chi ha effettuato il pagamento e riceve email/ricevute.</p>
+        </div>
+      </div>
+      <div class="bk-keyval">
+        <div><span class="bk-k">Nome</span><span class="bk-v"><%= (booking.firstName || booking.lastName) ? (booking.firstName + ' ' + booking.lastName).trim() : (booking.customerName || '—') %></span></div>
+        <div><span class="bk-k">Email</span><span class="bk-v"><a href="mailto:<%= booking.customerEmail %>"><%= booking.customerEmail %></a></span></div>
+        <div><span class="bk-k">Telefono</span><span class="bk-v"><%= booking.phone || '—' %></span></div>
+        <% if (booking.birthDate) { %>
+          <div><span class="bk-k">Data nascita</span><span class="bk-v"><%= fmtDate(booking.birthDate) %> <% if (ageOf(booking.birthDate)!==null) { %><span class="muted">(<%= ageOf(booking.birthDate) %> anni)</span><% } %></span></div>
+        <% } %>
+        <div><span class="bk-k">Consensi</span><span class="bk-v">
+          <% if (booking.dataConsent) { %><span class="chip chip-ok">Dati</span><% } else { %><span class="chip chip-off">No dati</span><% } %>
+          <% if (booking.imageConsent) { %><span class="chip chip-ok">Immagini</span><% } else { %><span class="chip chip-off">No img</span><% } %>
+          <% if (booking.healthConsent) { %><span class="chip chip-ok">Salute</span><% } else { %><span class="chip chip-off">No salute</span><% } %>
+          <% if (booking.parentalConsent) { %><span class="chip chip-ok">Min. autoriz.</span><% } %>
+        </span></div>
+      </div>
+    </section>
+
+    <!-- Partecipanti -->
+    <section class="fs-section">
+      <div class="fs-section-head">
+        <div class="fs-section-ico" style="background:#e3f0ff;color:#0d5290">🧑‍🤝‍🧑</div>
+        <div>
+          <h3 class="fs-section-title">Partecipanti (<%= booking.participants.length %>)</h3>
+          <p class="fs-section-sub">Persone iscritte sotto questa prenotazione.</p>
+        </div>
+      </div>
+      <% if (!booking.participants.length) { %>
+        <p class="muted" style="padding:14px 0">Nessun partecipante registrato. (Prenotazione legacy: il pagante è anche il partecipante.)</p>
+      <% } else { %>
+        <div class="bk-parts">
+          <% booking.participants.forEach(function(p, i){ var age = ageOf(p.birthDate); %>
+            <div class="bk-part">
+              <div class="bk-part-num"><%= i+1 %></div>
+              <div class="bk-part-body">
+                <div class="bk-part-name">
+                  <strong><%= p.firstName %> <%= p.lastName %></strong>
+                  <% if (p.isMinor) { %><span class="chip chip-warn">MINORE</span><% } %>
+                  <% if (age !== null) { %><span class="muted">· <%= age %> anni</span><% } %>
+                </div>
+                <div class="bk-part-grid">
+                  <% if (p.email) { %><div><span class="bk-k">Email</span><span class="bk-v"><a href="mailto:<%= p.email %>"><%= p.email %></a></span></div><% } %>
+                  <% if (p.phone) { %><div><span class="bk-k">Tel</span><span class="bk-v"><%= p.phone %></span></div><% } %>
+                  <% if (p.birthDate) { %><div><span class="bk-k">Nascita</span><span class="bk-v"><%= fmtDate(p.birthDate) %></span></div><% } %>
+                  <% if (p.address || p.city) { %><div><span class="bk-k">Indirizzo</span><span class="bk-v"><%= [p.address, p.city, p.zip, p.country].filter(Boolean).join(', ') %></span></div><% } %>
+                  <% if (p.tutorBlock) { %>
+                    <div><span class="bk-k">Tutor</span><span class="bk-v"><strong><%= p.tutorBlock.firstName %> <%= p.tutorBlock.lastName %></strong> <% if (p.tutorBlock.relationship) { %><span class="muted">(<%= p.tutorBlock.relationship %>)</span><% } %> · <%= p.tutorBlock.email %> · <%= p.tutorBlock.phone %></span></div>
+                  <% } %>
+                </div>
+              </div>
+            </div>
+          <% }) %>
+        </div>
+      <% } %>
+    </section>
+
+    <!-- Tutor blocks (se ci sono) -->
+    <% if (booking.tutorBlocks && booking.tutorBlocks.length) { %>
+      <section class="fs-section">
+        <div class="fs-section-head">
+          <div class="fs-section-ico" style="background:#f3e3ff;color:#5e2a8a">👨‍👩‍👧</div>
+          <div>
+            <h3 class="fs-section-title">Tutori (<%= booking.tutorBlocks.length %>)</h3>
+            <p class="fs-section-sub">Adulti responsabili dei minori.</p>
+          </div>
+        </div>
+        <div class="bk-keyval">
+          <% booking.tutorBlocks.forEach(function(t){ %>
+            <div><span class="bk-k"><%= t.firstName %> <%= t.lastName %></span><span class="bk-v"><%= t.relationship || '—' %> · <%= t.email %> · <%= t.phone %> · <strong><%= t.participants ? t.participants.length : 0 %></strong> figli associati</span></div>
+          <% }) %>
+        </div>
+      </section>
+    <% } %>
+
+    <!-- Lezioni scelte -->
+    <% if (lessonsResolved && lessonsResolved.length) { %>
+      <section class="fs-section">
+        <div class="fs-section-head">
+          <div class="fs-section-ico" style="background:#e7f3ec;color:#1b6b3e">🎭</div>
+          <div>
+            <h3 class="fs-section-title">Lezioni scelte (<%= lessonsResolved.length %>)</h3>
+            <p class="fs-section-sub">Day + slot scelti dal pagante in checkout.</p>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table class="table">
+            <thead><tr><th>Giorno</th><th>Orario</th><th>Titolo lezione</th><th>Professore</th></tr></thead>
+            <tbody>
+              <% lessonsResolved.forEach(function(L){ %>
+                <tr>
+                  <td><%= fmtDate(L.day) %></td>
+                  <td><strong><%= L.slot %></strong></td>
+                  <td><%= L.lesson ? L.lesson.title : '<span class="muted">— non risolto —</span>' %></td>
+                  <td><%= (L.lesson && L.lesson.professor) ? (L.lesson.professor.firstName + ' ' + L.lesson.professor.lastName) : '—' %></td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+        <p class="muted" style="font-size:12px;margin-top:8px">Posti occupati su queste lezioni: <strong><%= booking.participantsCount || 1 %></strong> (per ogni lezione = N partecipanti).</p>
+      </section>
+    <% } else if (items && items.lessons === undefined && booking.plan && booking.plan.bookingMode !== 'single_lessons') { %>
+      <section class="fs-section">
+        <div class="fs-section-head">
+          <div class="fs-section-ico" style="background:#e7f3ec;color:#1b6b3e">🎭</div>
+          <div>
+            <h3 class="fs-section-title">Lezioni incluse</h3>
+            <p class="fs-section-sub">Pack <strong><%= booking.plan.name %></strong>: include automaticamente tutte le lezioni dell'evento <% if (booking.slot) { %>(<%= booking.slot %>)<% } %>.</p>
+          </div>
+        </div>
+      </section>
+    <% } %>
+
+    <!-- Extras -->
+    <% if (extras && extras.length) { %>
+      <section class="fs-section">
+        <div class="fs-section-head">
+          <div class="fs-section-ico" style="background:#fff3d6;color:#7a5800">➕</div>
+          <div>
+            <h3 class="fs-section-title">Suplementi (<%= extras.length %>)</h3>
+            <p class="fs-section-sub">Voci aggiuntive sul checkout (assicurazione, merchandising, ecc.).</p>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table class="table">
+            <thead><tr><th>Nome</th><th>Prezzo unitario</th><th>Tipo</th><th>Subtotale × <%= booking.participantsCount || 1 %></th></tr></thead>
+            <tbody>
+              <% extras.forEach(function(e){ %>
+                <tr>
+                  <td><strong><%= e.name %></strong></td>
+                  <td><%= fmtEur(e.price) %></td>
+                  <td><% if (e.mandatory) { %><span class="chip chip-warn">Obbligatorio</span><% } else { %><span class="chip">Opzionale</span><% } %></td>
+                  <td><strong><%= fmtEur(Number(e.price) * (booking.participantsCount || 1)) %></strong></td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    <% } %>
+
+    <!-- Fatturazione -->
+    <% if (booking.billingAddress || booking.billingNif || booking.billingCity) { %>
+      <section class="fs-section">
+        <div class="fs-section-head">
+          <div class="fs-section-ico" style="background:#eef0f4;color:#1c1f26">🧾</div>
+          <div>
+            <h3 class="fs-section-title">Fatturazione</h3>
+            <p class="fs-section-sub">Dati per factura formale spagnola.</p>
+          </div>
+        </div>
+        <div class="bk-keyval">
+          <% if (booking.billingNif) { %><div><span class="bk-k">NIF/CIF</span><span class="bk-v"><code><%= booking.billingNif %></code></span></div><% } %>
+          <% if (booking.billingAddress) { %><div><span class="bk-k">Indirizzo</span><span class="bk-v"><%= booking.billingAddress %></span></div><% } %>
+          <% if (booking.billingCity || booking.billingZip || booking.billingCountry) { %>
+            <div><span class="bk-k">Località</span><span class="bk-v"><%= [booking.billingZip, booking.billingCity, booking.billingCountry].filter(Boolean).join(' ') %></span></div>
+          <% } %>
+        </div>
+      </section>
+    <% } %>
+
+    <!-- Note interne + edit limitato -->
+    <section class="fs-section">
+      <div class="fs-section-head">
+        <div class="fs-section-ico" style="background:#fff3d6;color:#7a5800">📝</div>
+        <div>
+          <h3 class="fs-section-title">Note interne &amp; modifiche manuali</h3>
+          <p class="fs-section-sub">Solo i campi qui sotto sono editabili. Tutto il resto è impostato dal checkout / Stripe.</p>
+        </div>
+      </div>
+
+      <form method="post" action="/admin/bookings/<%= booking.id %>" class="form">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <input type="hidden" name="customerName" value="<%= booking.customerName %>">
+        <input type="hidden" name="customerEmail" value="<%= booking.customerEmail %>">
+        <input type="hidden" name="phone" value="<%= booking.phone %>">
+        <input type="hidden" name="planId" value="<%= booking.planId || '' %>">
+        <input type="hidden" name="eventId" value="<%= booking.eventId || '' %>">
+        <input type="hidden" name="dateLabel" value="<%= booking.dateLabel %>">
+        <input type="hidden" name="slot" value="<%= booking.slot %>">
+
+        <div class="fs-grid">
+          <div class="field">
+            <label class="field-lbl">Stato prenotazione</label>
+            <select name="status">
+              <% STATUSES.forEach(function(s){ %><option value="<%= s %>" <%= booking.status===s ? 'selected':'' %>><%= s %></option><% }) %>
+            </select>
+          </div>
+          <div class="field">
+            <label class="field-lbl">Importo finale (€)</label>
+            <input type="number" step="0.01" name="amount" value="<%= booking.amount %>">
+            <div class="field-help">Modifica solo per rettifiche manuali (refund parziale, sconto extra, …).</div>
+          </div>
+          <div class="field field-full">
+            <label class="field-lbl">Metodo</label>
+            <input type="text" name="method" value="<%= booking.method %>" placeholder="es. Stripe, Bonifico, …">
+          </div>
+          <div class="field field-full">
+            <label class="field-lbl">Note (visibili solo admin)</label>
+            <textarea name="notes" rows="4" placeholder="Aggiungi note interne…"><%= booking.notes %></textarea>
+          </div>
+        </div>
+
+        <div class="fs-actions">
+          <a class="btn btn-ghost" href="/admin/bookings">Annulla</a>
+          <button class="btn btn-primary" type="submit">💾 Salva modifiche</button>
+        </div>
+      </form>
+    </section>
+
   </div>
 
-  <!-- SEZIONE 1: Cliente -->
-  <section class="fs-section">
-    <div class="fs-section-head">
-      <div class="fs-section-ico" style="background:#fdf2c9;color:#7a5800">👤</div>
-      <div>
-        <h3 class="fs-section-title">Cliente</h3>
-        <p class="fs-section-sub">Dati anagrafici del pagante.</p>
-      </div>
-    </div>
-    <div class="fs-grid">
-      <div class="field">
-        <label class="field-lbl">Nome cliente *</label>
-        <input type="text" name="customerName" required value="<%= booking ? booking.customerName : '' %>">
-      </div>
-      <div class="field">
-        <label class="field-lbl">Email *</label>
-        <input type="email" name="customerEmail" required value="<%= booking ? booking.customerEmail : '' %>">
-      </div>
-      <div class="field field-full">
-        <label class="field-lbl">Telefono</label>
-        <input type="text" name="phone" value="<%= booking ? booking.phone : '' %>" placeholder="+34 …">
-      </div>
-    </div>
-  </section>
+  <!-- COL DESTRA -->
+  <div class="bk-col">
 
-  <!-- SEZIONE 2: Pacchetto + evento + data -->
-  <section class="fs-section">
-    <div class="fs-section-head">
-      <div class="fs-section-ico" style="background:#e3f0ff;color:#0d5290">🎟</div>
-      <div>
-        <h3 class="fs-section-title">Pacchetto, evento e data</h3>
-        <p class="fs-section-sub">Cosa ha prenotato e quando.</p>
+    <!-- BREAKDOWN ECONOMICO -->
+    <section class="fs-section bk-money">
+      <div class="fs-section-head">
+        <div class="fs-section-ico" style="background:#e7f3ec;color:#1b6b3e">💰</div>
+        <div>
+          <h3 class="fs-section-title">Breakdown economico</h3>
+          <p class="fs-section-sub">IVA Spagna <%= (breakdown.ivaRate*100).toFixed(0) %>% inclusa nei prezzi listino.</p>
+        </div>
       </div>
-    </div>
-    <div class="fs-grid">
-      <div class="field">
-        <label class="field-lbl">Pacchetto</label>
-        <select name="planId">
-          <option value="">—</option>
-          <% plans.forEach(function(p){ %><option value="<%= p.id %>" <%= booking && booking.planId===p.id ? 'selected':'' %>><%= p.name %></option><% }) %>
-        </select>
-      </div>
-      <div class="field">
-        <label class="field-lbl">Evento</label>
-        <select name="eventId">
-          <option value="">—</option>
-          <% events.forEach(function(e){ %><option value="<%= e.id %>" <%= booking && booking.eventId===e.id ? 'selected':'' %>><%= e.title %></option><% }) %>
-        </select>
-      </div>
-      <div class="field">
-        <label class="field-lbl">Data (etichetta)</label>
-        <input type="text" name="dateLabel" value="<%= booking ? booking.dateLabel : '' %>" placeholder="es. 29 Julio 2026">
-        <div class="field-help">Testo libero mostrato al cliente.</div>
-      </div>
-      <div class="field">
-        <label class="field-lbl">Orario / fascia</label>
-        <input type="text" name="slot" value="<%= booking ? booking.slot : '' %>" placeholder="es. 9:30 oppure Mañana">
-      </div>
-    </div>
-  </section>
 
-  <!-- SEZIONE 3: Pagamento -->
-  <section class="fs-section">
-    <div class="fs-section-head">
-      <div class="fs-section-ico" style="background:#e7f3ec;color:#1b6b3e">💳</div>
-      <div>
-        <h3 class="fs-section-title">Pagamento</h3>
-        <p class="fs-section-sub">Stato, importo e metodo.</p>
-      </div>
-    </div>
-    <div class="fs-grid">
-      <div class="field">
-        <label class="field-lbl">Stato prenotazione</label>
-        <select name="status">
-          <% STATUSES.forEach(function(s){ %><option value="<%= s %>" <%= booking && booking.status===s ? 'selected':'' %>><%= s %></option><% }) %>
-        </select>
-      </div>
-      <div class="field">
-        <label class="field-lbl">Importo (€)</label>
-        <input type="number" step="0.01" name="amount" value="<%= booking ? booking.amount : 0 %>">
-      </div>
-      <div class="field field-full">
-        <label class="field-lbl">Metodo di pagamento</label>
-        <input type="text" name="method" value="<%= booking ? booking.method : '' %>" placeholder="es. Stripe, Bonifico, …">
-      </div>
-    </div>
-  </section>
+      <table class="bk-money-tbl">
+        <tr>
+          <td>Subtotale pack (× <%= booking.participantsCount || 1 %> persone)</td>
+          <td><%= fmtEur(breakdown.subtotal) %></td>
+        </tr>
+        <% if (breakdown.discountAmount > 0) { %>
+        <tr class="bk-discount">
+          <td>− Sconto quantità</td>
+          <td>−<%= fmtEur(breakdown.discountAmount) %></td>
+        </tr>
+        <% } %>
+        <% if (breakdown.referralDiscount > 0) { %>
+        <tr class="bk-discount">
+          <td>− Sconto codice <code><%= booking.referralCodeSnap %></code></td>
+          <td>−<%= fmtEur(breakdown.referralDiscount) %></td>
+        </tr>
+        <% } %>
+        <% if (breakdown.extrasTotal > 0) { %>
+        <tr>
+          <td>+ Suplementi</td>
+          <td>+<%= fmtEur(breakdown.extrasTotal) %></td>
+        </tr>
+        <% } %>
+        <tr class="bk-money-sep"><td colspan="2"></td></tr>
+        <tr class="bk-money-total">
+          <td><strong>Totale pagato</strong></td>
+          <td><strong><%= fmtEur(breakdown.total) %></strong></td>
+        </tr>
+        <tr class="bk-money-iva">
+          <td class="muted">di cui IVA</td>
+          <td class="muted"><%= fmtEur(breakdown.totalIva) %></td>
+        </tr>
+        <tr class="bk-money-iva">
+          <td class="muted">netto IVA esclusa</td>
+          <td class="muted"><%= fmtEur(breakdown.totalNet) %></td>
+        </tr>
+      </table>
 
-  <!-- SEZIONE 4: Note -->
-  <section class="fs-section">
-    <div class="fs-section-head">
-      <div class="fs-section-ico" style="background:#fff3d6;color:#7a5800">📝</div>
-      <div>
-        <h3 class="fs-section-title">Note interne</h3>
-        <p class="fs-section-sub">Promemoria, riferimenti, contatti — visibili solo agli admin.</p>
-      </div>
-    </div>
-    <textarea name="notes" rows="4" placeholder="Aggiungi note interne…"><%= booking ? booking.notes : '' %></textarea>
-  </section>
+      <% if (!breakdown.totalMatches && breakdown.total > 0) { %>
+        <div class="bk-warn">
+          ⚠ Il totale registrato (<strong><%= fmtEur(breakdown.total) %></strong>) non coincide con la somma calcolata dai sub-importi (<strong><%= fmtEur(breakdown.computedTotal) %></strong>). Differenza: <strong><%= fmtEur(breakdown.total - breakdown.computedTotal) %></strong>. Probabile booking legacy o rettifica manuale.
+        </div>
+      <% } %>
+    </section>
 
-  <div class="fs-actions">
-    <a class="btn btn-ghost" href="/admin/bookings">Annulla</a>
-    <button class="btn btn-primary" type="submit"><%= booking ? '💾 Salva modifiche' : '✨ Crea prenotazione' %></button>
+    <!-- COMMISSIONE -->
+    <% if (booking.commission) { %>
+      <section class="fs-section">
+        <div class="fs-section-head">
+          <div class="fs-section-ico" style="background:#e7f3ec;color:#1b6b3e">🪙</div>
+          <div>
+            <h3 class="fs-section-title">Commissione referral</h3>
+            <p class="fs-section-sub">Generata automaticamente al pagamento.</p>
+          </div>
+        </div>
+        <div class="bk-keyval">
+          <div><span class="bk-k">Importo</span><span class="bk-v"><strong style="color:#1b6b3e;font-size:18px"><%= fmtEur(booking.commission.commissionAmt) %></strong> <span class="muted">(<%= booking.commission.commissionPct %>% su <%= fmtEur(booking.commission.netBase) %> netto)</span></span></div>
+          <div><span class="bk-k">Stato</span><span class="bk-v">
+            <% if (booking.commission.status==='paid') { %><span class="badge badge-ok">paid</span>
+            <% } else if (booking.commission.status==='cancelled') { %><span class="badge badge-off">cancelled</span>
+            <% } else { %><span class="badge badge-warn">pending</span><% } %>
+          </span></div>
+          <div><span class="bk-k">Creata</span><span class="bk-v"><%= fmtDateTime(booking.commission.createdAt) %></span></div>
+          <% if (booking.commission.paidAt) { %>
+            <div><span class="bk-k">Pagata il</span><span class="bk-v"><%= fmtDateTime(booking.commission.paidAt) %></span></div>
+          <% } %>
+        </div>
+      </section>
+    <% } %>
+
+    <!-- STRIPE IDS -->
+    <% if (booking.stripeSessionId || booking.stripePaymentIntent) { %>
+      <section class="fs-section">
+        <div class="fs-section-head">
+          <div class="fs-section-ico" style="background:#e3f0ff;color:#0d5290">💳</div>
+          <div>
+            <h3 class="fs-section-title">Stripe</h3>
+            <p class="fs-section-sub">Riferimenti pagamento.</p>
+          </div>
+        </div>
+        <div class="bk-keyval">
+          <% if (booking.stripePaymentIntent) { %>
+            <div><span class="bk-k">PaymentIntent</span><span class="bk-v">
+              <a href="https://dashboard.stripe.com/payments/<%= booking.stripePaymentIntent %>" target="_blank" rel="noopener">
+                <code style="font-size:12px"><%= booking.stripePaymentIntent %></code> ↗
+              </a>
+            </span></div>
+          <% } %>
+          <% if (booking.stripeSessionId) { %>
+            <div><span class="bk-k">CheckoutSession</span><span class="bk-v">
+              <code style="font-size:12px"><%= booking.stripeSessionId %></code>
+            </span></div>
+          <% } %>
+        </div>
+      </section>
+    <% } %>
+
+    <!-- AUDIT LOG -->
+    <% if (auditEntries && auditEntries.length) { %>
+      <section class="fs-section">
+        <div class="fs-section-head">
+          <div class="fs-section-ico" style="background:#eef0f4;color:#1c1f26">📜</div>
+          <div>
+            <h3 class="fs-section-title">Cronologia (<%= auditEntries.length %>)</h3>
+            <p class="fs-section-sub">Ultime modifiche tracciate su questa prenotazione.</p>
+          </div>
+        </div>
+        <div class="bk-audit">
+          <% auditEntries.forEach(function(a){ %>
+            <div class="bk-audit-row">
+              <div class="bk-audit-when"><%= fmtDateTime(a.createdAt) %></div>
+              <div class="bk-audit-body">
+                <strong><%= a.action %></strong>
+                <% if (a.userEmail) { %> <span class="muted">· <%= a.userEmail %></span><% } %>
+                <% if (a.details) { %>
+                  <div class="bk-audit-det"><%= a.details %></div>
+                <% } %>
+              </div>
+            </div>
+          <% }) %>
+        </div>
+      </section>
+    <% } %>
+
   </div>
-</form>
+</div>
+
+<% } else { %>
+  <!-- NUOVA prenotazione: form classico (manteniamo il vecchio comportamento) -->
+  <form method="post" action="/admin/bookings" class="form fs-page" id="bookingForm">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <div class="fs-page-head">
+      <div>
+        <h2>Nuova prenotazione</h2>
+        <p>Crea manualmente una prenotazione (utile per registrare bonifici o casi speciali).</p>
+      </div>
+      <a class="btn btn-ghost" href="/admin/bookings">← Torna alle prenotazioni</a>
+    </div>
+    <section class="fs-section">
+      <div class="fs-section-head"><div class="fs-section-ico" style="background:#fdf2c9;color:#7a5800">👤</div><div><h3 class="fs-section-title">Cliente</h3></div></div>
+      <div class="fs-grid">
+        <div class="field"><label class="field-lbl">Nome cliente *</label><input type="text" name="customerName" required></div>
+        <div class="field"><label class="field-lbl">Email *</label><input type="email" name="customerEmail" required></div>
+        <div class="field field-full"><label class="field-lbl">Telefono</label><input type="text" name="phone" placeholder="+34 …"></div>
+      </div>
+    </section>
+    <section class="fs-section">
+      <div class="fs-section-head"><div class="fs-section-ico" style="background:#e3f0ff;color:#0d5290">🎟</div><div><h3 class="fs-section-title">Pacchetto, evento e data</h3></div></div>
+      <div class="fs-grid">
+        <div class="field"><label class="field-lbl">Pacchetto</label><select name="planId"><option value="">—</option><% plans.forEach(function(p){ %><option value="<%= p.id %>"><%= p.name %></option><% }) %></select></div>
+        <div class="field"><label class="field-lbl">Evento</label><select name="eventId"><option value="">—</option><% events.forEach(function(e){ %><option value="<%= e.id %>"><%= e.title %></option><% }) %></select></div>
+        <div class="field"><label class="field-lbl">Data (etichetta)</label><input type="text" name="dateLabel"></div>
+        <div class="field"><label class="field-lbl">Orario / fascia</label><input type="text" name="slot"></div>
+      </div>
+    </section>
+    <section class="fs-section">
+      <div class="fs-section-head"><div class="fs-section-ico" style="background:#e7f3ec;color:#1b6b3e">💳</div><div><h3 class="fs-section-title">Pagamento</h3></div></div>
+      <div class="fs-grid">
+        <div class="field"><label class="field-lbl">Stato</label><select name="status"><% STATUSES.forEach(function(s){ %><option value="<%= s %>"><%= s %></option><% }) %></select></div>
+        <div class="field"><label class="field-lbl">Importo (€)</label><input type="number" step="0.01" name="amount" value="0"></div>
+        <div class="field field-full"><label class="field-lbl">Metodo</label><input type="text" name="method" placeholder="es. Stripe, Bonifico"></div>
+      </div>
+    </section>
+    <section class="fs-section">
+      <div class="fs-section-head"><div class="fs-section-ico" style="background:#fff3d6;color:#7a5800">📝</div><div><h3 class="fs-section-title">Note</h3></div></div>
+      <textarea name="notes" rows="4"></textarea>
+    </section>
+    <div class="fs-actions">
+      <a class="btn btn-ghost" href="/admin/bookings">Annulla</a>
+      <button class="btn btn-primary" type="submit">✨ Crea prenotazione</button>
+    </div>
+  </form>
+<% } %>
+
+<style>
+  .bk-topbar{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin:18px 0 22px}
+  .bk-topbar-card{background:#fff;border:1px solid #eef0f4;border-radius:10px;padding:16px 18px}
+  .bk-topbar-amount{background:#f7faf7;border-color:#cbe6d3}
+  .bk-topbar-lbl{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#7a8190;margin-bottom:6px}
+  .bk-topbar-val{font-family:'Fraunces',Georgia,serif;font-size:30px;font-weight:600;color:#1c1f26;line-height:1.05}
+  .bk-topbar-sub{font-size:13px;color:#5a5e6a;margin-top:6px}
+
+  .bk-grid{display:grid;grid-template-columns:1.45fr 1fr;gap:22px;align-items:start}
+  @media(max-width:1100px){ .bk-grid{grid-template-columns:1fr} }
+  .bk-col{display:flex;flex-direction:column;gap:18px}
+
+  .bk-keyval{display:flex;flex-direction:column;gap:10px;padding-top:6px}
+  .bk-keyval > div{display:grid;grid-template-columns:160px 1fr;gap:14px;align-items:start;font-size:14px;line-height:1.55}
+  .bk-k{color:#7a8190;font-size:12px;letter-spacing:.06em;text-transform:uppercase;padding-top:2px}
+  .bk-v{color:#1c1f26;word-break:break-word}
+  @media(max-width:600px){ .bk-keyval > div{grid-template-columns:1fr} .bk-k{padding-top:0} }
+
+  .chip{display:inline-block;padding:2px 8px;border-radius:11px;font-size:11.5px;font-weight:600;background:#eef0f4;color:#5a5e6a;margin-right:4px}
+  .chip-ok{background:#dff3e6;color:#1b6b3e}
+  .chip-off{background:#fbe5e5;color:#9b2727}
+  .chip-warn{background:#fff3d6;color:#7a5800}
+
+  .bk-parts{display:flex;flex-direction:column;gap:12px;padding-top:6px}
+  .bk-part{display:grid;grid-template-columns:36px 1fr;gap:14px;background:#fafbfc;border:1px solid #eef0f4;border-radius:10px;padding:14px}
+  .bk-part-num{width:30px;height:30px;background:#1c1f26;color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px}
+  .bk-part-name{font-size:15px;margin-bottom:6px}
+  .bk-part-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px 14px;font-size:13px}
+  .bk-part-grid > div{display:grid;grid-template-columns:80px 1fr;gap:8px}
+  @media(max-width:600px){ .bk-part-grid{grid-template-columns:1fr} }
+
+  .bk-money-tbl{width:100%;border-collapse:collapse;font-size:14.5px}
+  .bk-money-tbl td{padding:8px 0}
+  .bk-money-tbl td:last-child{text-align:right;font-variant-numeric:tabular-nums}
+  .bk-money-tbl .bk-discount td{color:#9b2727}
+  .bk-money-sep td{border-top:1px dashed #d4d8e0;padding:0;height:8px}
+  .bk-money-total td{font-size:18px;font-family:'Fraunces',Georgia,serif;padding-top:10px}
+  .bk-money-iva td{padding:2px 0;font-size:12.5px}
+  .bk-warn{margin-top:12px;padding:10px 12px;background:#fff7e0;border:1px solid #f5d878;border-radius:8px;font-size:13px;color:#7a5800}
+
+  .bk-audit{display:flex;flex-direction:column;gap:10px;padding-top:6px;max-height:480px;overflow:auto}
+  .bk-audit-row{display:grid;grid-template-columns:120px 1fr;gap:12px;font-size:13px;border-bottom:1px dashed #eef0f4;padding-bottom:8px}
+  .bk-audit-row:last-child{border-bottom:0}
+  .bk-audit-when{color:#7a8190;font-size:12px}
+  .bk-audit-det{margin-top:3px;color:#5a5e6a;font-size:12px;font-family:'Courier New',monospace;word-break:break-word}
+</style>
+
 <%- include('../partials/footer') %>

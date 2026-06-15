@@ -5,6 +5,7 @@ const settings = require('../lib/settings');
 const { getStripe, publishableKey } = require('../lib/stripe');
 const B = require('../lib/booking');
 const MB = require('../lib/multibooking');
+const LC = require('../lib/lesson-capacity');
 
 const fs = require('fs');
 const path = require('path');
@@ -186,6 +187,17 @@ async function validateAndCreateBooking(plan, body) {
   }));
 
   const totalAmount = Math.round((calc.amount + extrasTotal) * 100) / 100;
+
+  // Anti overbook (single flow legacy: 1 partecipante)
+  if (plan.eventId) {
+    const sel = (plan.bookingMode === 'single_lessons')
+      ? { lessons: (calc.items && calc.items.lessons) || [] }
+      : (plan.bookingMode === 'red')
+        ? { days: (calc.items && calc.items.days) || {} }
+        : {};
+    const cap = await LC.assertCapacity({ eventId: plan.eventId, plan, selection: sel, requestedCount: 1 });
+    if (!cap.ok) return { error: cap.error };
+  }
 
   const booking = await prisma.booking.create({
     data: {
@@ -551,6 +563,16 @@ router.get('/reserva/success', A(async (req, res) => {
     where: { id: parseInt(req.query.b, 10) || 0 }, include: { plan: true, event: true },
   });
   res.render('public/success', { title: 'Reserva confirmada', booking });
+}));
+
+// API pubblica: disponibilità lezioni per evento (per UI checkout, gold/red barrato).
+// Risponde { eventId, lessons: [{id, dayIndex, time, title, isAfternoon, capacity, occupied, remaining, full}] }
+router.get('/api/lessons/availability/:eventId(\\d+)', A(async (req, res) => {
+  const eventId = parseInt(req.params.eventId, 10);
+  if (!eventId) return res.status(400).json({ ok: false, error: 'invalid eventId' });
+  const status = await LC.getEventCapacityStatus(eventId);
+  if (!status.event) return res.status(404).json({ ok: false, error: 'event not found' });
+  res.json({ ok: true, eventId, lessons: status.lessons });
 }));
 
 module.exports = router;

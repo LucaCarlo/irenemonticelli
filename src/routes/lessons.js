@@ -2,6 +2,7 @@
 const express = require('express');
 const prisma = require('../lib/db');
 const audit = require('../lib/audit');
+const LC = require('../lib/lesson-capacity');
 const { requirePermission } = require('../middleware/rbac');
 
 const router = express.Router();
@@ -20,9 +21,22 @@ router.get('/', A(async (req, res) => {
     include: { professor: true },
   }) : [];
 
+  // Occupancy attuale per ogni lezione (solo confirmed+paid)
+  let occupancyById = new Map();
+  if (evId) {
+    try {
+      const status = await LC.getEventCapacityStatus(evId);
+      occupancyById = new Map(status.lessons.map((s) => [s.id, s]));
+    } catch (_) {}
+  }
+
   // Raggruppa per giorno
   const byDay = {};
   lessons.forEach((l) => {
+    const occ = occupancyById.get(l.id);
+    l._occupied = occ ? occ.occupied : 0;
+    l._remaining = occ ? occ.remaining : (l.capacity || 0);
+    l._full = occ ? occ.full : false;
     if (!byDay[l.dayIndex]) byDay[l.dayIndex] = [];
     byDay[l.dayIndex].push(l);
   });
@@ -48,6 +62,7 @@ router.post('/', A(async (req, res) => {
     professorId: b.professorId ? parseInt(b.professorId, 10) : null,
     isAfternoon: !!b.isAfternoon,
     isPause: !!b.isPause,
+    capacity: Math.max(0, parseInt(b.capacity, 10) || 100),
     sort: parseInt(b.sort, 10) || 0,
     active: b.active !== '0',
   };
@@ -71,6 +86,7 @@ router.post('/:id(\\d+)', A(async (req, res) => {
     professorId: b.professorId ? parseInt(b.professorId, 10) : null,
     isAfternoon: !!b.isAfternoon,
     isPause: !!b.isPause,
+    capacity: Math.max(0, parseInt(b.capacity, 10) || 100),
     sort: parseInt(b.sort, 10) || 0,
     active: b.active !== '0',
   };
