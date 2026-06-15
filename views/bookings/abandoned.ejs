@@ -85,10 +85,11 @@
               </td>
               <td class="muted" style="white-space:nowrap;font-size:12.5px"><%= fmtDateTime(b.createdAt) %></td>
               <td class="row-actions">
-                <% if (b.resumeToken && (b._kind === 'abandoned' || b._kind === 'payment_error')) { %>
-                  <a class="btn-ico" href="/reserva/resume/<%= b.resumeToken %>" target="_blank" title="Apri link di ripresa (lo riceve il cliente)" style="color:#7a5800">↗</a>
-                <% } %>
                 <a class="btn-ico btn-ico-open" href="/admin/bookings/<%= b.id %>/edit" title="Dettaglio booking"><%- include('../partials/ico', { name:'open' }) %></a>
+                <form method="post" action="/admin/bookings/<%= b.id %>/delete" onsubmit="return confirm('Eliminare definitivamente questo carrello?')" style="display:inline">
+                  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                  <button type="submit" class="btn-ico btn-ico-danger" title="Elimina"><%- include('../partials/ico', { name:'trash' }) %></button>
+                </form>
               </td>
             </tr>
           <% }) %>
