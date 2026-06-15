@@ -2082,14 +2082,41 @@ window.RV_RESUME = <%- resumeData ? JSON.stringify(resumeData) : 'null' %>;
     // Salva chiamando buildPayload() (lo stesso del POST finale) → cattura TUTTO:
     // pagante, participanti, tutor, lezioni single, days red, extras, refcode, billing.
     var saveTimer = null;
+
+    // Verifica se il payload ha QUALSIASI contenuto significativo (anche solo nei partecipanti,
+    // anche solo nelle lezioni, anche solo nel codice referral). Il pagante non è obbligatorio
+    // per il salvataggio — l'utente potrebbe compilare prima i partecipanti.
+    function hasAnyContent(P) {
+      if (!P) return false;
+      if (P.payer) {
+        var pa = P.payer;
+        if (pa.firstName || pa.lastName || pa.email || pa.phone) return true;
+        if (pa.billing && (pa.billing.address || pa.billing.city || pa.billing.zip || pa.billing.nif)) return true;
+      }
+      if (Array.isArray(P.participants)) {
+        for (var i = 0; i < P.participants.length; i++) {
+          var pp = P.participants[i] || {};
+          if (pp.firstName || pp.lastName || pp.email || pp.phone || pp.birthDate || pp.address || pp.city || pp.zip) return true;
+        }
+      }
+      if (Array.isArray(P.lessons)) {
+        for (var j = 0; j < P.lessons.length; j++) {
+          var L = P.lessons[j] || {};
+          if (L.day || L.slot) return true;
+        }
+      }
+      if (P.days && typeof P.days === 'object' && Object.keys(P.days).length > 0) return true;
+      if (Array.isArray(P.extras) && P.extras.length > 0) return true;
+      if (P.referralCode) return true;
+      if (P.classesPerParticipant && P.classesPerParticipant > 1) return true;
+      return false;
+    }
+
     function persist() {
       var P = null;
       try { P = buildPayload(); } catch (e) { return; }
-      if (!P || !P.payer) return;
-      // Salva solo se almeno UN campo significativo del pagante è compilato
-      var p = P.payer;
-      var has = (p.firstName||p.lastName||p.email||p.phone);
-      if (!has || (String(p.firstName||'') + String(p.lastName||'') + String(p.email||'') + String(p.phone||'')).length < 2) {
+      if (!P) return;
+      if (!hasAnyContent(P)) {
         try { localStorage.removeItem(DRAFT_KEY); } catch(_) {}
         return;
       }
@@ -2099,7 +2126,7 @@ window.RV_RESUME = <%- resumeData ? JSON.stringify(resumeData) : 'null' %>;
           payload: P,
           planName: <%- JSON.stringify(plan.name) %>,
         }));
-        console.log('[draft] saved (participants:' + (P.participants||[]).length + ', extras:' + (P.extras||[]).length + ', lessons:' + ((P.lessons||[]).length || Object.keys(P.days||{}).length) + ')');
+        console.log('[draft] saved (payer:' + (!!(P.payer&&(P.payer.firstName||P.payer.email))) + ', participants:' + (P.participants||[]).length + ', extras:' + (P.extras||[]).length + ', lessons:' + ((P.lessons||[]).length || Object.keys(P.days||{}).length) + ', refcode:' + !!P.referralCode + ')');
       } catch (_) {}
     }
 
