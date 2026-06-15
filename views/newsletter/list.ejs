@@ -12,7 +12,7 @@
       <p class="muted" style="margin:4px 0 0;font-size:13.5px">Bozze, programmate e cronologia di tutte le email inviate.</p>
     </div>
     <div class="head-tools" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-      <a class="btn btn-ghost btn-sm" href="/admin/contacts" title="Vai alla pagina utenti">👥 Iscritti totali: <%= subStats.active %></a>
+      <a class="btn btn-ghost" href="/admin/contacts" title="Vai alla pagina utenti">👥 Iscritti totali: <%= subStats.active %></a>
       <a class="btn btn-primary" href="/admin/newsletter/new">+ Nuova campagna</a>
     </div>
   </div>
@@ -51,9 +51,9 @@
       <thead>
         <tr>
           <th>Oggetto</th>
-          <th style="width:160px">Audience</th>
-          <th style="width:130px">Creata</th>
-          <th style="width:280px"></th>
+          <th style="width:240px">Destinatari</th>
+          <th style="width:140px">Creata</th>
+          <th style="width:160px"></th>
         </tr>
       </thead>
       <tbody>
@@ -65,7 +65,7 @@
             </td>
             <td>
               <form method="post" action="/admin/newsletter/<%= c.id %>/send" id="sendf-<%= c.id %>"
-                    onsubmit="return confirm('Inviare ora la campagna a tutti gli iscritti dell\'audience selezionata?')">
+                    onsubmit="return confirm('Inviare ora la campagna ai destinatari selezionati?')">
                 <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                 <select name="audience" class="nl-aud-sel">
                   <option value="all" <%= c.audience==='all'?'selected':'' %>>📣 Tutti gli iscritti (<%= subStats.active %>)</option>
@@ -75,10 +75,12 @@
               </form>
             </td>
             <td class="muted" style="white-space:nowrap;font-size:12.5px"><%= fmtDateTime(c.createdAt) %></td>
-            <td class="row-actions" style="text-align:right">
-              <a class="btn btn-ghost btn-sm" href="/admin/newsletter/<%= c.id %>/preview" target="_blank">Anteprima</a>
-              <a class="btn btn-ghost btn-sm" href="/admin/newsletter/<%= c.id %>/edit">Modifica</a>
-              <button type="submit" form="sendf-<%= c.id %>" class="btn btn-primary btn-sm">📤 Invia</button>
+            <td class="row-actions">
+              <a class="btn-ico btn-ico-open" href="/admin/newsletter/<%= c.id %>/preview" target="_blank" title="Anteprima"><%- include('../partials/ico', { name:'eye' }) %></a>
+              <a class="btn-ico btn-ico-edit" href="/admin/newsletter/<%= c.id %>/edit" title="Modifica"><%- include('../partials/ico', { name:'edit' }) %></a>
+              <button type="submit" form="sendf-<%= c.id %>" class="btn-ico btn-ico-send" title="Invia ora">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+              </button>
               <form method="post" action="/admin/newsletter/<%= c.id %>/delete" onsubmit="return confirm('Eliminare la bozza?')" style="display:inline">
                 <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                 <button type="submit" class="btn-ico btn-ico-danger" title="Elimina"><%- include('../partials/ico', { name:'trash' }) %></button>
@@ -146,7 +148,20 @@
   .nl-kpi-lbl{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#7a8190;margin-bottom:5px}
   .nl-kpi-val{font-family:'Fraunces',Georgia,serif;font-size:28px;font-weight:600;color:#1c1f26;line-height:1}
 
-  .nl-aud-sel{padding:6px 10px;border:1px solid #ddd;border-radius:6px;font-size:13px;background:#fff;width:100%}
+  .nl-aud-sel{
+    width:100%;height:38px;padding:0 32px 0 12px;
+    border:1px solid var(--line, #dde0e4);border-radius:8px;background:#fff;
+    font-family:inherit;font-size:13.5px;color:#1c1f26;
+    appearance:none;-webkit-appearance:none;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path fill='%237a8190' d='M0 0l5 6 5-6z'/></svg>");
+    background-repeat:no-repeat;background-position:right 12px center;
+    cursor:pointer;transition:border-color .15s
+  }
+  .nl-aud-sel:hover{border-color:#1c1f26}
+  .nl-aud-sel:focus{outline:2px solid #e0aa00;border-color:#e0aa00}
+
+  .btn-ico-send{color:#1b6b3e;border:1px solid #aedabe;background:#e7f3ec}
+  .btn-ico-send:hover{background:#1b6b3e;color:#fff}
 
   .src{display:inline-block;padding:2px 8px;border-radius:99px;font-size:11px;font-weight:700;background:#eef0f4;color:#5a5e6a;text-transform:uppercase;letter-spacing:.04em}
   .src-all{background:#fff3d6;color:#7a5800}
