@@ -107,7 +107,7 @@
                   <div class="cal-event-card-sub">
                     <%= b.plan ? b.plan.name : '—' %>
                     <% if ((b.participantsCount||1) > 1) { %> · <strong><%= b.participantsCount %> pax</strong><% } %>
-                    <% if (b.amount) { %> · <strong><%= b.amount %>€</strong><% } %>
+                    <% if (b.amount) { %> · <strong><%= fmtEur(b.amount) %></strong><% } %>
                   </div>
                   <div class="cal-event-card-meta"><%= b.customerEmail %></div>
                 </a>

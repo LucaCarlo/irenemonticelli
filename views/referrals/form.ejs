@@ -113,11 +113,11 @@
     </div>
     <div style="background:#fffbe8;border:1px solid #ead9a8;border-radius:10px;padding:14px 18px">
       <div style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#7a5800;font-weight:700">In attesa di pagamento</div>
-      <div style="font-family:Georgia,serif;font-size:24px;margin-top:6px;color:var(--ink)"><%= stats.pendingAmount.toFixed(2) %> €</div>
+      <div style="font-family:Georgia,serif;font-size:24px;margin-top:6px;color:var(--ink)"><%= fmtEur(stats.pendingAmount) %></div>
     </div>
     <div style="background:#e7f3ec;border:1px solid #aedabe;border-radius:10px;padding:14px 18px">
       <div style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#1b6b3e;font-weight:700">Già pagate</div>
-      <div style="font-family:Georgia,serif;font-size:24px;margin-top:6px;color:var(--ink)"><%= stats.paidAmount.toFixed(2) %> €</div>
+      <div style="font-family:Georgia,serif;font-size:24px;margin-top:6px;color:var(--ink)"><%= fmtEur(stats.paidAmount) %></div>
     </div>
   </div>
   <a href="/admin/referrals/commissions?referrerId=<%= referrer.id %>" class="btn btn-ghost btn-sm" style="margin-top:14px">Vedi dettaglio commissioni →</a>

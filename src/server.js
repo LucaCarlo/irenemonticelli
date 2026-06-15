@@ -117,6 +117,23 @@ app.use(async (req, res, next) => {
     if (b < 1048576) return (b / 1024).toFixed(1) + ' KB';
     return (b / 1048576).toFixed(2) + ' MB';
   };
+  // ====== Formattazione numerica europea (1.000,50) ======
+  // Helper disponibili a TUTTE le view: <%= fmtEur(123.4) %> → "123,40 €"
+  // <%= fmtNum(1234.5) %> → "1.234,50"  <%= fmtInt(1234) %> → "1.234"
+  // <%= fmtPct(12.5) %> → "12,50 %"     <%= fmtNum0(1234) %> → "1.234"
+  res.locals.fmtNum = (n, decimals = 2) => {
+    const x = Number(n);
+    if (!isFinite(x)) return '0,00';
+    return x.toLocaleString('it-IT', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+  };
+  res.locals.fmtNum0 = (n) => {
+    const x = Number(n);
+    if (!isFinite(x)) return '0';
+    return Math.round(x).toLocaleString('it-IT');
+  };
+  res.locals.fmtInt = res.locals.fmtNum0;
+  res.locals.fmtEur = (n) => res.locals.fmtNum(n, 2) + ' €';
+  res.locals.fmtPct = (n, decimals = 2) => res.locals.fmtNum(n, decimals) + ' %';
   // Logo per la sidebar (se impostato)
   res.locals.logoUrl = '';
   try {

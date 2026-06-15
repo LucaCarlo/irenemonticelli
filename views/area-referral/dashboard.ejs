@@ -219,17 +219,17 @@
     </div>
     <div class="db-stat db-stat-accent">
       <div class="db-stat-lbl">Ganancias totales</div>
-      <div class="db-stat-val"><%= stats.totalEarnings.toFixed(2) %> €</div>
+      <div class="db-stat-val"><%= fmtEur(stats.totalEarnings) %></div>
       <div class="db-stat-sub">pagadas + pendientes</div>
     </div>
     <div class="db-stat">
       <div class="db-stat-lbl">Pendiente de pago</div>
-      <div class="db-stat-val"><%= stats.pendingAmount.toFixed(2) %> €</div>
+      <div class="db-stat-val"><%= fmtEur(stats.pendingAmount) %></div>
       <div class="db-stat-sub"><%= stats.pendingCount %> comision<%= stats.pendingCount===1?'':'es' %></div>
     </div>
     <div class="db-stat db-stat-paid">
       <div class="db-stat-lbl">Ya pagado</div>
-      <div class="db-stat-val"><%= stats.paidAmount.toFixed(2) %> €</div>
+      <div class="db-stat-val"><%= fmtEur(stats.paidAmount) %></div>
       <div class="db-stat-sub"><%= stats.paidCount %> comision<%= stats.paidCount===1?'':'es' %></div>
     </div>
   </div>
@@ -267,7 +267,7 @@
       </div>
       <div class="db-funnel-cell" style="background:linear-gradient(135deg,#fffbe8,#fff);border-color:rgba(245,197,24,.4)">
         <div class="db-funnel-ico">💰</div>
-        <div class="db-funnel-val"><%= stats.totalEarnings.toFixed(2) %> €</div>
+        <div class="db-funnel-val"><%= fmtEur(stats.totalEarnings) %></div>
         <div class="db-funnel-lbl">Ganado</div>
       </div>
     </div>
@@ -356,7 +356,7 @@
             <td style="white-space:nowrap"><%= new Date(c.createdAt).toLocaleDateString('es-ES',{day:'2-digit',month:'short',year:'numeric'}) %></td>
             <td><code style="background:#fffbe8;color:#7a5800;padding:3px 9px;border-radius:5px;font-weight:700;font-size:12.5px"><%= c.code.code %></code></td>
             <td><%= (c.booking.customerName||'').split(' ')[0] %> <%= ((c.booking.customerName||'').split(' ')[1]||'').charAt(0) %>.</td>
-            <td><strong style="color:#1b6b3e;font-size:15px"><%= c.commissionAmt.toFixed(2) %> €</strong></td>
+            <td><strong style="color:#1b6b3e;font-size:15px"><%= fmtEur(c.commissionAmt) %></strong></td>
             <td><span class="db-pill db-pill-<%= c.status %>"><%= c.status==='pending'?'Pendiente':(c.status==='paid'?'Pagado':'Anulado') %></span></td>
           </tr>
         <% }) %>

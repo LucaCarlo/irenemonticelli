@@ -26,8 +26,8 @@
   </a>
   <a class="kpi kpi-accent" href="/admin/bookings">
     <div class="kpi-head"><span class="kpi-ico" style="background:#fff;color:#7a5800">💰</span><span class="kpi-lbl">Entrate 30 giorni</span></div>
-    <div class="kpi-val"><%= kpi.revenue30.toLocaleString('it-IT') %>€</div>
-    <div class="kpi-sub">totali storiche: <strong><%= kpi.revenueAllAmount.toLocaleString('it-IT') %>€</strong></div>
+    <div class="kpi-val"><%= fmtEur(kpi.revenue30) %></div>
+    <div class="kpi-sub">totali storiche: <strong><%= fmtEur(kpi.revenueAllAmount) %></strong></div>
   </a>
   <a class="kpi" href="/admin/messages">
     <div class="kpi-head"><span class="kpi-ico" style="background:#e7f3ec;color:#1b6b3e">✉</span><span class="kpi-lbl">Messaggi nuovi</span></div>
@@ -36,8 +36,8 @@
   </a>
   <a class="kpi" href="/admin/settings/stats">
     <div class="kpi-head"><span class="kpi-ico" style="background:#fff3d6;color:#7a5800">👁</span><span class="kpi-lbl">Pageview (7g)</span></div>
-    <div class="kpi-val"><%= kpi.pageviews7.toLocaleString('it-IT') %></div>
-    <div class="kpi-sub"><strong><%= kpi.uniqueVisitors7 %></strong> visitatori unici</div>
+    <div class="kpi-val"><%= fmtNum0(kpi.pageviews7) %></div>
+    <div class="kpi-sub"><strong><%= fmtNum0(kpi.uniqueVisitors7) %></strong> visitatori unici</div>
   </a>
   <a class="kpi" href="/admin/newsletter">
     <div class="kpi-head"><span class="kpi-ico" style="background:#f0e8f7;color:#5b3a86">📧</span><span class="kpi-lbl">Iscritti newsletter</span></div>
@@ -82,7 +82,7 @@
               </div>
               <div class="feed-sub">
                 <%= b.plan ? b.plan.name : '—' %>
-                <% if (b.amount) { %> · <strong><%= b.amount %>€</strong><% } %>
+                <% if (b.amount) { %> · <strong><%= fmtEur(b.amount) %></strong><% } %>
                 · <%= new Date(b.createdAt).toLocaleString('it-IT',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}) %>
               </div>
             </div>

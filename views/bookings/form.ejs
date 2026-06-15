@@ -1,8 +1,7 @@
 <%- include('../partials/header') %>
 
 <%
-  // Helpers locali EJS
-  function fmtEur(n){ return (Math.round(Number(n||0)*100)/100).toFixed(2).replace('.', ',') + ' €'; }
+  // Helpers locali EJS (fmtEur globale tramite res.locals)
   function fmtDate(d){ if(!d) return '—'; var dt = new Date(d); return isNaN(dt) ? '—' : dt.toLocaleDateString('it-IT',{day:'2-digit',month:'long',year:'numeric'}); }
   function fmtDateTime(d){ if(!d) return '—'; var dt = new Date(d); return isNaN(dt) ? '—' : dt.toLocaleString('it-IT',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}); }
   function ageOf(birth){ if(!birth) return null; var dt=new Date(birth); var t=new Date(); var a=t.getFullYear()-dt.getFullYear(); if(t.getMonth()<dt.getMonth()||(t.getMonth()===dt.getMonth()&&t.getDate()<dt.getDate())) a--; return a; }
