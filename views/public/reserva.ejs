@@ -1932,6 +1932,112 @@ window.RV_RESUME = <%- resumeData ? JSON.stringify(resumeData) : 'null' %>;
       sync();
     } catch (err) { console.warn('[resume] prefill failed:', err); }
   }
+
+  // ===== Autosave + Restore localStorage (bozze pre-pagamento) =====
+  // Salva ogni input change in localStorage. Sopravvive a reload + chiusura tab.
+  // TTL 24h. Si pulisce dopo pagamento OK (in /reserva/success cleanup script).
+  (function(){
+    var SLUG = <%- JSON.stringify(plan.slug) %>;
+    var DRAFT_KEY = 'rv_draft_' + SLUG;
+    var TTL_MS = 24 * 60 * 60 * 1000;  // 24h
+
+    // Restore: se in localStorage c'è una bozza recente E non stiamo già facendo un resume server-side
+    if (!window.RV_RESUME) {
+      try {
+        var raw = localStorage.getItem(DRAFT_KEY);
+        if (raw) {
+          var d = JSON.parse(raw);
+          if (d && d.savedAt && (Date.now() - d.savedAt) < TTL_MS) {
+            // Restore solo se ci sono dati significativi (almeno un input compilato)
+            if (d.values && Object.keys(d.values).length > 0) {
+              Object.keys(d.values).forEach(function(name){
+                var els = form.querySelectorAll('[name="' + CSS.escape(name) + '"]');
+                els.forEach(function(el){
+                  if (el.type === 'checkbox' || el.type === 'radio') {
+                    if (Array.isArray(d.values[name])) {
+                      el.checked = d.values[name].indexOf(el.value) !== -1;
+                    } else {
+                      el.checked = (el.value === d.values[name]);
+                    }
+                  } else {
+                    el.value = d.values[name];
+                  }
+                });
+              });
+              // Banner discreto
+              var bn = document.createElement('div');
+              bn.style.cssText = 'margin:10px 0;padding:10px 14px;background:#e7f3ec;border:1px solid #aedabe;border-radius:8px;font-size:13px;color:#1b6b3e;display:flex;align-items:center;justify-content:space-between;gap:10px';
+              bn.innerHTML = '<span>✓ Hemos recuperado los datos que habías introducido. <small style="color:#5a5e6a">Puedes seguir donde lo dejaste.</small></span>'
+                + '<button type="button" style="background:none;border:0;color:#1b6b3e;cursor:pointer;font-weight:600;font-size:13px">Limpiar y empezar de cero</button>';
+              form.insertBefore(bn, form.firstChild);
+              bn.querySelector('button').addEventListener('click', function(){
+                if (!confirm('¿Quieres borrar todos los datos guardados y empezar de cero?')) return;
+                try { localStorage.removeItem(DRAFT_KEY); } catch(_) {}
+                window.location.reload();
+              });
+              if (typeof sync === 'function') sync();
+            }
+          } else {
+            // Bozza scaduta
+            try { localStorage.removeItem(DRAFT_KEY); } catch(_) {}
+          }
+        }
+      } catch (e) { console.warn('[draft] restore failed:', e); }
+    }
+
+    // Salva on input/change con debounce
+    var saveTimer = null;
+    function snapshot() {
+      var values = {};
+      var inputs = form.querySelectorAll('input, select, textarea');
+      inputs.forEach(function(el){
+        if (!el.name) return;
+        if (el.name === '_csrf') return;
+        if (el.name === 'resumeToken') return;
+        if (el.type === 'submit' || el.type === 'button' || el.type === 'hidden' && el.name === 'csrfToken') return;
+        if (el.type === 'checkbox' || el.type === 'radio') {
+          if (el.checked) {
+            if (values[el.name]) {
+              if (!Array.isArray(values[el.name])) values[el.name] = [values[el.name]];
+              values[el.name].push(el.value);
+            } else {
+              values[el.name] = el.value;
+            }
+          }
+        } else if (el.value) {
+          values[el.name] = el.value;
+        }
+      });
+      return values;
+    }
+
+    function persist() {
+      var values = snapshot();
+      // Salva solo se almeno UN campo significativo è compilato (evita di salvare form vuoto)
+      var meaningful = ['firstName', 'lastName', 'email', 'phone'];
+      var hasContent = meaningful.some(function(k){ return values[k] && String(values[k]).length >= 2; });
+      if (!hasContent) {
+        try { localStorage.removeItem(DRAFT_KEY); } catch(_) {}
+        return;
+      }
+      try {
+        localStorage.setItem(DRAFT_KEY, JSON.stringify({ savedAt: Date.now(), values: values, planName: <%- JSON.stringify(plan.name) %> }));
+      } catch (_) {}
+    }
+
+    form.addEventListener('input', function(){
+      clearTimeout(saveTimer);
+      saveTimer = setTimeout(persist, 800);
+    });
+    form.addEventListener('change', function(){
+      clearTimeout(saveTimer);
+      saveTimer = setTimeout(persist, 200);
+    });
+
+    // Pulizia se la form viene submittata con successo (handled altrove a /reserva/success)
+    // Qui esponiamo il key globale così altri script possono cancellarlo a successo
+    window.RV_DRAFT_KEY = DRAFT_KEY;
+  })();
 })();
 </script>
 

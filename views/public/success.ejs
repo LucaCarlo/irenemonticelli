@@ -32,5 +32,14 @@
     <% } %>
     <a class="btn" href="/">Volver al inicio</a>
   </div>
+  <script>
+    /* Cleanup di tutte le bozze localStorage del checkout dopo pagamento OK */
+    try {
+      for (var i = localStorage.length - 1; i >= 0; i--) {
+        var k = localStorage.key(i);
+        if (k && k.indexOf('rv_draft_') === 0) localStorage.removeItem(k);
+      }
+    } catch (_) {}
+  </script>
 </body>
 </html>
