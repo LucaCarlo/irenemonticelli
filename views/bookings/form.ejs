@@ -214,6 +214,31 @@
         <p class="muted" style="font-size:12px;margin-top:8px">Posti occupati: <strong><%= booking.participantsCount || 1 %></strong> partecipanti × <strong><%= lessonsResolved.length %></strong> lezioni.</p>
       </section>
 
+    <!-- RED legacy: nessun dato salvato in itemsJson (booking pre-fix) -->
+    <% } else if (booking.plan && booking.plan.bookingMode === 'red') { %>
+      <section class="fs-section">
+        <div class="fs-section-head">
+          <div class="fs-section-ico" style="background:#fff3d6;color:#7a5800">⚠️</div>
+          <div>
+            <h3 class="fs-section-title">Pack RED — selezione fascia non registrata</h3>
+            <p class="fs-section-sub">Questa prenotazione è stata creata prima del fix che salva mattina/pomeriggio nei dati booking. Chiedi al cliente quale fascia ha scelto per ogni giorno.</p>
+          </div>
+        </div>
+        <% if (booking.event) {
+             function isoForDayIdx(dayIdx){ var dt = new Date(booking.event.startDate); dt.setDate(dt.getDate() + (dayIdx-1)); return dt.toISOString().slice(0,10); }
+             var nDays = 0;
+             if (booking.event.startDate && booking.event.endDate) {
+               nDays = Math.round((new Date(booking.event.endDate) - new Date(booking.event.startDate))/86400000) + 1;
+             }
+        %>
+          <div class="bk-keyval">
+            <% for (var d=1; d<=nDays; d++) { %>
+              <div><span class="bk-k">Día <%= d %></span><span class="bk-v"><%= fmtDate(isoForDayIdx(d)) %> — <span class="muted">fascia non registrata (Mañana o Tarde)</span></span></div>
+            <% } %>
+          </div>
+        <% } %>
+      </section>
+
     <!-- Lezioni: gold / junior (tutto incluso) -->
     <% } else if (lessonsAuto && lessonsAuto.length) {
          var byDayA = {};

@@ -275,6 +275,23 @@ async function createMultiBooking(plan, body) {
     }
   }
 
+  // ---- GIORNI + FASCIA (solo per Red) ----
+  // body.days = { 'YYYY-MM-DD': 'AM'|'PM', ... }
+  let redDays = {};
+  if (plan.bookingMode === 'red') {
+    const raw = (body && body.days) || {};
+    if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
+      return { error: 'Debes elegir Mañana o Tarde para cada día' };
+    }
+    Object.keys(raw).forEach((iso) => {
+      const v = String(raw[iso] || '').toUpperCase().trim();
+      if (v === 'AM' || v === 'PM') redDays[iso] = v;
+    });
+    if (!Object.keys(redDays).length) {
+      return { error: 'Debes elegir Mañana o Tarde para cada día del Pack Red' };
+    }
+  }
+
   // ---- EXTRAS ----
   const chosenExtras = await resolveExtras(plan, body.extras || []);
   const extrasSnapshot = chosenExtras.map((x) => ({
@@ -301,7 +318,7 @@ async function createMultiBooking(plan, body) {
     const selection = (plan.bookingMode === 'single_lessons')
       ? { lessons }
       : (plan.bookingMode === 'red')
-        ? { days: (body.days || {}) }
+        ? { days: redDays }
         : {};
     const cap = await LC.assertCapacity({
       eventId: plan.eventId,
@@ -336,7 +353,11 @@ async function createMultiBooking(plan, body) {
         planId: plan.id,
         eventId: plan.eventId || null,
         dateLabel: breakdown.label,
-        itemsJson: JSON.stringify(plan.bookingMode === 'single_lessons' ? { lessons, count: classesPerParticipant } : {}),
+        itemsJson: JSON.stringify(
+          plan.bookingMode === 'single_lessons' ? { lessons, count: classesPerParticipant }
+          : plan.bookingMode === 'red'          ? { days: redDays }
+          : {}
+        ),
         extrasJson: JSON.stringify(extrasSnapshot),
         amount: breakdown.total,
         currency: plan.currency || 'EUR',

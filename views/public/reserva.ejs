@@ -1638,6 +1638,15 @@
         });
       }
       payload.lessons = lessons;
+    } else if (mode === 'red') {
+      // Raccoglie gli hidden input name="day_<iso>" = 'AM'|'PM' creati nel template
+      var days = {};
+      form.querySelectorAll('input[type="hidden"][name^="day_"]').forEach(function(inp){
+        var iso = inp.name.slice(4);   // "day_2026-07-29" → "2026-07-29"
+        var v = (inp.value || '').toUpperCase();
+        if (v === 'AM' || v === 'PM') days[iso] = v;
+      });
+      payload.days = days;
     }
     return payload;
   }
