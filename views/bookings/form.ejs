@@ -201,22 +201,32 @@
         <div class="fs-section-head">
           <div class="fs-section-ico" style="background:#e7f3ec;color:#1b6b3e">🎭</div>
           <div>
-            <h3 class="fs-section-title">Lezioni della prenotazione (<%= lessonsResolved.length %>)</h3>
-            <p class="fs-section-sub">
-              <% if (booking.plan && booking.plan.bookingMode === 'red') { %>
-                Pack <strong>RED</strong> — fascia scelta per ogni giorno (<%= daysR.length %> giorni).
-              <% } else { %>
-                Lezioni selezionate al checkout (day + orario).
-              <% } %>
-            </p>
+            <% if (booking.plan && booking.plan.bookingMode === 'red') { %>
+              <h3 class="fs-section-title">Pack RED — <%= daysR.length %> giorn<%= daysR.length===1?'o':'i' %> · fascia per giorno</h3>
+              <p class="fs-section-sub">Per ogni giorno è stata scelta una fascia (mattina o pomeriggio); sotto ogni fascia, le lezioni incluse.</p>
+            <% } else { %>
+              <h3 class="fs-section-title">Lezioni scelte (<%= lessonsResolved.length %>)</h3>
+              <p class="fs-section-sub">Lezioni selezionate al checkout (giorno + orario).</p>
+            <% } %>
           </div>
         </div>
-        <% daysR.forEach(function(d){ var rows = byDayR[d]; var seg = rows[0] && rows[0].segment; %>
+        <%
+          // Calcolo "Día N" relativo all'evento (1, 2, 3...)
+          function dayIndexFor(iso){
+            if (!booking.event || !booking.event.startDate) return null;
+            var s = new Date(booking.event.startDate);
+            var t = new Date(iso + 'T00:00:00');
+            var diff = Math.round((t - s)/86400000);
+            return diff >= 0 ? diff + 1 : null;
+          }
+        %>
+        <% daysR.forEach(function(d){ var rows = byDayR[d]; var seg = rows[0] && rows[0].segment; var dIdx = dayIndexFor(d); %>
           <div class="bk-day-group">
             <div class="bk-day-head">
+              <% if (dIdx) { %><span class="bk-day-num">Día <%= dIdx %></span><% } %>
               <strong><%= fmtDate(d) %></strong>
-              <% if (seg) { %><span class="chip <%= seg==='Tarde' ? 'chip-warn' : 'chip-ok' %>"><%= seg %></span><% } %>
-              <span class="muted" style="font-size:12px"><%= rows.length %> lezioni</span>
+              <% if (seg) { %><span class="chip <%= seg==='Tarde' ? 'chip-warn' : 'chip-ok' %>" style="font-size:13px;padding:4px 12px"><%= seg %></span><% } %>
+              <span class="muted" style="font-size:12px;margin-left:auto"><%= rows.length %> lezioni</span>
             </div>
             <div class="table-wrap">
               <table class="table">
@@ -306,44 +316,29 @@
         </form>
       </section>
 
-    <!-- Lezioni: gold / junior (tutto incluso) -->
+    <!-- Lezioni: gold / junior (tutto incluso) — niente tabella, riepilogo compatto -->
     <% } else if (lessonsAuto && lessonsAuto.length) {
-         var byDayA = {};
-         lessonsAuto.forEach(function(L){ (byDayA[L.day] = byDayA[L.day] || []).push(L); });
-         var daysA = Object.keys(byDayA).sort();
+         var nDaysAuto = (new Set(lessonsAuto.map(function(L){return L.day;}))).size;
     %>
       <section class="fs-section">
         <div class="fs-section-head">
           <div class="fs-section-ico" style="background:#e7f3ec;color:#1b6b3e">🎭</div>
           <div>
-            <h3 class="fs-section-title">Lezioni incluse — Pack <%= booking.plan.name %> (<%= lessonsAuto.length %>)</h3>
-            <p class="fs-section-sub">Il pack include automaticamente tutte le lezioni attive dell'evento.</p>
+            <h3 class="fs-section-title">Programma — Pack <%= booking.plan.name %></h3>
+            <p class="fs-section-sub">Accesso completo a tutte le lezioni dell'evento.</p>
           </div>
         </div>
-        <% daysA.forEach(function(d){ var rows = byDayA[d]; %>
-          <div class="bk-day-group">
-            <div class="bk-day-head">
-              <strong><%= fmtDate(d) %></strong>
-              <span class="muted" style="font-size:12px"><%= rows.length %> lezioni</span>
-            </div>
-            <div class="table-wrap">
-              <table class="table">
-                <thead><tr><th style="width:90px">Orario</th><th>Titolo lezione</th><th>Professore</th><th style="width:120px">Fascia</th></tr></thead>
-                <tbody>
-                  <% rows.forEach(function(L){ %>
-                    <tr>
-                      <td><strong><%= L.slot %></strong></td>
-                      <td><%= L.lesson.title %></td>
-                      <td><%= L.lesson.professor ? (L.lesson.professor.firstName + ' ' + L.lesson.professor.lastName) : '—' %></td>
-                      <td><% if (L.lesson.isAfternoon) { %><span class="chip chip-warn">Tarde</span><% } else { %><span class="chip chip-ok">Mañana</span><% } %></td>
-                    </tr>
-                  <% }) %>
-                </tbody>
-              </table>
-            </div>
+        <div class="bk-gold-card">
+          <div class="bk-gold-badge">✓ Tutto incluso</div>
+          <div class="bk-gold-meta">
+            <div><strong><%= nDaysAuto %></strong> <%= nDaysAuto===1 ? 'giorno' : 'giorni' %> di evento</div>
+            <div><strong><%= lessonsAuto.length %></strong> lezioni attive</div>
+            <div><strong><%= booking.participantsCount || 1 %></strong> partecipant<%= (booking.participantsCount||1)===1?'e':'i' %></div>
           </div>
-        <% }) %>
-        <p class="muted" style="font-size:12px;margin-top:8px">Posti occupati: <strong><%= booking.participantsCount || 1 %></strong> partecipanti × <strong><%= lessonsAuto.length %></strong> lezioni.</p>
+          <p class="bk-gold-note muted">
+            Il pack <strong><%= booking.plan.name %></strong> include automaticamente l'accesso a tutte le lezioni dei <%= nDaysAuto %> giorni di evento (mattina + pomeriggio). Niente da scegliere.
+          </p>
+        </div>
       </section>
     <% } %>
 
@@ -688,6 +683,14 @@
   .bk-red-edit summary{cursor:pointer;font-size:13px;color:#7a5800;font-weight:600;list-style:none;display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:6px}
   .bk-red-edit summary::-webkit-details-marker{display:none}
   .bk-red-edit summary:hover{background:#fffbe8}
+
+  .bk-gold-card{background:linear-gradient(135deg,#fbf6e6 0%,#fff 60%);border:1px solid #e8d99a;border-radius:12px;padding:22px 24px;margin-top:10px}
+  .bk-gold-badge{display:inline-block;background:#1c1f26;color:#e0aa00;padding:6px 14px;border-radius:20px;font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;margin-bottom:14px}
+  .bk-gold-meta{display:flex;gap:30px;flex-wrap:wrap;margin-bottom:14px;font-size:14.5px;color:#1c1f26}
+  .bk-gold-meta strong{font-family:'Fraunces',Georgia,serif;font-size:22px;font-weight:600;color:#7a5800;margin-right:4px}
+  .bk-gold-note{font-size:13.5px;line-height:1.6;margin:0}
+
+  .bk-day-num{display:inline-block;background:linear-gradient(135deg,#fdf2c9,#ffe39e);color:#7a5800;font-weight:700;padding:3px 10px;border-radius:6px;font-size:12px;letter-spacing:.04em}
 
   .bk-day-group{margin-top:12px;border:1px solid #eef0f4;border-radius:10px;overflow:hidden}
   .bk-day-group + .bk-day-group{margin-top:14px}

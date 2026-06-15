@@ -16,7 +16,7 @@
         </select>
       </form>
       <% if (evId) { %>
-        <button type="button" class="btn btn-primary btn-sm" onclick="document.getElementById('newLessonForm').scrollIntoView({behavior:'smooth'});setTimeout(function(){document.querySelector('#newLessonForm input[name=time]').focus()},400)">+ Nuova lezione</button>
+        <button type="button" class="btn btn-primary btn-sm" id="openNewLessonBtn">+ Nuova lezione</button>
       <% } %>
     </div>
   </div>
@@ -123,41 +123,58 @@
 <% }) %>
 
 <% if (evId) { %>
-<div class="card" id="newLessonForm">
-  <div class="card-head" style="margin-bottom:14px">
-    <h3 style="margin:0">+ Nuova lezione</h3>
+<!-- Modal nuova lezione (aperto da bottone in alto) -->
+<div class="nl-modal" id="newLessonModal" hidden>
+  <div class="nl-modal-backdrop" data-close></div>
+  <div class="nl-modal-panel">
+    <div class="nl-modal-head">
+      <h3 style="margin:0">+ Nuova lezione</h3>
+      <button type="button" class="btn-ico" data-close title="Chiudi">×</button>
+    </div>
+    <form method="post" action="/admin/lessons" class="form" style="padding:20px 24px 24px">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <input type="hidden" name="eventId" value="<%= evId %>">
+      <div class="fs-grid">
+        <div class="field"><label class="field-lbl">Giorno</label><input type="number" name="dayIndex" value="1" min="1" required></div>
+        <div class="field"><label class="field-lbl">Orario</label><input type="text" name="time" placeholder="9:30" required autofocus></div>
+        <div class="field field-full"><label class="field-lbl">Titolo lezione</label><input type="text" name="title" placeholder="Ballet" required></div>
+        <div class="field field-full">
+          <label class="field-lbl">Professore</label>
+          <select name="professorId">
+            <option value="">— Nessuno —</option>
+            <% professors.forEach(function(p){ %><option value="<%= p.id %>"><%= p.firstName %> <%= p.lastName %></option><% }) %>
+          </select>
+        </div>
+        <div class="field">
+          <label class="field-lbl">Fascia</label>
+          <select name="isAfternoon"><option value="">Mañana</option><option value="1">Tarde</option></select>
+        </div>
+        <div class="field">
+          <label class="field-lbl">Capacità (0 = illimitata)</label>
+          <input type="number" name="capacity" value="100" min="0" max="9999">
+        </div>
+        <div class="field field-full" style="padding-top:6px">
+          <label class="switch"><input type="checkbox" name="isPause" value="1"><span>È una pausa (lunch ecc.)</span></label>
+        </div>
+      </div>
+      <div class="fs-actions" style="margin-top:16px">
+        <button type="button" class="btn btn-ghost" data-close>Annulla</button>
+        <button type="submit" class="btn btn-primary">+ Aggiungi lezione</button>
+      </div>
+    </form>
   </div>
-  <form method="post" action="/admin/lessons" class="form lesson-new-form">
-    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-    <input type="hidden" name="eventId" value="<%= evId %>">
-    <div class="fs-grid">
-      <div class="field"><label class="field-lbl">Giorno</label><input type="number" name="dayIndex" value="1" min="1" required></div>
-      <div class="field"><label class="field-lbl">Orario</label><input type="text" name="time" placeholder="9:30" required></div>
-      <div class="field" style="grid-column:span 2"><label class="field-lbl">Titolo lezione</label><input type="text" name="title" placeholder="Ballet" required></div>
-      <div class="field">
-        <label class="field-lbl">Professore</label>
-        <select name="professorId">
-          <option value="">— Nessuno —</option>
-          <% professors.forEach(function(p){ %><option value="<%= p.id %>"><%= p.firstName %> <%= p.lastName %></option><% }) %>
-        </select>
-      </div>
-      <div class="field">
-        <label class="field-lbl">Fascia</label>
-        <select name="isAfternoon"><option value="">Mañana</option><option value="1">Tarde</option></select>
-      </div>
-      <div class="field">
-        <label class="field-lbl">Capacità (0 = illimitata)</label>
-        <input type="number" name="capacity" value="100" min="0" max="9999">
-      </div>
-      <div class="field" style="display:flex;align-items:center;padding-top:24px">
-        <label class="switch"><input type="checkbox" name="isPause" value="1"><span>È una pausa</span></label>
-      </div>
-    </div>
-    <div class="form-actions" style="margin-top:14px">
-      <button class="btn btn-primary">+ Aggiungi lezione</button>
-    </div>
-  </form>
 </div>
+<script>
+(function(){
+  var modal = document.getElementById('newLessonModal');
+  var openBtn = document.getElementById('openNewLessonBtn');
+  function show(){ modal.hidden = false; document.body.style.overflow='hidden'; var inp = modal.querySelector('input[name=time]'); if (inp) inp.focus(); }
+  function hide(){ modal.hidden = true; document.body.style.overflow=''; }
+  if (openBtn) openBtn.addEventListener('click', show);
+  modal.addEventListener('click', function(e){ if (e.target.hasAttribute('data-close')) hide(); });
+  document.addEventListener('keydown', function(e){ if (e.key === 'Escape' && !modal.hidden) hide(); });
+})();
+</script>
 <% } %>
 
 <div class="lesson-saver" id="lessonSaver" hidden>
@@ -200,7 +217,12 @@
   .cap-fill.is-warn{background:linear-gradient(90deg,#f0c04b,#c8970a)}
   .cap-fill.is-full{background:linear-gradient(90deg,#e88080,#9b2727)}
 
-  .lesson-new-form .field{margin-bottom:0}
+  /* Modal nuova lezione */
+  .nl-modal{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center}
+  .nl-modal-backdrop{position:absolute;inset:0;background:rgba(28,31,38,.55);backdrop-filter:blur(2px)}
+  .nl-modal-panel{position:relative;background:#fff;border-radius:14px;box-shadow:0 24px 60px rgba(0,0,0,.3);width:min(560px,92vw);max-height:90vh;overflow:auto;animation:nlIn .2s ease}
+  @keyframes nlIn{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:none}}
+  .nl-modal-head{display:flex;justify-content:space-between;align-items:center;padding:18px 24px;border-bottom:1px solid #eef0f4}
 
   .lesson-saver{position:fixed;bottom:20px;right:24px;background:#1c1f26;color:#e0aa00;padding:10px 16px;border-radius:30px;
     display:flex;align-items:center;gap:8px;font-size:13.5px;font-weight:600;box-shadow:0 8px 28px rgba(0,0,0,.2);z-index:50;
