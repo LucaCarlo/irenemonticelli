@@ -154,6 +154,12 @@ model Booking {
   paymentStatus String   @default("unpaid")
   stripeSessionId String @default("")
   stripePaymentIntent String @default("")
+  // Errore Stripe dettagliato (decline_code, error.code, error.message) — solo se payment fallisce
+  stripeErrorCode String @default("")
+  stripeError   String   @default("")
+  // Token random per deep-link "Riprendi pagamento" → /reserva/resume/<token>
+  // Generato alla creazione di una booking pending; null/empty su quelle gia' confermate.
+  resumeToken   String?  @unique
   notes         String   @default("")
   // Dati fatturazione del pagante (opzionali — se compilati genera factura formale)
   billingAddress  String  @default("")

@@ -48,6 +48,7 @@
       <% } %>
       <% if (can('bookings.manage')) { %>
         <a class="sb-link <%= path.indexOf('/admin/bookings')===0 ? 'active' : '' %>" href="/admin/bookings"><%- include('icon',{name:'bookings'}) %><span>Prenotazioni</span></a>
+        <a class="sb-link <%= path.indexOf('/admin/abandoned-carts')===0 ? 'active' : '' %>" href="/admin/abandoned-carts"><%- include('icon',{name:'messages'}) %><span>Carrelli abbandonati</span></a>
       <% } else { %>
         <span class="sb-link disabled"><%- include('icon',{name:'bookings'}) %><span>Prenotazioni</span><em class="soon">presto</em></span>
       <% } %>

@@ -19,6 +19,7 @@
 //   - { ok: false, error: '...' }
 //   - { ok: true, booking, breakdown: { perParticipantBase, subtotal, extrasTotal, total, N, chosenExtras } }
 
+const crypto = require('crypto');
 const prisma = require('./db');
 const B = require('./booking');
 const RC = require('./referral-calc');
@@ -27,6 +28,11 @@ const LC = require('./lesson-capacity');
 const MAX_PARTICIPANTS = 20;
 
 function round2(n) { return Math.round(Number(n) * 100) / 100; }
+
+// Token random URL-safe per il deep-link "Riprendi pagamento"
+function genResumeToken() {
+  return crypto.randomBytes(16).toString('hex');
+}
 
 function isValidEmail(s) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s || '');
@@ -376,6 +382,7 @@ async function createMultiBooking(plan, body) {
         referralCodeId: breakdown.referralCode ? breakdown.referralCode.id : null,
         referralCodeSnap: breakdown.referralCode ? breakdown.referralCode.code : '',
         referralDiscount: breakdown.referralDiscount || 0,
+        resumeToken: genResumeToken(),
         status: 'pending',
         paymentStatus: 'unpaid',
       },

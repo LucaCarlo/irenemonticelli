@@ -12,12 +12,8 @@ router.use(requirePermission('bookings.manage'));
 router.get('/', A(async (req, res) => {
   const dt = require('../lib/datatable');
   const params = dt.parseParams(req, { defaultSort: 'createdAt', allowedSorts: ['customerName','customerEmail','amount','status','paymentStatus','createdAt'] });
-  const status = STATUSES.includes(req.query.status) ? req.query.status : '';
-  const payStatus = String(req.query.paymentStatus || '').trim();
-  params._extra = { status, paymentStatus: payStatus };
-  const where = {};
-  if (status) where.status = status;
-  if (payStatus) where.paymentStatus = payStatus;
+  // Vista "Prenotazioni" = SOLO pagate (le altre vivono in /admin/abandoned-carts).
+  const where = { paymentStatus: 'paid', status: 'confirmed' };
   if (params.q) where.OR = [
     { customerName: { contains: params.q, mode: 'insensitive' } },
     { customerEmail: { contains: params.q, mode: 'insensitive' } },
@@ -26,15 +22,15 @@ router.get('/', A(async (req, res) => {
     { phone: { contains: params.q, mode: 'insensitive' } },
   ];
   const orderBy = {}; orderBy[params.sort] = params.dir;
-  const [totalUnfiltered, total, bookings, counts] = await Promise.all([
-    prisma.booking.count(),
+  const [totalUnfiltered, total, bookings, abandonedCount] = await Promise.all([
+    prisma.booking.count({ where: { paymentStatus: 'paid', status: 'confirmed' } }),
     prisma.booking.count({ where }),
     prisma.booking.findMany({ where, include: { plan: true, event: true }, orderBy, skip: params.skip, take: params.take }),
-    prisma.booking.groupBy({ by: ['status'], _count: { _all: true } }),
+    prisma.booking.count({ where: { NOT: { AND: [{ paymentStatus: 'paid' }, { status: 'confirmed' }] } } }),
   ]);
   const totalPages = Math.max(1, Math.ceil(total / params.perPage));
   const links = dt.pageLinks(params.page, totalPages);
-  res.render('bookings/list', { title: 'Prenotazioni', bookings, status, paymentStatus: payStatus, STATUSES, counts, params, total, totalUnfiltered, totalPages, links });
+  res.render('bookings/list', { title: 'Prenotazioni pagate', bookings, STATUSES, params, total, totalUnfiltered, totalPages, links, abandonedCount });
 }));
 
 router.get('/calendar', A(async (req, res) => {

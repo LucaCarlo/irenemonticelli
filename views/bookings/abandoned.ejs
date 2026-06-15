@@ -1,0 +1,131 @@
+<%- include('../partials/header') %>
+
+<%
+  function fmtEur(n){ return (Math.round(Number(n||0)*100)/100).toFixed(2).replace('.', ',') + ' €'; }
+  function fmtDateTime(d){ if(!d) return '—'; var dt=new Date(d); return isNaN(dt)?'—':dt.toLocaleString('it-IT',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}); }
+  var KIND_LBL = {
+    refunded:      { lbl: 'Rimborsato',    cls: 'kind-refunded',      ico: '↩️' },
+    payment_error: { lbl: 'Errore pagamento', cls: 'kind-error',      ico: '⚠️' },
+    abandoned:     { lbl: 'Abbandonato',  cls: 'kind-abandoned',     ico: '🚪' },
+    cancelled:     { lbl: 'Annullato',     cls: 'kind-cancelled',     ico: '✕' },
+    other:         { lbl: 'Altro',         cls: 'kind-other',         ico: '?' },
+  };
+%>
+
+<div class="card">
+  <div class="card-head">
+    <div>
+      <h2>Carrelli abbandonati</h2>
+      <p class="muted" style="margin:4px 0 0;font-size:13.5px">Prenotazioni che non sono arrivate al pagamento confermato (rimborsate, errori, abbandonate, annullate).</p>
+    </div>
+    <a class="btn btn-ghost" href="/admin/bookings">→ Prenotazioni pagate</a>
+  </div>
+
+  <!-- TAB filtri -->
+  <div class="ac-tabs">
+    <a href="/admin/abandoned-carts" class="ac-tab <%= !filter ? 'is-active' : '' %>">
+      Tutti <span class="ac-tab-n"><%= counts.all %></span>
+    </a>
+    <a href="/admin/abandoned-carts?kind=abandoned" class="ac-tab ac-tab-abandoned <%= filter==='abandoned' ? 'is-active' : '' %>">
+      🚪 Checkout abbandonato <span class="ac-tab-n"><%= counts.abandoned %></span>
+    </a>
+    <a href="/admin/abandoned-carts?kind=payment_error" class="ac-tab ac-tab-error <%= filter==='payment_error' ? 'is-active' : '' %>">
+      ⚠️ Errore pagamento <span class="ac-tab-n"><%= counts.payment_error %></span>
+    </a>
+    <a href="/admin/abandoned-carts?kind=refunded" class="ac-tab ac-tab-refunded <%= filter==='refunded' ? 'is-active' : '' %>">
+      ↩️ Rimborsate <span class="ac-tab-n"><%= counts.refunded %></span>
+    </a>
+    <a href="/admin/abandoned-carts?kind=cancelled" class="ac-tab ac-tab-cancelled <%= filter==='cancelled' ? 'is-active' : '' %>">
+      ✕ Annullate <span class="ac-tab-n"><%= counts.cancelled %></span>
+    </a>
+  </div>
+
+  <%- include('../partials/dt-toolbar', {
+    params, total, totalUnfiltered,
+    entitySingular: 'carrello', entityPlural: 'carrelli',
+    basePath: '/admin/abandoned-carts',
+    searchPlaceholder: 'Cerca per nome o email…',
+    extraFilters: [],
+  }) %>
+
+  <% if (!items.length) { %>
+    <div style="text-align:center;padding:60px 20px">
+      <div style="font-size:48px;margin-bottom:8px">🎉</div>
+      <h3 style="margin:0 0 6px">Nessun carrello abbandonato</h3>
+      <p class="muted" style="margin:0">Tutte le prenotazioni sono arrivate al pagamento confermato.</p>
+    </div>
+  <% } else { %>
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Cliente</th>
+            <th>Email</th>
+            <th>Pacchetto</th>
+            <th>Importo</th>
+            <th>Tipo</th>
+            <th>Dettaglio errore</th>
+            <th>Data</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% items.forEach(function(b){ var k = KIND_LBL[b._kind] || KIND_LBL.other; %>
+            <tr class="ac-row <%= k.cls %>">
+              <td>
+                <strong><%= b.customerName || ((b.firstName||'') + ' ' + (b.lastName||'')) %></strong>
+                <% if (b.participantsCount > 1) { %><div class="muted" style="font-size:11px;margin-top:2px"><%= b.participantsCount %> partecipanti</div><% } %>
+              </td>
+              <td><% if (b.customerEmail) { %><a href="mailto:<%= b.customerEmail %>"><%= b.customerEmail %></a><% } else { %>—<% } %></td>
+              <td><%= b.plan ? b.plan.name : '—' %></td>
+              <td><strong><%= fmtEur(b.amount) %></strong></td>
+              <td><span class="ac-kind <%= k.cls %>"><%= k.ico %> <%= k.lbl %></span></td>
+              <td style="max-width:280px">
+                <% if (b._kind === 'payment_error' && (b.stripeError || b.stripeErrorCode)) { %>
+                  <div class="ac-err">
+                    <% if (b.stripeErrorCode) { %><code class="ac-err-code"><%= b.stripeErrorCode %></code><% } %>
+                    <% if (b.stripeError) { %><div class="ac-err-msg"><%= b.stripeError %></div><% } %>
+                  </div>
+                <% } else if (b._kind === 'refunded') { %>
+                  <span class="muted">Rimborso elaborato</span>
+                <% } else if (b._kind === 'abandoned') { %>
+                  <span class="muted">Cliente uscito senza completare</span>
+                <% } else { %>
+                  <span class="muted">—</span>
+                <% } %>
+              </td>
+              <td class="muted" style="white-space:nowrap;font-size:12.5px"><%= fmtDateTime(b.createdAt) %></td>
+              <td class="row-actions">
+                <% if (b.resumeToken && (b._kind === 'abandoned' || b._kind === 'payment_error')) { %>
+                  <a class="btn-ico" href="/reserva/resume/<%= b.resumeToken %>" target="_blank" title="Apri link di ripresa (lo riceve il cliente)" style="color:#7a5800">↗</a>
+                <% } %>
+                <a class="btn-ico btn-ico-open" href="/admin/bookings/<%= b.id %>/edit" title="Dettaglio booking"><%- include('../partials/ico', { name:'open' }) %></a>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+    <%- include('../partials/dt-pagination', { links, params, basePath: '/admin/abandoned-carts' }) %>
+  <% } %>
+</div>
+
+<style>
+  .ac-tabs{display:flex;flex-wrap:wrap;gap:6px;margin:14px 0 18px;padding-bottom:14px;border-bottom:1px solid #eef0f4}
+  .ac-tab{display:inline-flex;align-items:center;gap:8px;padding:8px 14px;border:1px solid #eef0f4;border-radius:8px;text-decoration:none;color:#5a5e6a;font-size:13px;background:#fff;transition:all .15s}
+  .ac-tab:hover{border-color:#1c1f26;color:#1c1f26}
+  .ac-tab.is-active{background:#1c1f26;color:#e0aa00;border-color:#1c1f26;font-weight:600}
+  .ac-tab-n{display:inline-block;background:#eef0f4;color:#5a5e6a;font-weight:700;font-size:11px;padding:1px 8px;border-radius:11px;min-width:22px;text-align:center}
+  .ac-tab.is-active .ac-tab-n{background:#e0aa00;color:#1c1408}
+
+  .ac-kind{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:8px;font-size:12px;font-weight:700;white-space:nowrap}
+  .ac-kind.kind-refunded{background:#e3e7f0;color:#3a3f50}
+  .ac-kind.kind-error{background:#fef0ec;color:#a8351c;border:1px solid #f3c5b9}
+  .ac-kind.kind-abandoned{background:#fff3d6;color:#7a5800;border:1px solid #f0c04b}
+  .ac-kind.kind-cancelled{background:#eef0f4;color:#5a5e6a}
+
+  .ac-err-code{display:inline-block;background:#1c1f26;color:#ff8a72;padding:2px 8px;border-radius:4px;font-family:'Courier New',monospace;font-size:11px;font-weight:700;margin-bottom:4px}
+  .ac-err-msg{font-size:12.5px;color:#5a5e6a;line-height:1.45;word-break:break-word}
+</style>
+
+<%- include('../partials/footer') %>

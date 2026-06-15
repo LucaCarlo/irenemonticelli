@@ -101,6 +101,46 @@ router.get('/reserva/:slug', A(async (req, res) => {
     orderBy: [{ mandatory: 'desc' }, { sort: 'asc' }, { id: 'asc' }],
   });
 
+  // Resume: se ?resume=<token>, carica la booking pending e precompila il form (JS lato client)
+  let resumeData = null;
+  if (req.query.resume) {
+    const rb = await prisma.booking.findUnique({
+      where: { resumeToken: String(req.query.resume) },
+      include: { participants: { include: { tutorBlock: true } }, tutorBlocks: true },
+    });
+    if (rb && rb.planId === plan.id && rb.paymentStatus !== 'paid' && rb.paymentStatus !== 'refunded' && rb.status !== 'cancelled') {
+      let resumeItems = {};
+      let resumeExtras = [];
+      try { resumeItems = rb.itemsJson ? JSON.parse(rb.itemsJson) : {}; } catch (_) {}
+      try { resumeExtras = rb.extrasJson ? JSON.parse(rb.extrasJson) : []; } catch (_) {}
+      resumeData = {
+        token: rb.resumeToken,
+        bookingId: rb.id,
+        firstName: rb.firstName, lastName: rb.lastName,
+        email: rb.customerEmail, phone: rb.phone,
+        birthDate: rb.birthDate ? new Date(rb.birthDate).toISOString().slice(0, 10) : '',
+        participantsCount: rb.participantsCount || 1,
+        classesPerParticipant: rb.classesPerParticipant || 1,
+        items: resumeItems,
+        extras: Array.isArray(resumeExtras) ? resumeExtras.filter((x) => !x.mandatory).map((x) => x.id) : [],
+        referralCodeSnap: rb.referralCodeSnap || '',
+        participants: (rb.participants || []).map((p) => ({
+          firstName: p.firstName, lastName: p.lastName,
+          birthDate: p.birthDate ? new Date(p.birthDate).toISOString().slice(0, 10) : '',
+          email: p.email || '', phone: p.phone || '',
+          address: p.address || '', city: p.city || '', zip: p.zip || '', country: p.country || 'ES',
+          isMinor: !!p.isMinor,
+        })),
+        tutors: (rb.tutorBlocks || []).map((t) => ({
+          firstName: t.firstName, lastName: t.lastName,
+          email: t.email, phone: t.phone, relationship: t.relationship,
+        })),
+        paymentStatus: rb.paymentStatus,
+        stripeError: rb.stripeError || '',
+      };
+    }
+  }
+
   res.render('public/reserva', {
     title: plan.name,
     logoDefs: LOGO_DEFS,
@@ -121,6 +161,7 @@ router.get('/reserva/:slug', A(async (req, res) => {
     error: req.query.e || null,
     stripePk: await publishableKey(),
     refCookieCode: res.locals.refCookieCode || '',
+    resumeData,
   });
 }));
 
@@ -208,6 +249,7 @@ async function validateAndCreateBooking(plan, body) {
       dateLabel: calc.label, itemsJson: JSON.stringify(calc.items || {}),
       extrasJson: JSON.stringify(extrasSnapshot),
       amount: totalAmount, currency: plan.currency || 'EUR',
+      resumeToken: require('crypto').randomBytes(16).toString('hex'),
       status: 'pending', paymentStatus: 'unpaid',
     },
   });
@@ -413,6 +455,20 @@ router.post('/reserva/:slug/payment-intent', A(async (req, res) => {
     }
   }
 
+  // Resume: se il body contiene un resumeToken valido di una booking pending/failed,
+  // marco la vecchia booking come 'cancelled' prima di crearne una nuova
+  // (evita di accumulare booking duplicate per ogni tentativo di ripresa).
+  const resumeToken = String((req.body && req.body.resumeToken) || '').trim();
+  if (resumeToken) {
+    const old = await prisma.booking.findUnique({ where: { resumeToken }, select: { id: true, paymentStatus: true, status: true } });
+    if (old && old.paymentStatus !== 'paid' && old.paymentStatus !== 'refunded' && old.status !== 'cancelled') {
+      await prisma.booking.update({
+        where: { id: old.id },
+        data: { status: 'cancelled', notes: '[auto] superata dalla ripresa carrello' },
+      }).catch(() => {});
+    }
+  }
+
   let mb;
   try { mb = await MB.createMultiBooking(plan, req.body || {}); }
   catch (e) { console.error('[reserva PI] createMultiBooking failed:', e); return res.status(500).json({ ok: false, error: 'Errore interno' }); }
@@ -450,10 +506,21 @@ router.post('/reserva/:slug/payment-intent', A(async (req, res) => {
   });
   await prisma.booking.update({ where: { id: booking.id }, data: { stripePaymentIntent: pi.id } });
 
+  // Setta cookie "rv_resume" (TTL 7g) → l'header pubblico mostrera' l'icona "Riprendi reserva"
+  if (booking.resumeToken) {
+    res.cookie('rv_resume', booking.resumeToken, {
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+      httpOnly: false,  // accessibile a JS dell'header per mostrare l'icona
+      sameSite: 'lax',
+      path: '/',
+    });
+  }
+
   res.json({
     ok: true,
     clientSecret: pi.client_secret,
     bookingId: booking.id,
+    resumeToken: booking.resumeToken,
     publishableKey: await publishableKey(),
     breakdown: { participantsCount: breakdown.N, subtotal: breakdown.subtotal, extrasTotal: breakdown.extrasTotal, total: breakdown.total },
   });
@@ -568,7 +635,55 @@ router.get('/reserva/success', A(async (req, res) => {
   const booking = await prisma.booking.findUnique({
     where: { id: parseInt(req.query.b, 10) || 0 }, include: { plan: true, event: true },
   });
+  // Pagamento andato a buon fine → pulisco il cookie di ripresa
+  res.clearCookie('rv_resume', { path: '/' });
   res.render('public/success', { title: 'Reserva confirmada', booking });
+}));
+
+// ---- Resume di un checkout abbandonato ----
+// /reserva/resume/:token  → redirect al pack giusto con query param ?resume=<token>
+router.get('/reserva/resume/:token', A(async (req, res) => {
+  const token = String(req.params.token || '').trim();
+  if (!token) return res.redirect('/');
+  const booking = await prisma.booking.findUnique({
+    where: { resumeToken: token },
+    include: { plan: true },
+  });
+  if (!booking || !booking.plan) {
+    res.clearCookie('rv_resume', { path: '/' });
+    return res.redirect('/');
+  }
+  // Solo per booking non ancora pagate (paid/refunded → niente ripresa)
+  if (booking.paymentStatus === 'paid' || booking.paymentStatus === 'refunded' || booking.status === 'cancelled') {
+    res.clearCookie('rv_resume', { path: '/' });
+    return res.redirect('/');
+  }
+  return res.redirect(`/reserva/${booking.plan.slug}?resume=${token}`);
+}));
+
+// ---- API per l'header pubblico: dato un token, ritorna info sintetica della booking da riprendere ----
+router.get('/api/booking/resume-info', A(async (req, res) => {
+  const token = String((req.query && req.query.t) || (req.cookies && req.cookies.rv_resume) || '').trim();
+  if (!token) return res.json({ ok: false });
+  const b = await prisma.booking.findUnique({
+    where: { resumeToken: token },
+    include: { plan: { select: { slug: true, name: true } } },
+  });
+  if (!b || !b.plan) return res.json({ ok: false });
+  if (b.paymentStatus === 'paid' || b.paymentStatus === 'refunded' || b.status === 'cancelled') {
+    return res.json({ ok: false });
+  }
+  res.json({
+    ok: true,
+    bookingId: b.id,
+    planName: b.plan.name,
+    planSlug: b.plan.slug,
+    amount: b.amount,
+    currency: b.currency,
+    resumeUrl: `/reserva/resume/${b.resumeToken}`,
+    paymentStatus: b.paymentStatus,  // 'unpaid' | 'failed'
+    stripeError: b.stripeError || '',
+  });
 }));
 
 // API pubblica: disponibilità lezioni per evento (per UI checkout, gold/red barrato).

@@ -918,6 +918,9 @@
   });
 })();
 
+// Dati per ripresa di una booking abbandonata (passati dal server se ?resume=<token>)
+window.RV_RESUME = <%- resumeData ? JSON.stringify(resumeData) : 'null' %>;
+
 (function(){
   var form = document.getElementById('rvForm');
   var mode = form.dataset.mode;
@@ -1835,6 +1838,100 @@
   // ===== Init =====
   renderParticipants();
   sync();
+
+  // ===== Resume di una booking abbandonata =====
+  // Se RV_RESUME è non-null, prefilliamo i campi pagante + participantsCount + lezioni + classes
+  if (window.RV_RESUME) {
+    try {
+      var R = window.RV_RESUME;
+      // Banner in cima al form per dare contesto
+      var banner = document.createElement('div');
+      banner.id = 'rv-resume-banner';
+      banner.style.cssText = 'margin:14px 0 18px;padding:14px 18px;border-radius:10px;font-size:14px;border:1px solid #f5d878;background:#fffbe8;color:#7a5800;display:flex;align-items:center;gap:10px';
+      var bannerMsg = R.paymentStatus === 'failed'
+        ? '⚠️ <strong>Hubo un error con tu pago anterior.</strong>' + (R.stripeError ? ' (' + R.stripeError + ')' : '') + ' Hemos rellenado tus datos: revisa y reintenta el pago.'
+        : '👋 <strong>Bienvenido de nuevo!</strong> Hemos rellenado tus datos de la reserva anterior. Termina cuando quieras.';
+      banner.innerHTML = bannerMsg;
+      form.insertBefore(banner, form.firstChild);
+
+      // Pagante: nome, email, telefono, data nascita
+      function setVal(name, value) {
+        var el = form.querySelector('[name="' + name + '"]');
+        if (el && value != null && value !== '') el.value = value;
+      }
+      setVal('firstName', R.firstName);
+      setVal('lastName', R.lastName);
+      setVal('email', R.email);
+      setVal('phone', R.phone);
+      setVal('birthDate', R.birthDate);
+
+      // Per single_lessons: classes count
+      if (mode === 'single_lessons' && R.classesPerParticipant) {
+        var cs = document.getElementById('rvCount');
+        if (cs) {
+          cs.value = String(R.classesPerParticipant);
+          cs.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+      }
+
+      // Per single_lessons: prefill lezioni (day+slot)
+      if (mode === 'single_lessons' && R.items && Array.isArray(R.items.lessons)) {
+        setTimeout(function(){
+          R.items.lessons.forEach(function(l, i){
+            var d = form.querySelector('input[name="lesson_day_'+i+'"]');
+            var s = form.querySelector('input[name="lesson_slot_'+i+'"]');
+            if (d) d.value = l.day || '';
+            if (s) s.value = l.slot || '';
+          });
+          // Forza il refresh delle UI delle lezioni
+          if (typeof sync === 'function') sync();
+        }, 250);
+      }
+
+      // Per RED: prefill day_<iso>
+      if (mode === 'red' && R.items && R.items.days) {
+        Object.keys(R.items.days).forEach(function(iso){
+          var seg = R.items.days[iso];
+          var hidden = form.querySelector('input[name="day_'+iso+'"]');
+          if (hidden) hidden.value = seg;
+          var btn = form.querySelector('.rv-ampm[data-day="'+iso+'"] .scx-ampm-btn[data-val="'+seg+'"]');
+          if (btn) btn.classList.add('is-selected');
+        });
+      }
+
+      // Participantes count
+      if (R.participantsCount && R.participantsCount > 1) {
+        var partsInput = document.getElementById('rvParts');
+        if (partsInput) {
+          partsInput.value = String(R.participantsCount);
+          partsInput.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+      }
+
+      // Extras
+      if (Array.isArray(R.extras) && R.extras.length) {
+        R.extras.forEach(function(id){
+          var cb = form.querySelector('input[type="checkbox"][name="extras"][value="'+id+'"]');
+          if (cb) cb.checked = true;
+        });
+      }
+
+      // Codice referral
+      if (R.referralCodeSnap) {
+        var inp = document.getElementById('rvRefCodeInput');
+        if (inp) inp.value = R.referralCodeSnap;
+      }
+
+      // Salvo il token in un hidden affinche' il backend possa "rilanciare" la booking
+      // (la prossima POST a payment-intent invierà resumeToken)
+      var hr = document.createElement('input');
+      hr.type = 'hidden'; hr.name = 'resumeToken'; hr.value = R.token;
+      form.appendChild(hr);
+      window.RV_RESUME_TOKEN = R.token;
+
+      sync();
+    } catch (err) { console.warn('[resume] prefill failed:', err); }
+  }
 })();
 </script>
 

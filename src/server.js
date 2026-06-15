@@ -184,6 +184,7 @@ app.use('/admin/lessons', requireAuth, enforcePasswordChange, csrfProtect, requi
 app.use('/admin/extras', requireAuth, enforcePasswordChange, csrfProtect, require('./routes/extras'));
 app.use('/admin/newsletter', requireAuth, enforcePasswordChange, csrfProtect, require('./routes/newsletter'));
 app.use('/admin/bookings', requireAuth, enforcePasswordChange, csrfProtect, require('./routes/bookings'));
+app.use('/admin/abandoned-carts', requireAuth, enforcePasswordChange, csrfProtect, require('./routes/abandoned-carts'));
 app.use('/admin/messages', requireAuth, enforcePasswordChange, csrfProtect, require('./routes/messages'));
 app.use('/admin/contacts', requireAuth, enforcePasswordChange, csrfProtect, require('./routes/contacts'));
 app.use('/admin/audit', requireAuth, enforcePasswordChange, csrfProtect, require('./routes/audit'));

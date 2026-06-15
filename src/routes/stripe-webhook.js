@@ -176,14 +176,50 @@ router.post('/stripe/webhook', express.raw({ type: '*/*' }), async (req, res) =>
       const bookingId = await resolveBookingId(s, 'session');
       resolvedBookingId = bookingId;
       if (bookingId) {
-        await prisma.booking.update({ where: { id: bookingId }, data: { paymentStatus: 'failed' } }).catch(() => {});
+        await prisma.booking.update({
+          where: { id: bookingId },
+          data: {
+            paymentStatus: 'failed',
+            stripeErrorCode: 'session_expired',
+            stripeError: 'La sesión de pago expiró sin completarse',
+          },
+        }).catch(() => {});
       }
     } else if (event.type === 'payment_intent.payment_failed') {
       const pi = event.data.object;
       const bookingId = await resolveBookingId(pi, 'pi');
       resolvedBookingId = bookingId;
       if (bookingId) {
-        await prisma.booking.update({ where: { id: bookingId }, data: { paymentStatus: 'failed' } }).catch(() => {});
+        // Estrae i dettagli dell'errore: decline_code (più specifico) > code > generic message
+        const lpe = pi.last_payment_error || {};
+        const code = lpe.decline_code || lpe.code || 'payment_failed';
+        // Frase user-friendly: prefer human-readable message poi fallback
+        const msg = lpe.message
+          || (lpe.payment_method_details && lpe.payment_method_details.error)
+          || 'El pago no se ha podido completar';
+        await prisma.booking.update({
+          where: { id: bookingId },
+          data: {
+            paymentStatus: 'failed',
+            stripeErrorCode: String(code).slice(0, 80),
+            stripeError: String(msg).slice(0, 500),
+          },
+        }).catch(() => {});
+      }
+    } else if (event.type === 'charge.refunded' || event.type === 'charge.refund.updated') {
+      const ch = event.data.object;
+      // Lookup booking per PaymentIntent ID
+      const pi = ch.payment_intent;
+      if (pi) {
+        const b = await prisma.booking.findFirst({ where: { stripePaymentIntent: pi }, select: { id: true } });
+        if (b) {
+          resolvedBookingId = b.id;
+          // Refund totale o parziale: per ora marchiamo refunded
+          await prisma.booking.update({
+            where: { id: b.id },
+            data: { paymentStatus: 'refunded' },
+          }).catch(() => {});
+        }
       }
     }
   } catch (e) {
