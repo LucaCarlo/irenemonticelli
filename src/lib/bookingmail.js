@@ -189,14 +189,14 @@ async function sendBookingConfirmation(bookingId, overrideTo) {
 
   if (overrideTo) {
     // Modalità sample/test: invia SOLO al destinatario override.
-    await sendMail({ to: overrideTo, subject: '[SAMPLE] ' + subject, text, html });
+    await sendMail({ to: overrideTo, subject: '[SAMPLE] ' + subject, text, html, kind: 'booking.confirmation.sample', entity: 'Booking', entityId: b.id });
     return;
   }
   // Al cliente
-  await sendMail({ to: b.customerEmail, subject, text, html });
+  await sendMail({ to: b.customerEmail, subject, text, html, kind: 'booking.confirmation', entity: 'Booking', entityId: b.id });
   // Copia a Irene/admin
   if (adminEmail && adminEmail !== b.customerEmail) {
-    await sendMail({ to: adminEmail, subject: `[Nueva reserva] ${subject}`, text, html }).catch(() => {});
+    await sendMail({ to: adminEmail, subject: `[Nueva reserva] ${subject}`, text, html, kind: 'booking.confirmation.admin', entity: 'Booking', entityId: b.id }).catch(() => {});
   }
 }
 

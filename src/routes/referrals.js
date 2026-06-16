@@ -85,6 +85,7 @@ async function sendCodeCreatedEmail(referrer, code, req) {
     to: referrer.email,
     subject: `🎫 Tu nuevo código: ${code.code} · ${siteName}`,
     text, html,
+    kind: 'referrer.code_created', entity: 'ReferralCode', entityId: code.id,
   });
 }
 
@@ -129,6 +130,7 @@ async function sendWelcomeEmail(referrer, tempPassword, req) {
     to: referrer.email,
     subject: `Bienvenida al Programa de Referidos · ${siteName}`,
     text, html,
+    kind: 'referrer.welcome', entity: 'Referrer', entityId: referrer.id,
   });
 }
 

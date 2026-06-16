@@ -68,6 +68,7 @@ publicRouter.post('/contacto', A(async (req, res) => {
         to: adminEmail,
         subject: `[Contatto] ${msg.subject || msg.name}`,
         text, html,
+        kind: 'contact.notification', entity: 'ContactMessage', entityId: msg.id,
       });
     }
   } catch (e) {

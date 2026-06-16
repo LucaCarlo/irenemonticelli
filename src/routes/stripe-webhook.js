@@ -99,6 +99,7 @@ async function createCommissionIfNeeded(bookingId) {
         to: ref.email,
         subject: `🎉 Nueva comisión de ${commissionAmt.toFixed(2)}€ · ${siteName}`,
         text, html,
+        kind: 'commission.new', entity: 'ReferralCommission', entityId: bookingId,
       });
     } catch (e) {
       console.error('[commission-mail] invio referrer fallito:', e.message);

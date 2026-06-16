@@ -129,7 +129,7 @@ router.post('/:id(\\d+)/test', A(async (req, res) => {
   });
   try {
     const { sendMail } = require('../lib/mailer');
-    await sendMail({ to, subject: '[TEST] ' + c.subject, html, text: nlLib.htmlToText(c.htmlBody) });
+    await sendMail({ to, subject: '[TEST] ' + c.subject, html, text: nlLib.htmlToText(c.htmlBody), kind: 'newsletter.test', entity: 'NewsletterCampaign', entityId: id });
     await audit.log(req, 'newsletter.test', { entity: 'NewsletterCampaign', entityId: String(id), details: { to } });
     req.flash('success', 'Email di test inviata a ' + to);
   } catch (e) {

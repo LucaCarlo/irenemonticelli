@@ -52,6 +52,7 @@ router.post('/test-email', requirePermission('settings.edit'), async (req, res) 
       to: req.body.to || req.user.email,
       subject: 'Test SMTP — Irene Monticelli Admin',
       text: 'Se leggi questa email, la configurazione SMTP funziona correttamente.',
+      kind: 'smtp.test',
     });
     req.flash('success', 'Email di test inviata a ' + (req.body.to || req.user.email));
   } catch (e) {

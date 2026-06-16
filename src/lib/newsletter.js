@@ -136,7 +136,7 @@ async function sendCampaign(campaignId, baseUrl) {
     const unsubscribeUrl = `${baseUrl}/newsletter/unsubscribe/${r.unsubscribeToken}`;
     const html = wrapEmail({ subject: c.subject, preheader: c.preheader, body: c.htmlBody, unsubscribeUrl, baseUrl });
     try {
-      await sendMail({ to: r.email, subject: c.subject, html, text: htmlToText(c.htmlBody) });
+      await sendMail({ to: r.email, subject: c.subject, html, text: htmlToText(c.htmlBody), kind: 'newsletter.campaign', entity: 'NewsletterCampaign', entityId: c.id });
       await prisma.newsletterSubscriber.update({ where: { id: r.id }, data: { lastSentAt: new Date() } });
       success++;
     } catch (e) {
