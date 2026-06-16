@@ -224,7 +224,7 @@
             <td><% if (c.active) { %><span class="badge badge-ok">attivo</span><% } else { %><span class="badge badge-off">disattivo</span><% } %></td>
             <td class="row-actions">
               <details class="code-edit-dd">
-                <summary class="btn-ico" title="Modifica">✎</summary>
+                <summary class="btn-ico btn-ico-edit" title="Modifica"><%- include('../partials/ico', { name:'edit' }) %></summary>
                 <form method="post" action="/admin/referrals/codes/<%= c.id %>" class="form code-edit-form">
                   <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                   <div class="fs-grid">
@@ -352,8 +352,10 @@
   .plan-chip input:checked + span{font-weight:700;color:#7a5800}
   .plan-chip:has(input:checked){background:#fffbe8;border-color:#e0aa00}
   .code-edit-dd{display:inline-block;position:relative}
-  .code-edit-dd > summary{list-style:none;cursor:pointer;color:#0d5290}
+  .code-edit-dd > summary{list-style:none;cursor:pointer;display:inline-flex;align-items:center;justify-content:center}
   .code-edit-dd > summary::-webkit-details-marker{display:none}
+  .code-edit-dd > summary::marker{display:none;content:''}
+  .code-edit-dd > summary > svg{width:16px;height:16px}
   .code-edit-form{position:absolute;right:0;top:30px;z-index:30;background:#fff;border:1px solid #d4d8e0;border-radius:10px;padding:18px;box-shadow:0 12px 40px rgba(0,0,0,.12);width:min(640px, 90vw)}
 </style>
 <% } %>
