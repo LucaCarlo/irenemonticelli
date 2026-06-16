@@ -6,10 +6,6 @@
       <p class="muted" style="margin:4px 0 0;font-size:13.5px">Solo prenotazioni confermate e pagate. <% if (abandonedCount > 0) { %><a href="/admin/abandoned-carts" style="color:#7a5800;font-weight:600">Carrelli abbandonati (<%= abandonedCount %>) →</a><% } %></p>
     </div>
     <div class="head-tools" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-      <div class="view-switcher" style="display:inline-flex;border:1px solid #dde0e4;border-radius:8px;overflow:hidden">
-        <a class="btn btn-sm" href="/admin/bookings" style="border:0;border-radius:0;background:#1c1f26;color:#e0aa00;padding:8px 14px">Vista lista</a>
-        <a class="btn btn-sm btn-ghost" href="/admin/bookings/calendar" style="border:0;border-radius:0;border-left:1px solid #dde0e4;padding:8px 14px">Vista calendario</a>
-      </div>
       <a class="btn btn-primary" href="/admin/bookings/new">+ Nuova prenotazione</a>
     </div>
   </div>
