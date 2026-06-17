@@ -160,7 +160,7 @@ router.get('/stats', requirePermission('stats.view'), async (req, res) => {
     if (!sessPaths[v.sessionId]) sessPaths[v.sessionId] = new Set();
     sessPaths[v.sessionId].add(v.path);
   }
-  let stepLand = 0, stepProD = 0, stepReserva = 0, stepSuccess = 0;
+  let stepLand = 0, stepProD = 0, stepReserva = 0;
   for (const sid of Object.keys(sessPaths)) {
     const p = sessPaths[sid];
     stepLand++;
@@ -168,9 +168,11 @@ router.get('/stats', requirePermission('stats.view'), async (req, res) => {
     if (sawProDance) stepProD++;
     const sawReserva = Array.from(p).some((x) => /^\/reserva(\/|$)/.test(x));
     if (sawReserva) stepReserva++;
-    const sawSuccess = p.has('/reserva/success');
-    if (sawSuccess) stepSuccess++;
   }
+  // "Pagamento confermato" non è tracciabile dalle PageView (la success.ejs non
+  // include tracker.js, e comunque il pagamento può avvenire inline senza redirect).
+  // Uso il conteggio diretto delle booking confirmed+paid nel periodo come fonte di verità.
+  const stepSuccess = bookingsConfirmed;
 
   const series = Object.keys(byDay).map((d) => ({
     date: d,
