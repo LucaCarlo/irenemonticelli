@@ -7036,6 +7036,42 @@ header.site.over-video .nav-links a.nav-referral:hover{
 <script id="rv-navfix">document.addEventListener("click",function(e){var t=e.target.closest(".nav-toggle");if(!t)return;var n=t.closest("nav")||t.parentNode;var l=n&&n.querySelector(".nav-links");if(!l)return;e.preventDefault();t.classList.toggle("open");l.classList.toggle("open");});document.addEventListener("click",function(e){if(e.target.closest(".nav-links a")){var o=document.querySelector(".nav-links.open");if(o){o.classList.remove("open");var b=document.querySelector(".nav-toggle.open");if(b)b.classList.remove("open");}}});</script>
 <script src="/tracker.js" defer></script>
 <script src="/resume-banner.js" defer></script>
+<script id="pdx-live-pricing">
+/* Aggiorna in tempo reale i prezzi delle card pack (RED, GOLD) dal server.
+   Se la promo è scaduta, nasconde "pdx-was" (strikethrough) e "pdx-deadline". */
+(function(){
+  var MONTHS_ES = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+  function fmtDeadline(iso){
+    if (!iso) return '';
+    var d = new Date(iso + 'T00:00:00');
+    if (isNaN(d)) return '';
+    return 'hasta el ' + d.getDate() + ' ' + MONTHS_ES[d.getMonth()];
+  }
+  function apply(cardSel, data){
+    var card = document.querySelector(cardSel);
+    if (!card || !data) return;
+    var now = card.querySelector('.pdx-now');
+    var was = card.querySelector('.pdx-was');
+    var deadline = card.querySelector('.pdx-deadline');
+    if (now)  now.textContent  = Math.round(data.now) + '€';
+    if (was)  was.textContent  = Math.round(data.base) + '€';
+    if (data.promo && data.deadline) {
+      if (was) was.style.display = '';
+      if (deadline) { deadline.style.display = ''; deadline.textContent = fmtDeadline(data.deadline); }
+    } else {
+      if (was) was.style.display = 'none';
+      if (deadline) deadline.style.display = 'none';
+    }
+  }
+  fetch('/api/plans/pricing.json', { credentials: 'same-origin' })
+    .then(function(r){ return r.json(); })
+    .then(function(j){
+      apply('.pdx-card.pdx-red',  j.red);
+      apply('.pdx-card.pdx-gold', j.gold);
+    })
+    .catch(function(){ /* silente: se l'API fallisce, restano i valori hardcoded */ });
+})();
+</script>
 <script>
 (function(){ // footer dinamico: sostituisce .foot-credit-dynamic con html da /api/site-footer.json
   try {

@@ -803,4 +803,42 @@ router.get('/api/lessons/availability/:eventId(\\d+)', A(async (req, res) => {
   res.json({ ok: true, eventId, lessons: status.lessons });
 }));
 
+// API pubblica: prezzi correnti dei pack (per la pagina pro-dance statica).
+// Ritorna, per ogni pack attivo con tiers, il prezzo attualmente valido +
+// prezzo base (per lo strikethrough) + prossima scadenza (per la label
+// "hasta el X"). Calcolato server-side con tierPrice(), sempre coerente
+// col checkout.
+// SLUG-MAP: fornisce sia lo slug ('pack-gold') sia una chiave breve ('gold')
+// così l'HTML può indicare l'una o l'altra.
+router.get('/api/plans/pricing.json', A(async (req, res) => {
+  const plans = await prisma.plan.findMany({ where: { active: true }, select: { slug: true, pricingJson: true, currency: true } });
+  const now = new Date();
+  const out = {};
+  plans.forEach((p) => {
+    const pr = B.pricing(p);
+    if (!pr || pr.type !== 'tiers') return;   // solo pack a fasce
+    const base = Number(pr.base || 0);
+    const nowPrice = B.tierPrice(pr, now);
+    // Prossima scadenza attiva (la prima nel futuro)
+    const tiers = (pr.tiers || []).slice().sort((a, b) => new Date(a.until) - new Date(b.until));
+    let deadline = null;
+    for (const t of tiers) {
+      const d = new Date(t.until + 'T23:59:59');
+      if (now <= d && Number(t.price) === nowPrice) { deadline = t.until; break; }
+    }
+    const shortKey = p.slug.replace(/^pack-/, '');
+    const isPromoActive = nowPrice < base;
+    out[shortKey] = out[p.slug] = {
+      slug: p.slug,
+      now: nowPrice,
+      base,
+      currency: p.currency || 'EUR',
+      deadline: isPromoActive ? deadline : null,   // null → siamo in fascia base, niente promo
+      promo: isPromoActive,
+    };
+  });
+  res.set('Cache-Control', 'public, max-age=300');   // 5 minuti — cambio prezzo raramente
+  res.json(out);
+}));
+
 module.exports = router;
